@@ -1,0 +1,379 @@
+import { Template } from './template.js';
+import { COLOR_PALETTE } from './palette.js';
+import { WindowWizard } from './window-wizard.js';
+import { encodeBase, base64ToUint8, sleep, consoleLog, consoleError, consoleWarn, formatNumber } from './utils.js';
+
+export class TemplateManager {
+    constructor(name, version) {
+        this.name            = name;
+        this.version         = version;
+        this.windowMain      = null;
+        this.settingsManager = null;
+        this.schemaVersion   = '2.0.0';
+        this.userId          = null;
+        this.encodeAlphabet  = "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+        this.tileSize        = 1000;
+        this.pixelsPerTile   = 3;
+        this.paletteTolerance = 3;
+        this.paletteCache    = this.#buildPaletteCache(this.paletteTolerance);
+        this.storageData     = null;
+        this.templates       = [];
+        this.isEnabled       = true;
+        this.hiddenColors    = new Map();
+        // Flags d'état pour le solo mode et le highlight
+        this._soloMode = false;
+        this._soloObs  = null;
+        this._hlActive = false;
+    }
+
+    setWindowMain(windowMain)        { this.windowMain      = windowMain; }
+    setSettingsManager(settingsManager) { this.settingsManager = settingsManager; }
+
+    async createTemplate(file, displayName, coords) {
+        if (!this.storageData) this.storageData = await this.#createEmptyStorage();
+        this.windowMain.setStatus(`Creating template at ${coords.join(', ')}...`);
+
+        const tmpl = new Template({
+            displayName,
+            sortId:   0,
+            authorId: encodeBase(this.userId || 0, this.encodeAlphabet),
+            file,
+            coords
+        });
+        const skipTransparent = !this.settingsManager?.settings?.flags?.includes('hl-noSkip');
+        const aggressiveSkip  = !!this.settingsManager?.settings?.flags?.includes('hl-agSkip');
+        const { imageBitmaps, base64Tiles } = await tmpl.processImage(this.tileSize, this.paletteCache, skipTransparent, aggressiveSkip);
+        tmpl.tiles = imageBitmaps;
+
+        const pixelStatsForStorage = {
+            total:  tmpl.pixelStats.total,
+            colors: Object.fromEntries(tmpl.pixelStats.colors)
+        };
+        this.storageData.templates[`${tmpl.sortId} ${tmpl.authorId}`] = {
+            name:    tmpl.displayName,
+            coords:  coords.join(', '),
+            enabled: true,
+            pixels:  pixelStatsForStorage,
+            tiles:   base64Tiles
+        };
+        this.templates = [];
+        this.templates.push(tmpl);
+        this.windowMain.setStatus(`Template created at ${coords.join(', ')}!`);
+        await this.#saveToStorage();
+    }
+
+    async downloadAllTemplates() {
+        consoleLog('Downloading all templates...');
+        for (const tmpl of this.templates) {
+            await this.#downloadTemplate(tmpl);
+            await sleep(500);
+        }
+    }
+
+    async loadFromStorage() {
+        const stored = JSON.parse(GM_getValue('bmTemplates', '{}')).templates;
+        if (!stored || Object.keys(stored).length === 0) return;
+        for (const [key, entry] of Object.entries(stored)) {
+            if (!stored.hasOwnProperty(key)) continue;
+            await this.#downloadTemplate(new Template({ displayName: entry.name, sortId: key.split(' ')?.[0], tiles: entry.tiles }));
+            await sleep(500);
+        }
+    }
+
+    async compositeTemplateTiles(tmpl) {
+        const tileKeys  = Object.keys(tmpl.tiles).sort();
+        const images    = await Promise.all(tileKeys.map(key => {
+            const src = tmpl.tiles[key];
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload  = () => resolve(img);
+                img.onerror = reject;
+                img.src     = 'data:image/png;base64,' + src;
+            });
+        }));
+        let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0;
+        tileKeys.forEach((key, idx) => {
+            const [tileX, tileY, pixelX, pixelY] = key.split(',').map(Number);
+            const img = images[idx];
+            const absX = tileX * this.tileSize + pixelX;
+            const absY = tileY * this.tileSize + pixelY;
+            minX = Math.min(minX, absX);
+            minY = Math.min(minY, absY);
+            maxX = Math.max(maxX, absX + img.width  / this.pixelsPerTile);
+            maxY = Math.max(maxY, absY + img.height / this.pixelsPerTile);
+        });
+        const logicalW  = maxX - minX;
+        const logicalH  = maxY - minY;
+        const scaledW   = logicalW * this.pixelsPerTile;
+        const scaledH   = logicalH * this.pixelsPerTile;
+        const bigCanvas = new OffscreenCanvas(scaledW, scaledH);
+        const bigCtx    = bigCanvas.getContext('2d');
+        tileKeys.forEach((key, idx) => {
+            const [tileX, tileY, pixelX, pixelY] = key.split(',').map(Number);
+            const img  = images[idx];
+            const absX = tileX * this.tileSize + pixelX;
+            const absY = tileY * this.tileSize + pixelY;
+            bigCtx.drawImage(img, (absX - minX) * this.pixelsPerTile, (absY - minY) * this.pixelsPerTile, img.width, img.height);
+        });
+        bigCtx.globalCompositeOperation = 'destination-over';
+        bigCtx.drawImage(bigCanvas, 0, -1);
+        bigCtx.drawImage(bigCanvas, 0,  1);
+        bigCtx.drawImage(bigCanvas, -1, 0);
+        bigCtx.drawImage(bigCanvas,  1, 0);
+        const outCanvas = new OffscreenCanvas(logicalW, logicalH);
+        const outCtx    = outCanvas.getContext('2d');
+        outCtx.imageSmoothingEnabled = false;
+        outCtx.drawImage(bigCanvas, 0, 0, scaledW, scaledH, 0, 0, logicalW, logicalH);
+        return outCanvas.convertToBlob({ type: 'image/png' });
+    }
+
+    async renderTileOverlay(tileBlob, tileCoords) {
+        if (!this.isEnabled) return tileBlob;
+        const scaledSize = this.tileSize * this.pixelsPerTile;
+        const coordKey   = tileCoords[0].toString().padStart(4, '0') + ',' + tileCoords[1].toString().padStart(4, '0');
+        const sorted     = [...this.templates].sort((a, b) => a.sortId - b.sortId);
+        const matching   = sorted.map(tmpl => {
+            const keys = Object.keys(tmpl.tiles).filter(k => k.startsWith(coordKey));
+            if (keys.length === 0) return null;
+            const key  = keys[0];
+            const parts = key.split(',');
+            return {
+                template:   tmpl,
+                tileBitmap: tmpl.tiles[key],
+                pixelData:  tmpl.pixelData?.[key],
+                tileCoordStr:  [parts[0], parts[1]],
+                pixelOffset:   [parts[2], parts[3]]
+            };
+        }).filter(Boolean);
+
+        if (matching.length === 0) {
+            this.windowMain.setStatus(`Sleeping\nVersion: ${this.version}`);
+            return tileBlob;
+        }
+
+        const visibleCount = sorted.filter(t => Object.keys(t.tiles).some(k => k.startsWith(coordKey))).length;
+        const totalPx      = formatNumber(sorted.filter(t => Object.keys(t.tiles).some(k => k.startsWith(coordKey))).reduce((acc, t) => acc + (t.pixelStats.total || 0), 0));
+        this.windowMain.setStatus(`Displaying ${visibleCount} template${visibleCount === 1 ? '' : 's'}.\nTotal pixels: ${totalPx}`);
+
+        const liveBitmap = await createImageBitmap(tileBlob);
+        const canvas     = new OffscreenCanvas(scaledSize, scaledSize);
+        const ctx        = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        ctx.beginPath(); ctx.rect(0, 0, scaledSize, scaledSize); ctx.clip();
+        ctx.clearRect(0, 0, scaledSize, scaledSize);
+        ctx.drawImage(liveBitmap, 0, 0, scaledSize, scaledSize);
+
+        const liveImageData = ctx.getImageData(0, 0, scaledSize, scaledSize);
+        const livePixels    = new Uint32Array(liveImageData.data.buffer);
+        const highlight     = this.settingsManager?.settings?.highlight ?? [[2, 0, 0]];
+        const isDefaultHl   = highlight?.length === 1 && highlight[0][0] === 2 && highlight[0][1] === 0 && highlight[0][2] === 0;
+
+        for (const entry of matching) {
+            const hasErased   = !!entry.template.pixelStats?.colors?.get(-1);
+            let templatePixels = entry.pixelData?.slice();
+            const offsetX = Number(entry.pixelOffset[0]) * this.pixelsPerTile;
+            const offsetY = Number(entry.pixelOffset[1]) * this.pixelsPerTile;
+
+            if (this.hiddenColors.size === 0 && !hasErased)
+                ctx.drawImage(entry.tileBitmap, offsetX, offsetY);
+
+            if (!templatePixels) {
+                const img = ctx.getImageData(offsetX, offsetY, entry.tileBitmap.width, entry.tileBitmap.height);
+                templatePixels = new Uint32Array(img.data.buffer);
+            }
+
+            const { correctMap, outputPixels } = this.#computePixelDiff({
+                livePixels, templatePixels,
+                region:       [offsetX, offsetY, entry.tileBitmap.width, entry.tileBitmap.height],
+                highlight, isDefaultHighlight: isDefaultHl
+            });
+
+            if (this.hiddenColors.size !== 0 || hasErased || !isDefaultHl)
+                ctx.drawImage(await createImageBitmap(new ImageData(new Uint8ClampedArray(outputPixels.buffer), entry.tileBitmap.width, entry.tileBitmap.height)), offsetX, offsetY);
+
+            if (entry.template.pixelStats.correct === undefined) entry.template.pixelStats.correct = {};
+            entry.template.pixelStats.correct[coordKey] = correctMap;
+        }
+        return canvas.convertToBlob({ type: 'image/png' });
+    }
+
+    importFromStorage(data) {
+        if (data?.whoami === 'BlueMarble') this.#importTemplates(data);
+    }
+
+    setEnabled(enabled) { this.isEnabled = enabled; }
+
+    // ── Méthodes privées ──────────────────────────────────────
+
+    #buildPaletteCache(tolerance) {
+        const palette = [...COLOR_PALETTE];
+        palette.unshift({ id: -1, premium: false, name: 'Erased', rgb: [222, 250, 206] });
+        palette.unshift({ id: -2, premium: false, name: 'Other',  rgb: [0, 0, 0] });
+        const colorLookup = new Map();
+        for (const color of palette) {
+            if (color.id === 0 || color.id === -2) continue;
+            const [r, g, b] = color.rgb;
+            for (let dr = -tolerance; dr <= tolerance; dr++)
+                for (let dg = -tolerance; dg <= tolerance; dg++)
+                    for (let db = -tolerance; db <= tolerance; db++) {
+                        const nr = r + dr, ng = g + dg, nb = b + db;
+                        if (nr < 0 || nr > 255 || ng < 0 || ng > 255 || nb < 0 || nb > 255) continue;
+                        const packed = (255 << 24 | nb << 16 | ng << 8 | nr) >>> 0;
+                        if (!colorLookup.has(packed)) colorLookup.set(packed, color.id);
+                    }
+        }
+        return { palette, jt: colorLookup };
+    }
+
+    async #createEmptyStorage() {
+        return {
+            whoami:        this.name.replace(' ', ''),
+            scriptVersion: this.version,
+            schemaVersion: this.schemaVersion,
+            templates:     {}
+        };
+    }
+
+    async #ensureStorage() {
+        if (!this.storageData) this.storageData = await this.#createEmptyStorage();
+    }
+
+    async #downloadTemplate(tmpl) {
+        tmpl.inferCoordsFromTiles();
+        const filename = `${tmpl.coords.join('-')}_${tmpl.displayName.replaceAll(' ', '-')}`;
+        const blob     = await this.compositeTemplateTiles(tmpl);
+        await GM.download({
+            url:     URL.createObjectURL(blob),
+            name:    filename + '.png',
+            saveAs:  'uniquify',
+            onload:  () => consoleLog(`Download of template '${filename}' complete!`),
+            onerror: (err, details) => consoleError(`Download of template '${filename}' failed because ${err}! Details: ${details}`),
+            ontimeout: () => consoleWarn(`Download of template '${filename}' has timed out!`)
+        });
+    }
+
+    async #saveToStorage() {
+        GM.setValue('bmTemplates', JSON.stringify(this.storageData));
+    }
+
+    async #importTemplates(data) {
+        const entries      = data.templates;
+        const storedVer    = data?.schemaVersion?.split(/[-\.+]/) ?? [];
+        const currentVer   = this.schemaVersion.split(/[-\.+]/);
+        const scriptVer    = data?.scriptVersion;
+
+        if (storedVer[0] === currentVer[0]) {
+            if (storedVer[1] !== currentVer[1])
+                new WindowWizard(this.name, this.version, this.schemaVersion, this).toggle();
+
+            this.templates = await (async ({ tileSize, pixelsPerTile, templates }) => {
+                const loaded = [];
+                if (Object.keys(entries).length > 0) {
+                    for (const key in entries) {
+                        if (!entries.hasOwnProperty(key)) continue;
+                        const entry    = entries[key];
+                        const parts    = key.split(' ');
+                        const sortId   = Number(parts?.[0]);
+                        const authorId = parts?.[1] || '0';
+                        const name     = entry.name || `Template ${sortId || ''}`;
+                        const pixelStats = {
+                            total:  entry.pixels?.total,
+                            colors: new Map(Object.entries(entry.pixels?.colors || {}).map(([k, v]) => [Number(k), v]))
+                        };
+                        const base64Tiles = entry.tiles;
+                        const imageBitmaps = {};
+                        const pixelDataMap = {};
+                        const canvasSize   = tileSize * pixelsPerTile;
+                        for (const tileKey in base64Tiles) {
+                            if (!base64Tiles.hasOwnProperty(tileKey)) continue;
+                            const bytes    = base64ToUint8(base64Tiles[tileKey]);
+                            const imgBitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+                            imageBitmaps[tileKey] = imgBitmap;
+                            const tmpCanvas = new OffscreenCanvas(canvasSize, canvasSize);
+                            const tmpCtx    = tmpCanvas.getContext('2d');
+                            tmpCtx.drawImage(imgBitmap, 0, 0);
+                            const imgData = tmpCtx.getImageData(0, 0, imgBitmap.width, imgBitmap.height);
+                            pixelDataMap[tileKey] = new Uint32Array(imgData.data.buffer);
+                        }
+                        const tmpl = new Template({ displayName: name, sortId: sortId || loaded.length || 0, authorId: authorId || '' });
+                        tmpl.pixelStats = pixelStats;
+                        tmpl.tiles      = imageBitmaps;
+                        tmpl.pixelData  = pixelDataMap;
+                        loaded.push(tmpl);
+                    }
+                }
+                return loaded;
+            })({ tileSize: this.tileSize, pixelsPerTile: this.pixelsPerTile, templates: entries });
+        } else if (storedVer[0] < currentVer[0]) {
+            new WindowWizard(this.name, this.version, this.schemaVersion, this).toggle();
+        } else {
+            this.windowMain.setError(`Template version ${data?.schemaVersion} is unsupported.\nUse Yet Another Wplace Overlay version ${scriptVer} or load a new template.`);
+        }
+    }
+
+    #computePixelDiff({ livePixels, templatePixels, region, highlight, isDefaultHighlight }) {
+        const scale       = this.pixelsPerTile;
+        const canvasSize  = this.tileSize * scale;
+        const [offsetX, offsetY, regionW, regionH] = region;
+        const tolerance   = this.paletteTolerance;
+        const showTransp  = !this.settingsManager?.settings?.flags?.includes('hl-noTrans');
+        const { jt: colorLookup } = this.paletteCache;
+        const correctMap  = new Map();
+
+        for (let row = 1; row < regionH; row += scale) {
+            for (let col = 1; col < regionW; col += scale) {
+                const liveY    = offsetY + row - 1;
+                const liveX    = offsetX + col;
+                const livePx   = livePixels[liveY * canvasSize + liveX];
+                const tmplPx   = templatePixels[row * regionW + col];
+                const tmplA    = tmplPx >>> 24 & 255;
+                const liveA    = livePx >>> 24 & 255;
+                const tmplColor = colorLookup.get(tmplPx) ?? -2;
+                const liveColor = colorLookup.get(livePx) ?? -2;
+
+                // Couleur cachée : remplacer par le pixel live
+                if (this.hiddenColors.get(tmplColor))
+                    templatePixels[row * regionW + col] = livePx;
+
+                // Pixel effacé (transparent) : pattern damier
+                if (tmplColor === -1) {
+                    const ALPHA_GRAY = 536870912;
+                    if (this.hiddenColors.get(tmplColor)) {
+                        templatePixels[row * regionW + col] = 0;
+                    } else if ((liveY / scale & 1) === (liveX / scale & 1)) {
+                        templatePixels[row * regionW + col]                              = ALPHA_GRAY;
+                        templatePixels[(row - 1) * regionW + (col - 1)]                 = ALPHA_GRAY;
+                        templatePixels[(row - 1) * regionW + (col + 1)]                 = ALPHA_GRAY;
+                        templatePixels[(row + 1) * regionW + (col - 1)]                 = ALPHA_GRAY;
+                        templatePixels[(row + 1) * regionW + (col + 1)]                 = ALPHA_GRAY;
+                    } else {
+                        templatePixels[row * regionW + col]                = 0;
+                        templatePixels[(row - 1) * regionW + col]          = ALPHA_GRAY;
+                        templatePixels[(row + 1) * regionW + col]          = ALPHA_GRAY;
+                        templatePixels[row * regionW + (col - 1)]          = ALPHA_GRAY;
+                        templatePixels[row * regionW + (col + 1)]          = ALPHA_GRAY;
+                    }
+                }
+
+                // Highlight des pixels incorrects
+                if (!isDefaultHighlight && tmplA > tolerance && liveColor !== tmplColor && (showTransp || liveA > tolerance)) {
+                    const currentPx = templatePixels[row * regionW + col];
+                    for (const [mode, dx, dy] of highlight) {
+                        const fillPx = mode !== 0 ? (mode !== 1 ? currentPx : 0xFF0000FF) : 0;
+                        templatePixels[(row + dy) * regionW + (col + dx)] = fillPx;
+                    }
+                }
+
+                // Comptage des pixels corrects
+                if (tmplColor === -1 && livePx <= tolerance) {
+                    correctMap.set(tmplColor, (correctMap.get(tmplColor) ?? 0) + 1);
+                    continue;
+                }
+                if (tmplA <= tolerance || liveA <= tolerance) continue;
+                if (liveColor !== tmplColor) continue;
+                correctMap.set(tmplColor, (correctMap.get(tmplColor) ?? 0) + 1);
+            }
+        }
+        return { correctMap, outputPixels: templatePixels };
+    }
+}
