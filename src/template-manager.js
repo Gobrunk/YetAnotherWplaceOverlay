@@ -70,7 +70,7 @@ export class TemplateManager {
     }
 
     async loadFromStorage() {
-        const stored = JSON.parse(GM_getValue('bmTemplates', '{}')).templates;
+        const stored = JSON.parse(GM_getValue('yawoTemplates', '{}')).templates;
         if (!stored || Object.keys(stored).length === 0) return;
         for (const [key, entry] of Object.entries(stored)) {
             if (!stored.hasOwnProperty(key)) continue;
@@ -285,7 +285,7 @@ export class TemplateManager {
     }
 
     async #saveToStorage() {
-        GM.setValue('bmTemplates', JSON.stringify(this.storageData));
+        GM.setValue('yawoTemplates', JSON.stringify(this.storageData));
     }
 
     #saveCorrectToStorage() {
@@ -297,7 +297,7 @@ export class TemplateManager {
             for (const [coordKey, map] of Object.entries(tmpl.pixelStats?.correct ?? {}))
                 entry.correct[coordKey] = Object.fromEntries(map);
         }
-        GM.setValue('bmTemplates', JSON.stringify(this.storageData));
+        GM.setValue('yawoTemplates', JSON.stringify(this.storageData));
     }
 
     async #importTemplates(data) {

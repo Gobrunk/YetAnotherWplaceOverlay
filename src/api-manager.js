@@ -35,8 +35,8 @@ export class ApiManager {
                             timerEl.dataset.endDate = Date.now() + (charges.max - charges.count) * charges.cooldownMs;
                         }
                     }
-                    windowMain.setElementContent('bm-droplets',   `<b>${formatNumber(jsonData.droplets)}</b>`);
-                    windowMain.setElementContent('bm-next-level',  `<b>${formatNumber(pixelsToNextLevel)}</b> pixel${pixelsToNextLevel === 1 ? '' : 's'}`);
+                    windowMain.setElementContent('yawo-droplets',   `<b>${formatNumber(jsonData.droplets)}</b>`);
+                    windowMain.setElementContent('yawo-next-level',  `<b>${formatNumber(pixelsToNextLevel)}</b> pixel${pixelsToNextLevel === 1 ? '' : 's'}`);
                     break;
                 }
                 case 'pixel': {
@@ -56,16 +56,16 @@ export class ApiManager {
                     for (const span of spanEls) {
                         const text = span.textContent.trim();
                         if (text.includes(displayCoords[0]) && text.includes(displayCoords[1])) {
-                            let coordsDisplay = document.querySelector('#bm-coords-display');
+                            let coordsDisplay = document.querySelector('#yawo-coords-display');
                             const labels   = ['Tl X:', 'Tl Y:', 'Px X:', 'Px Y:'];
-                            const ids      = ['bm-coords-tile-x', 'bm-coords-tile-y', 'bm-coords-pixel-x', 'bm-coords-pixel-y'];
+                            const ids      = ['yawo-coords-tile-x', 'yawo-coords-tile-y', 'yawo-coords-pixel-x', 'yawo-coords-pixel-y'];
                             const allCoords = [...tileSegments, ...pixelCoords];
                             if (coordsDisplay) {
                                 for (const [idx, id] of ids.entries())
                                     document.getElementById(id).textContent = `${labels[idx] ?? '??:'} ${allCoords[idx]}`;
                             } else {
                                 coordsDisplay = document.createElement('span');
-                                coordsDisplay.id = 'bm-coords-display';
+                                coordsDisplay.id = 'yawo-coords-display';
                                 coordsDisplay.style = 'display: flex; flex-wrap: wrap; gap: 0 1ch; font-size: small;';
                                 for (const [idx, coord] of allCoords.entries()) {
                                     const part = document.createElement('span');

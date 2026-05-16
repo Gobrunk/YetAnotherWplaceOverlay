@@ -1,15 +1,15 @@
 export function injectBridge(scriptName) {
     !function(bridgeFn) {
         const scriptEl = document.createElement('script');
-        scriptEl.setAttribute('bm-name',  scriptName);
-        scriptEl.setAttribute('bm-style', 'color: cornflowerblue;');
+        scriptEl.setAttribute('yawo-name',  scriptName);
+        scriptEl.setAttribute('yawo-style', 'color: cornflowerblue;');
         scriptEl.textContent = `(${bridgeFn})();`;
         document.documentElement?.appendChild(scriptEl);
         scriptEl.remove();
     }(() => {
         const scriptEl   = document.currentScript;
-        const scriptName = scriptEl?.getAttribute('bm-name')  || 'Yet Another Wplace Overlay';
-        const logStyle   = scriptEl?.getAttribute('bm-style') || '';
+        const scriptName = scriptEl?.getAttribute('yawo-name')  || 'Yet Another Wplace Overlay';
+        const logStyle   = scriptEl?.getAttribute('yawo-style') || '';
         const blobQueue  = new Map();
 
         window.addEventListener('message', event => {

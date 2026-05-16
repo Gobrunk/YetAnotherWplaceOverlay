@@ -1,3 +1,5 @@
+import terser from '@rollup/plugin-terser';
+
 const BANNER = `// ==UserScript==
 // @name            Yet Another Wplace Overlay
 // @name:en         Yet Another Wplace Overlay
@@ -19,12 +21,21 @@ const BANNER = `// ==UserScript==
 // Wplace  --> https://wplace.live
 // License --> https://www.mozilla.org/en-US/MPL/2.0/`;
 
+const addBanner = {
+    name: 'add-banner',
+    generateBundle(_, bundle) {
+        for (const chunk of Object.values(bundle)) {
+            if (chunk.type === 'chunk') chunk.code = BANNER + '\n' + chunk.code;
+        }
+    },
+};
+
 export default {
     input: 'src/main.js',
     output: {
         file:   'tampermonkey.js',
         format: 'iife',
-        banner: BANNER,
         generatedCode: { arrowFunctions: true, constBindings: true },
     },
+    plugins: [terser(), addBanner],
 };

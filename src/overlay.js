@@ -2,7 +2,7 @@ export class Overlay {
     #rootElement   = null;
     #currentParent = null;
     #parentStack   = [];
-    #statusAreaId  = 'bm-status';
+    #statusAreaId  = 'yawo-status';
 
     constructor(name, version) {
         this.name           = name;
@@ -198,7 +198,7 @@ export class Overlay {
         attrs.title = `Help: ${title}`;
         const buttonEl = this.#createElement('button', {
             textContent: '?',
-            className:   'bm-info-btn',
+            className:   'yawo-info-btn',
             onclick:     () => this.setElementContent(this.#statusAreaId, title)
         }, attrs);
         cb(this, buttonEl);
@@ -272,13 +272,13 @@ export class Overlay {
     // ── Éléments spéciaux ─────────────────────────────────────
 
     addTitleBar(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('div', { class: 'bm-titlebar' }, attrs));
+        cb(this, this.#createElement('div', { class: 'yawo-titlebar' }, attrs));
         return this;
     }
 
     addCountdownTimer(endTimestamp = Date.now(), intervalMs = 500, attrs = {}, cb = () => {}) {
-        const id = attrs.id || 'bm-countdown-' + crypto.randomUUID().slice(0, 8);
-        const timeEl = this.#createElement('time', { class: 'bm-countdown' }, attrs);
+        const id = attrs.id || 'yawo-countdown-' + crypto.randomUUID().slice(0, 8);
+        const timeEl = this.#createElement('time', { class: 'yawo-countdown' }, attrs);
         timeEl.id = id;
         timeEl.dataset.endDate = endTimestamp;
         setInterval(() => {
@@ -321,9 +321,9 @@ export class Overlay {
         if (btn.disabled) return;
         btn.disabled = true;
         btn.style.textDecoration = 'none';
-        const windowEl  = btn.closest('.bm-window');
-        const titlebar  = btn.closest('.bm-titlebar');
-        const contentEl = windowEl.querySelector('.bm-content');
+        const windowEl  = btn.closest('.yawo-window');
+        const titlebar  = btn.closest('.yawo-titlebar');
+        const contentEl = windowEl.querySelector('.yawo-content');
         const heading   = contentEl?.querySelector('h1');
         if (windowEl.parentElement) windowEl.parentElement.append(windowEl);
         if ('expanded' === btn.dataset.buttonStatus) {
@@ -406,7 +406,7 @@ export class Overlay {
             targetX = prevX;
             targetY = prevY;
             document.body.style.userSelect = 'none';
-            handleEl.classList.add('bm-dragging');
+            handleEl.classList.add('yawo-dragging');
             document.addEventListener('mousemove', onMouseMove);
             document.addEventListener('touchmove', onTouchMove, { passive: false });
             document.addEventListener('mouseup',   stopDrag);
@@ -420,7 +420,7 @@ export class Overlay {
             isDragging = false;
             if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
             document.body.style.userSelect = '';
-            handleEl.classList.remove('bm-dragging');
+            handleEl.classList.remove('yawo-dragging');
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('touchmove', onTouchMove);
             document.removeEventListener('mouseup',   stopDrag);

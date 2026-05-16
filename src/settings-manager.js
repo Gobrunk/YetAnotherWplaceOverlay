@@ -6,7 +6,7 @@ export class SettingsManager extends WindowSettings {
         this.settings           = settings;
         this.settings.flags     ??= [];
         this.savedSettings      = structuredClone(this.settings);
-        this.storageKey         = 'bmUserSettings';
+        this.storageKey         = 'yawoUserSettings';
         this.saveIntervalMs     = 5000;
         this.lastSaveTimestamp  = 0;
         setInterval(this.#autoSave.bind(this), this.saveIntervalMs);
@@ -19,10 +19,10 @@ export class SettingsManager extends WindowSettings {
     }
 
     buildTemplateSection() {
-        this.addDiv({ class: 'bm-col' })
+        this.addDiv({ class: 'yawo-col' })
             .addHeading(2, { textContent: 'Template' }).up()
             .addHr().up()
-            .addDiv({ class: 'bm-col', style: 'margin-left: 1.5ch;' })
+            .addDiv({ class: 'yawo-col', style: 'margin-left: 1.5ch;' })
                 .addCheckbox({ textContent: 'Template creation should skip transparent tiles' }, (ov, label, input) => {
                     input.checked  = !this.settings?.flags?.includes('hl-noSkip');
                     input.onchange = e => this.toggleFlag('hl-noSkip', !e.target.checked);

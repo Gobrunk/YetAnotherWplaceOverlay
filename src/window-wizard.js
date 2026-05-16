@@ -5,9 +5,9 @@ import { escapeHTML, decodeBase, formatNumber, formatDate } from './utils.js';
 export class WindowWizard extends Overlay {
     constructor(name, version, requiredSchemaVersion, templateManager = undefined) {
         super(name, version);
-        this.windowId              = 'bm-window-wizard';
+        this.windowId              = 'yawo-window-wizard';
         this.mountTarget           = document.body;
-        this.storedData            = JSON.parse(GM_getValue('bmTemplates', '{}'));
+        this.storedData            = JSON.parse(GM_getValue('yawoTemplates', '{}'));
         this.scriptVersion         = this.storedData?.scriptVersion;
         this.schemaVersion         = this.storedData?.schemaVersion;
         this.storageHealth         = undefined;
@@ -21,35 +21,35 @@ export class WindowWizard extends Overlay {
             return;
         }
         let extraStyle = '';
-        if (!document.querySelector('#bm-window-main')) extraStyle = 'z-index: 9001;';
+        if (!document.querySelector('#yawo-window-main')) extraStyle = 'z-index: 9001;';
 
-        this.addDiv({ id: this.windowId, class: 'bm-window', style: extraStyle })
+        this.addDiv({ id: this.windowId, class: 'yawo-window', style: extraStyle })
             .addTitleBar()
-                .addButton({ class: 'bm-chrome-btn', textContent: '▼', 'aria-label': 'Minimize window "Template Wizard"', 'data-button-status': 'expanded' }, (overlay, btn) => {
+                .addButton({ class: 'yawo-chrome-btn', textContent: '▼', 'aria-label': 'Minimize window "Template Wizard"', 'data-button-status': 'expanded' }, (overlay, btn) => {
                     btn.onclick    = () => overlay.toggleMinimize(btn);
                     btn.ontouchend = () => btn.click();
                 }).up()
                 .addDiv().up()
-                .addButton({ class: 'bm-chrome-btn', textContent: '✖', 'aria-label': 'Close window "Template Wizard"' }, (overlay, btn) => {
+                .addButton({ class: 'yawo-chrome-btn', textContent: '✖', 'aria-label': 'Close window "Template Wizard"' }, (overlay, btn) => {
                     btn.onclick    = () => document.querySelector(`#${this.windowId}`)?.remove();
                     btn.ontouchend = () => btn.click();
                 }).up()
             .up()
-            .addDiv({ class: 'bm-content' })
-                .addDiv({ class: 'bm-col bm-spaced' })
+            .addDiv({ class: 'yawo-content' })
+                .addDiv({ class: 'yawo-col yawo-spaced' })
                     .addHeading(1, { textContent: 'Template Wizard' }).up()
                 .up()
                 .addHr().up()
-                .addDiv({ class: 'bm-col' })
+                .addDiv({ class: 'yawo-col' })
                     .addHeading(2, { textContent: 'Status' }).up()
-                    .addParagraph({ id: 'bm-wizard-status', textContent: 'Loading template storage status...' }).up()
+                    .addParagraph({ id: 'yawo-wizard-status', textContent: 'Loading template storage status...' }).up()
                 .up()
-                .addDiv({ class: 'bm-col bm-sections' })
+                .addDiv({ class: 'yawo-col yawo-sections' })
                     .addHeading(2, { textContent: 'Detected templates:' }).up()
                 .up()
             .up()
         .mount(this.mountTarget);
-        this.enableDragging(`#${this.windowId}.bm-window`, `#${this.windowId} .bm-titlebar`);
+        this.enableDragging(`#${this.windowId}.yawo-window`, `#${this.windowId} .yawo-titlebar`);
         this.#buildStatusSection();
         this.#buildTemplateList();
     }
@@ -86,11 +86,11 @@ export class WindowWizard extends Overlay {
             if (match) wplaceVersionDate = formatDate(new Date(Number(match[0])));
         }
 
-        this.setElementContent('bm-wizard-status', `${statusHTML}<br>Your templates were created during Yet Another Wplace Overlay version <b>${escapeHTML(this.scriptVersion)}</b> with schema version <b>${escapeHTML(this.schemaVersion)}</b>.<br>The current Yet Another Wplace Overlay version is <b>${escapeHTML(this.version)}</b> and requires schema version <b>${escapeHTML(this.requiredSchemaVersion)}</b>.<br>Wplace was last updated on <b>${wplaceVersionDate}</b>.${this.storageHealth !== 'Good' ? upgradeNotice : ''}`);
+        this.setElementContent('yawo-wizard-status', `${statusHTML}<br>Your templates were created during Yet Another Wplace Overlay version <b>${escapeHTML(this.scriptVersion)}</b> with schema version <b>${escapeHTML(this.schemaVersion)}</b>.<br>The current Yet Another Wplace Overlay version is <b>${escapeHTML(this.version)}</b> and requires schema version <b>${escapeHTML(this.requiredSchemaVersion)}</b>.<br>Wplace was last updated on <b>${wplaceVersionDate}</b>.${this.storageHealth !== 'Good' ? upgradeNotice : ''}`);
 
         const actionBuilder = new Overlay(this.name, this.version);
         if (this.storageHealth !== 'Dead') {
-            actionBuilder.addDiv({ class: 'bm-col bm-row bm-spaced', style: 'gap: 1.5ch;' })
+            actionBuilder.addDiv({ class: 'yawo-col yawo-row yawo-spaced', style: 'gap: 1.5ch;' })
                 .addButton({ textContent: 'Download all templates' }, (ov, btn) => {
                     btn.onclick = () => { btn.disabled = true; this.templateManager.downloadAllTemplates().then(() => { btn.disabled = false; }); };
                 }).up();
@@ -101,16 +101,16 @@ export class WindowWizard extends Overlay {
             }).up();
         }
         if (this.storageHealth !== 'Dead') actionBuilder.up();
-        actionBuilder.mount(document.querySelector('#bm-wizard-status').parentNode);
+        actionBuilder.mount(document.querySelector('#yawo-wizard-status').parentNode);
     }
 
     #buildTemplateList() {
         const templates = this.storedData?.templates;
         if (!templates || Object.keys(templates).length === 0) return;
 
-        const sectionsEl  = document.querySelector(`#${this.windowId} .bm-sections`);
+        const sectionsEl  = document.querySelector(`#${this.windowId} .yawo-sections`);
         const listBuilder = new Overlay(this.name, this.version);
-        listBuilder.addDiv({ id: 'bm-wizard-list', class: 'bm-col' });
+        listBuilder.addDiv({ id: 'yawo-wizard-list', class: 'yawo-col' });
 
         for (const key in templates) {
             if (!templates.hasOwnProperty(key)) continue;
@@ -125,12 +125,12 @@ export class WindowWizard extends Overlay {
             const authorStr  = typeof authorId === 'number' ? formatNumber(authorId)   : '???';
             const pixelStr   = typeof pixelTotal === 'number' ? formatNumber(pixelTotal) : '???';
 
-            listBuilder.addDiv({ class: 'bm-col bm-row' })
-                .addDiv({ class: 'bm-row', style: 'flex-direction: column; gap: 0;' })
-                    .addDiv({ class: 'bm-template-thumb', textContent: '🖼️' }).up()
+            listBuilder.addDiv({ class: 'yawo-col yawo-row' })
+                .addDiv({ class: 'yawo-row', style: 'flex-direction: column; gap: 0;' })
+                    .addDiv({ class: 'yawo-template-thumb', textContent: '🖼️' }).up()
                     .addSmall({ textContent: `#${sortIdStr}` }).up()
                 .up()
-                .addDiv({ class: 'bm-row bm-template-info' })
+                .addDiv({ class: 'yawo-row yawo-template-info' })
                     .addHeading(3, { textContent: name }).up()
                     .addSpan({ textContent: `Uploaded by user #${authorStr}` }).up()
                     .addSpan({ textContent: `Coordinates: ${coords.join(', ')}` }).up()
@@ -143,22 +143,22 @@ export class WindowWizard extends Overlay {
 
     async #upgradeStorage(showUI) {
         if (showUI) {
-            const contentEl = document.querySelector(`#${this.windowId} .bm-content`);
+            const contentEl = document.querySelector(`#${this.windowId} .yawo-content`);
             contentEl.innerHTML = '';
             new Overlay(this.name, this.version)
-                .addDiv({ class: 'bm-col' })
-                    .addDiv({ class: 'bm-col bm-spaced' })
+                .addDiv({ class: 'yawo-col' })
+                    .addDiv({ class: 'yawo-col yawo-spaced' })
                         .addHeading(1, { textContent: 'Template Wizard' }).up()
                     .up()
                     .addHr().up()
-                    .addDiv({ class: 'bm-col' })
+                    .addDiv({ class: 'yawo-col' })
                         .addHeading(2, { textContent: 'Status' }).up()
                         .addParagraph({ textContent: 'Updating template storage. Please wait...' }).up()
                     .up()
                 .up()
             .mount(contentEl);
         }
-        GM_deleteValue('bmCoords');
+        GM_deleteValue('yawoCoords');
         const templates = this.storedData?.templates;
         if (templates && Object.keys(templates).length > 0) {
             for (const [, entry] of Object.entries(templates)) {

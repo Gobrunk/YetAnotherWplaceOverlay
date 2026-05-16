@@ -12,7 +12,7 @@ const SCRIPT_VERSION = GM_info.script.version.toString();
 injectBridge(SCRIPT_NAME);
 injectStyles();
 
-const savedSettings   = JSON.parse(GM_getValue('bmUserSettings', '{}'));
+const savedSettings   = JSON.parse(GM_getValue('yawoUserSettings', '{}'));
 const templateManager = new TemplateManager(SCRIPT_NAME, SCRIPT_VERSION);
 const apiManager      = new ApiManager(templateManager);
 const settingsManager = new SettingsManager(SCRIPT_NAME, SCRIPT_VERSION, savedSettings);
@@ -23,7 +23,7 @@ windowMain.setSettingsManager(settingsManager);
 templateManager.setWindowMain(windowMain);
 templateManager.setSettingsManager(settingsManager);
 
-const storedTemplates = JSON.parse(GM_getValue('bmTemplates', '{}'));
+const storedTemplates = JSON.parse(GM_getValue('yawoTemplates', '{}'));
 templateManager.importFromStorage(storedTemplates);
 templateManager.loadFilterState(savedSettings);
 
@@ -36,10 +36,10 @@ const initUI = () => {
         const colorOneEl = document.querySelector('#color-1');
         if (!colorOneEl) return;
 
-        let moveBtnEl = document.querySelector('#bm-move-btn');
+        let moveBtnEl = document.querySelector('#yawo-move-btn');
         if (!moveBtnEl) {
             moveBtnEl = document.createElement('button');
-            moveBtnEl.id        = 'bm-move-btn';
+            moveBtnEl.id        = 'yawo-move-btn';
             moveBtnEl.textContent = 'Move ↑';
             moveBtnEl.className = 'btn btn-soft';
             moveBtnEl.onclick   = function() {
