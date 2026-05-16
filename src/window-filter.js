@@ -9,6 +9,7 @@ export class WindowColorFilter extends Overlay {
         this.listContainerId = 'yawo-filter-list';
         this.mountTarget     = document.body;
         this.templateManager = ctx.apiManager?.templateManager ?? ctx;
+        this.settingsManager = ctx.settingsManager ?? null;
 
         const { palette } = this.templateManager.paletteCache;
         this.palette        = palette;
@@ -33,7 +34,7 @@ export class WindowColorFilter extends Overlay {
 
     toggle() {
         const existing = document.querySelector('#yawo-color-dropdown');
-        if (existing) { existing._posObs?.disconnect(); existing.remove(); return; }
+        if (existing) { existing._cleanup?.(); existing.remove(); return; }
 
         const anchor = document.querySelector('[data-yawo-filter="1"]');
         if (!anchor) return;
@@ -60,17 +61,6 @@ export class WindowColorFilter extends Overlay {
             for (const tileCorr of Object.values(corr))
                 for (const [cid, cnt] of tileCorr) neMap.set(cid, (neMap.get(cid) ?? 0) + Number(cnt));
         }
-
-        const wrap = document.createElement('div');
-        wrap.id = 'yawo-color-dropdown';
-        wrap.style.cssText = `
-            position:fixed; z-index:9999;
-            background:var(--color-bg,#1a1a1a);
-            border:1px solid rgba(255,255,255,.12);
-            border-radius:8px; width:380px;
-            box-shadow:0 8px 24px rgba(0,0,0,.4);
-            font-family:inherit; font-size:13px; overflow:hidden;
-        `;
 
         // ── Solo Mode ─────────────────────────────────────────
         if (this.templateManager._soloMode === undefined) this.templateManager._soloMode = false;
@@ -122,13 +112,27 @@ export class WindowColorFilter extends Overlay {
 
         if (this.templateManager._soloMode) startSoloObs();
 
-        // ── Header ────────────────────────────────────────────
-        const header = document.createElement('div');
-        header.style.cssText = `display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-bottom:1px solid rgba(255,255,255,.1);`;
+        // ── Window wrapper ────────────────────────────────────
+        const wrap = document.createElement('div');
+        wrap.id = 'yawo-color-dropdown';
+        wrap.classList.add('yawo-window');
+        wrap.style.cssText = `width:380px; z-index:9999;`;
+        wrap._cleanup = stopSoloObs;
 
-        const titleEl = document.createElement('span');
-        titleEl.style.cssText = `font-weight:600; color:rgba(255,255,255,.9); font-size:13px;`;
+        // ── Titlebar ──────────────────────────────────────────
+        const titlebar = document.createElement('div');
+        titlebar.className = 'yawo-titlebar';
+
+        const minimizeBtn = document.createElement('button');
+        minimizeBtn.className = 'yawo-chrome-btn';
+        minimizeBtn.textContent = '▼';
+        minimizeBtn.dataset.buttonStatus = 'expanded';
+        minimizeBtn.setAttribute('aria-label', 'Minimize window "Color Filter"');
+        minimizeBtn.onclick    = () => this.toggleMinimize(minimizeBtn);
+        minimizeBtn.ontouchend = () => minimizeBtn.click();
+
         const shownCount = sortedPal.filter(p => p.id > 0 && (ieMap.get(p.id) ?? 0) > 0).length;
+        const titleEl = document.createElement('div');
         titleEl.textContent = `Couleurs (${shownCount})`;
 
         const mkBtn = (label, bg, fg, onclick) => {
@@ -170,16 +174,31 @@ export class WindowColorFilter extends Overlay {
             }
         };
 
-        const btnGroup = document.createElement('div');
-        btnGroup.style.cssText = `display:flex; gap:4px; align-items:center;`;
+        // Span pour éviter le style .yawo-titlebar > div (flex:1) sur le groupe de boutons
+        const btnGroup = document.createElement('span');
+        btnGroup.style.cssText = `display:flex; gap:4px; align-items:center; flex-shrink:0;`;
         btnGroup.appendChild(soloBtn);
         btnGroup.appendChild(mkBtn('✓ All',  'rgba(74,222,128,.15)',  'rgba(74,222,128,.9)',  () => { this.templateManager.hiddenColors.clear(); this.templateManager.saveFilterState(); wrap.remove(); this.toggle(); }));
         btnGroup.appendChild(mkBtn('✗ None', 'rgba(248,113,113,.15)', 'rgba(248,113,113,.9)', () => { for (const c of pal) { if (c.id > 0) this.templateManager.hiddenColors.set(c.id, true); } this.templateManager.saveFilterState(); wrap.remove(); this.toggle(); }));
         btnGroup.appendChild(mkBtn('↻',      'rgba(255,255,255,.08)', 'rgba(255,255,255,.7)', () => { wrap.remove(); this.templateManager.refreshCorrectStats().then(() => this.toggle()); }));
 
-        header.appendChild(titleEl);
-        header.appendChild(btnGroup);
-        wrap.appendChild(header);
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'yawo-chrome-btn';
+        closeBtn.textContent = '✖';
+        closeBtn.setAttribute('aria-label', 'Close window "Color Filter"');
+        closeBtn.onclick    = () => { stopSoloObs(); wrap.remove(); };
+        closeBtn.ontouchend = () => closeBtn.click();
+
+        titlebar.appendChild(minimizeBtn);
+        titlebar.appendChild(titleEl);
+        titlebar.appendChild(btnGroup);
+        titlebar.appendChild(closeBtn);
+        wrap.appendChild(titlebar);
+
+        // ── Content ───────────────────────────────────────────
+        const content = document.createElement('div');
+        content.className = 'yawo-content';
+        content.style.cssText = `padding:4px 0; gap:0;`;
 
         // ── Liste scrollable ──────────────────────────────────
         const list = document.createElement('div');
@@ -232,16 +251,21 @@ export class WindowColorFilter extends Overlay {
             nameEl.style.cssText = `flex:1; color:rgba(255,255,255,.85);`;
             nameEl.textContent = color.name;
 
+            const barColor = pct >= 80 ? '#22c55e' : pct >= 40 ? '#facc15' : '#f87171';
+
             const barWrap = document.createElement('div');
-            barWrap.style.cssText = `width:48px; height:4px; background:rgba(255,255,255,.1); border-radius:2px; flex-shrink:0;`;
+            barWrap.style.cssText = `width:100px; height:16px; background:rgba(255,255,255,.1); border-radius:3px; flex-shrink:0; position:relative; overflow:hidden;`;
             const bar = document.createElement('div');
-            const barColor = pct >= 80 ? '#4ade80' : pct >= 40 ? '#facc15' : '#f87171';
-            bar.style.cssText = `height:100%; border-radius:2px; background:${barColor}; width:${pct}%;`;
+            bar.style.cssText = `height:100%; border-radius:3px; background:${barColor}; width:${pct}%;`;
+            const barLabel = document.createElement('span');
+            barLabel.style.cssText = `position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:9px; color:#fff; background:rgba(0,0,0,.35); pointer-events:none; white-space:nowrap;`;
+            barLabel.textContent = `${formatNumber(correct)} / ${formatNumber(total)}`;
             barWrap.appendChild(bar);
+            barWrap.appendChild(barLabel);
 
             const statsEl = document.createElement('span');
-            statsEl.style.cssText = `color:rgba(255,255,255,.5); font-size:11px; white-space:nowrap; width:150px; flex-shrink:0; text-align:right;`;
-            statsEl.textContent = `${correct}/${total} (${pct}%)`;
+            statsEl.style.cssText = `color:${barColor}; font-size:11px; white-space:nowrap; width:36px; flex-shrink:0; text-align:right; font-weight:600;`;
+            statsEl.textContent = `${pct}%`;
 
             row.appendChild(toggleBtn);
             row.appendChild(swatch);
@@ -250,23 +274,28 @@ export class WindowColorFilter extends Overlay {
             row.appendChild(statsEl);
             list.appendChild(row);
         }
-        wrap.appendChild(list);
+        content.appendChild(list);
+        wrap.appendChild(content);
         document.body.appendChild(wrap);
 
-        // Positionnement sous le bouton anchor
-        const reposition = () => {
+        // ── Position : restaure la sauvegarde ou se place sous l'ancre ──
+        const savedPos = this.settingsManager?.settings?.filterWindowPosition;
+        if (savedPos?.x !== undefined && savedPos?.y !== undefined) {
+            wrap.style.transform = `translate(${savedPos.x}px, ${savedPos.y}px)`;
+            wrap.style.left = '0px';
+            wrap.style.top  = '0px';
+        } else {
             const rect = anchor.getBoundingClientRect();
             wrap.style.top  = (rect.bottom + 4) + 'px';
             wrap.style.left = rect.left + 'px';
-        };
-        reposition();
-
-        const yawoWin = anchor.closest('.yawo-window');
-        if (yawoWin) {
-            const posObs = new MutationObserver(reposition);
-            posObs.observe(yawoWin, { attributes: true, attributeFilter: ['style'] });
-            wrap._posObs = posObs;
         }
+
+        // ── Dragging ──────────────────────────────────────────
+        this.enableDragging('#yawo-color-dropdown.yawo-window', '#yawo-color-dropdown .yawo-titlebar', (x, y) => {
+            if (this.settingsManager?.settings) {
+                this.settingsManager.settings.filterWindowPosition = { x, y };
+            }
+        });
     }
 
     toggleCompact() {
