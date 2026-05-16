@@ -16,9 +16,11 @@ export class TemplateManager {
         this.pixelsPerTile   = 3;
         this.paletteTolerance = 3;
         this.paletteCache    = this.#buildPaletteCache(this.paletteTolerance);
-        this.storageData     = null;
-        this.templates       = [];
-        this.isEnabled       = true;
+        this.storageData          = null;
+        this.templates            = [];
+        this.activeTemplateKey    = null;
+        this.windowTemplateSelect = null;
+        this.isEnabled            = true;
         this.hiddenColors    = new Map();
         this._soloMode = false;
         this._soloObs  = null;
@@ -34,7 +36,7 @@ export class TemplateManager {
 
         const tmpl = new Template({
             displayName,
-            sortId:   0,
+            sortId:   Date.now(),
             authorId: encodeBase(this.userId || 0, this.encodeAlphabet),
             file,
             coords
@@ -55,10 +57,30 @@ export class TemplateManager {
             pixels:  pixelStatsForStorage,
             tiles:   base64Tiles
         };
-        this.templates = [];
         this.templates.push(tmpl);
+        this.activeTemplateKey = `${tmpl.sortId} ${tmpl.authorId}`;
+        if (this.settingsManager?.settings) this.settingsManager.settings.activeTemplateKey = this.activeTemplateKey;
         this.windowMain.setStatus(`Template created at ${coords.join(', ')}!`);
         await this.#saveToStorage();
+        this.windowTemplateSelect?.refresh();
+    }
+
+    async deleteTemplate(key) {
+        this.templates = this.templates.filter(t => `${t.sortId} ${t.authorId}` !== key);
+        if (this.storageData?.templates) delete this.storageData.templates[key];
+        if (this.activeTemplateKey === key) {
+            const first = this.templates[0];
+            this.activeTemplateKey = first ? `${first.sortId} ${first.authorId}` : null;
+        }
+        if (this.settingsManager?.settings) this.settingsManager.settings.activeTemplateKey = this.activeTemplateKey;
+        await this.#saveToStorage();
+        this.windowTemplateSelect?.refresh();
+    }
+
+    setActiveTemplate(key) {
+        this.activeTemplateKey = key;
+        if (this.settingsManager?.settings) this.settingsManager.settings.activeTemplateKey = key;
+        this.windowTemplateSelect?.refresh();
     }
 
     async downloadAllTemplates() {
@@ -130,7 +152,10 @@ export class TemplateManager {
         if (!this.isEnabled) return tileBlob;
         const scaledSize = this.tileSize * this.pixelsPerTile;
         const coordKey   = tileCoords[0].toString().padStart(4, '0') + ',' + tileCoords[1].toString().padStart(4, '0');
-        const sorted     = [...this.templates].sort((a, b) => a.sortId - b.sortId);
+        const toRender   = this.activeTemplateKey
+            ? this.templates.filter(t => `${t.sortId} ${t.authorId}` === this.activeTemplateKey)
+            : this.templates;
+        const sorted     = [...toRender].sort((a, b) => a.sortId - b.sortId);
         const matching   = sorted.map(tmpl => {
             const keys = Object.keys(tmpl.tiles).filter(k => k.startsWith(coordKey));
             if (keys.length === 0) return null;
@@ -150,8 +175,8 @@ export class TemplateManager {
             return tileBlob;
         }
 
-        const visibleCount = sorted.filter(t => Object.keys(t.tiles).some(k => k.startsWith(coordKey))).length;
-        const totalPx      = formatNumber(sorted.filter(t => Object.keys(t.tiles).some(k => k.startsWith(coordKey))).reduce((acc, t) => acc + (t.pixelStats.total || 0), 0));
+        const visibleCount = toRender.filter(t => Object.keys(t.tiles).some(k => k.startsWith(coordKey))).length;
+        const totalPx      = formatNumber(toRender.filter(t => Object.keys(t.tiles).some(k => k.startsWith(coordKey))).reduce((acc, t) => acc + (t.pixelStats.total || 0), 0));
         this.windowMain.setStatus(`Displaying ${visibleCount} template${visibleCount === 1 ? '' : 's'}.\nTotal pixels: ${totalPx}`);
 
         const liveBitmap = await createImageBitmap(tileBlob);
@@ -204,6 +229,8 @@ export class TemplateManager {
             this.hiddenColors = new Map(hidden.map(id => [id, true]));
         if (typeof settings?.soloMode === 'boolean')
             this._soloMode = settings.soloMode;
+        if (settings?.activeTemplateKey)
+            this.activeTemplateKey = settings.activeTemplateKey;
     }
 
     saveFilterState() {
@@ -356,6 +383,10 @@ export class TemplateManager {
                 return loaded;
             })({ tileSize: this.tileSize, pixelsPerTile: this.pixelsPerTile, templates: entries });
             this.storageData = data;
+            if (!this.activeTemplateKey && this.templates.length > 0) {
+                const first = this.templates[0];
+                this.activeTemplateKey = `${first.sortId} ${first.authorId}`;
+            }
         } else if (storedVer[0] < currentVer[0]) {
             new WindowWizard(this.name, this.version, this.schemaVersion, this).toggle();
         } else {

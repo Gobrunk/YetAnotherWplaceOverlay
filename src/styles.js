@@ -222,6 +222,109 @@ export function injectStyles() {
       .yawo-file-upload { position: relative; }
       .yawo-file-upload input[type="file"] { position: absolute; width: 0; height: 0; opacity: 0; }
 
+      /* ── Cartes de sélection d'overlay ── */
+      .yawo-template-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 6px 8px;
+        border-radius: 6px;
+        border: 1px solid rgba(255,255,255,.08);
+        background: rgba(255,255,255,.03);
+      }
+      .yawo-template-card--active {
+        border-color: rgba(100,160,255,.45);
+        background: rgba(100,160,255,.07);
+      }
+
+      /* Bouton "Actif" vert */
+      .yawo-btn-success {
+        border-color: rgba(34,197,94,.45) !important;
+        color: rgba(34,197,94,.9) !important;
+        background: rgba(34,197,94,.07) !important;
+        cursor: default !important;
+      }
+
+      /* Bouton danger (suppression) */
+      .yawo-btn-danger {
+        border-color: rgba(239,68,68,.35) !important;
+        color: rgba(239,68,68,.75) !important;
+        padding: 3px 7px !important;
+      }
+      .yawo-btn-danger:hover {
+        background: rgba(239,68,68,.1) !important;
+        border-color: rgba(239,68,68,.65) !important;
+        color: rgba(239,68,68,1) !important;
+      }
+      .yawo-btn-danger svg { display: block; }
+
+      /* ── Section "Ajouter un overlay" ── */
+      .yawo-add-section { border: none; }
+      .yawo-add-section > summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 5px 8px;
+        border-radius: 6px;
+        border: 1px dashed rgba(255,255,255,.14);
+        color: rgba(255,255,255,.45);
+        font-size: 11px;
+        background: transparent;
+        transition: background .12s, color .12s, border-color .12s;
+        user-select: none;
+      }
+      .yawo-add-section > summary::-webkit-details-marker,
+      .yawo-add-section > summary::marker { display: none; content: ''; }
+      .yawo-add-section > summary:hover {
+        background: rgba(255,255,255,.05);
+        color: rgba(255,255,255,.75);
+        border-color: rgba(255,255,255,.22);
+      }
+      .yawo-add-section[open] > summary {
+        border-radius: 6px 6px 0 0;
+        border-bottom-color: transparent;
+        color: rgba(255,255,255,.75);
+        background: rgba(255,255,255,.04);
+      }
+      .yawo-add-body {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px;
+        background: rgba(255,255,255,.03);
+        border: 1px dashed rgba(255,255,255,.14);
+        border-top: none;
+        border-radius: 0 0 6px 6px;
+      }
+      .yawo-form-label {
+        font-size: 9px;
+        color: rgba(255,255,255,.35);
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        font-weight: 600;
+      }
+      .yawo-coords-block { display: flex; flex-direction: column; gap: 5px; }
+      .yawo-coords-header { display: flex; align-items: center; justify-content: space-between; }
+      .yawo-coords-grid {
+        display: grid;
+        grid-template-columns: 30px 1fr 1fr;
+        gap: 4px;
+        align-items: center;
+      }
+      .yawo-coords-grid .yawo-form-label { text-align: right; padding-right: 2px; }
+      .yawo-coords-grid .yawo-coord-input { width: 100%; box-sizing: border-box; text-align: left; }
+      .yawo-btn-create {
+        width: 100% !important;
+        margin-top: 2px !important;
+        padding: 5px 8px !important;
+        background: rgba(255,255,255,.09) !important;
+        border-color: rgba(255,255,255,.2) !important;
+      }
+      .yawo-btn-create:hover {
+        background: rgba(255,255,255,.15) !important;
+        border-color: rgba(255,255,255,.32) !important;
+      }
+
       /* ── Scrollbars ── */
       .yawo-window ::-webkit-scrollbar       { width: 4px; height: 4px; }
       .yawo-window ::-webkit-scrollbar-track { background: transparent; }

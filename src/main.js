@@ -1,10 +1,11 @@
-import { TemplateManager }  from './template-manager.js';
-import { ApiManager }       from './api-manager.js';
-import { SettingsManager }  from './settings-manager.js';
-import { WindowMain }       from './window-main.js';
-import { injectBridge }     from './bridge.js';
-import { injectStyles }     from './styles.js';
-import { consoleLog }       from './utils.js';
+import { TemplateManager }      from './template-manager.js';
+import { ApiManager }           from './api-manager.js';
+import { SettingsManager }      from './settings-manager.js';
+import { WindowMain }           from './window-main.js';
+import { WindowTemplateSelect } from './window-template-select.js';
+import { injectBridge }         from './bridge.js';
+import { injectStyles }         from './styles.js';
+import { consoleLog }           from './utils.js';
 
 const SCRIPT_NAME    = GM_info.script.name.toString();
 const SCRIPT_VERSION = GM_info.script.version.toString();
@@ -17,6 +18,10 @@ const templateManager = new TemplateManager(SCRIPT_NAME, SCRIPT_VERSION);
 const apiManager      = new ApiManager(templateManager);
 const settingsManager = new SettingsManager(SCRIPT_NAME, SCRIPT_VERSION, savedSettings);
 const windowMain      = new WindowMain(SCRIPT_NAME, SCRIPT_VERSION);
+
+const windowTemplateSelect = new WindowTemplateSelect(SCRIPT_NAME, SCRIPT_VERSION);
+windowTemplateSelect.setCtx(windowMain);
+templateManager.windowTemplateSelect = windowTemplateSelect;
 
 windowMain.setApiManager(apiManager);
 windowMain.setSettingsManager(settingsManager);
