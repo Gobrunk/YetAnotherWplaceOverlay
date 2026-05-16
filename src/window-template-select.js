@@ -152,6 +152,30 @@ export class WindowTemplateSelect extends Overlay {
             if (isActive) activateBtn.className = 'yawo-btn-success';
             activateBtn.onclick = () => tm.setActiveTemplate(key);
 
+            const renameBtn = document.createElement('button');
+            renameBtn.className = 'yawo-btn-rename';
+            renameBtn.title     = 'Renommer';
+            renameBtn.innerHTML = '<svg viewBox="0 0 14 14" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 1.5l3 3-8 8H1.5v-3l8-8z"/><path d="M8 3l3 3"/></svg>';
+            renameBtn.onclick   = () => {
+                const input = document.createElement('input');
+                input.type      = 'text';
+                input.value     = tmpl.displayName;
+                input.className = 'yawo-rename-input';
+                name.replaceWith(input);
+                input.focus();
+                input.select();
+                let cancelled = false;
+                input.addEventListener('keydown', e => {
+                    if (e.key === 'Enter')  { e.preventDefault(); input.blur(); }
+                    if (e.key === 'Escape') { cancelled = true; input.blur(); }
+                });
+                input.addEventListener('blur', () => {
+                    if (cancelled) { input.replaceWith(name); return; }
+                    const newName = input.value.trim() || tmpl.displayName;
+                    tm.renameTemplate(key, newName);
+                });
+            };
+
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'yawo-btn-danger';
             deleteBtn.title     = 'Supprimer';
@@ -160,7 +184,7 @@ export class WindowTemplateSelect extends Overlay {
                 if (confirm(`Supprimer "${tmpl.displayName}" ?`)) tm.deleteTemplate(key);
             };
 
-            btnRow.append(activateBtn, deleteBtn);
+            btnRow.append(activateBtn, renameBtn, deleteBtn);
             card.append(info, btnRow);
             container.appendChild(card);
         }

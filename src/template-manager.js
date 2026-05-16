@@ -60,6 +60,7 @@ export class TemplateManager {
         this.templates.push(tmpl);
         this.activeTemplateKey = `${tmpl.sortId} ${tmpl.authorId}`;
         if (this.settingsManager?.settings) this.settingsManager.settings.activeTemplateKey = this.activeTemplateKey;
+        this.windowMain?.updateActiveOverlayName(tmpl.displayName);
         this.windowMain.setStatus(`Template created at ${coords.join(', ')}!`);
         await this.#saveToStorage();
         this.windowTemplateSelect?.refresh();
@@ -73,6 +74,7 @@ export class TemplateManager {
             this.activeTemplateKey = first ? `${first.sortId} ${first.authorId}` : null;
         }
         if (this.settingsManager?.settings) this.settingsManager.settings.activeTemplateKey = this.activeTemplateKey;
+        this.windowMain?.updateActiveOverlayName(this.#getActiveDisplayName());
         await this.#saveToStorage();
         this.windowTemplateSelect?.refresh();
     }
@@ -80,7 +82,20 @@ export class TemplateManager {
     setActiveTemplate(key) {
         this.activeTemplateKey = key;
         if (this.settingsManager?.settings) this.settingsManager.settings.activeTemplateKey = key;
+        this.windowMain?.updateActiveOverlayName(this.#getActiveDisplayName());
         this.windowTemplateSelect?.refresh();
+    }
+
+    async renameTemplate(key, newName) {
+        const trimmed = newName.trim();
+        if (!trimmed) return;
+        const tmpl = this.templates.find(t => `${t.sortId} ${t.authorId}` === key);
+        if (!tmpl) return;
+        tmpl.displayName = trimmed;
+        if (this.storageData?.templates?.[key]) this.storageData.templates[key].name = trimmed;
+        await this.#saveToStorage();
+        this.windowTemplateSelect?.refresh();
+        if (key === this.activeTemplateKey) this.windowMain?.updateActiveOverlayName(trimmed);
     }
 
     async downloadAllTemplates() {
@@ -262,7 +277,14 @@ export class TemplateManager {
         this.#saveCorrectToStorage();
     }
 
+    getActiveDisplayName() { return this.#getActiveDisplayName(); }
+
     // ── Méthodes privées ──────────────────────────────────────
+
+    #getActiveDisplayName() {
+        const tmpl = this.templates.find(t => `${t.sortId} ${t.authorId}` === this.activeTemplateKey);
+        return tmpl?.displayName ?? '—';
+    }
 
     #buildPaletteCache(tolerance) {
         const palette = [...COLOR_PALETTE];
@@ -387,6 +409,7 @@ export class TemplateManager {
                 const first = this.templates[0];
                 this.activeTemplateKey = `${first.sortId} ${first.authorId}`;
             }
+            this.windowMain?.updateActiveOverlayName(this.#getActiveDisplayName());
         } else if (storedVer[0] < currentVer[0]) {
             new WindowWizard(this.name, this.version, this.schemaVersion, this).toggle();
         } else {

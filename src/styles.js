@@ -259,6 +259,32 @@ export function injectStyles() {
       }
       .yawo-btn-danger svg { display: block; }
 
+      /* Bouton renommage */
+      .yawo-btn-rename {
+        border-color: rgba(255,255,255,.2) !important;
+        color: rgba(255,255,255,.45) !important;
+        padding: 3px 7px !important;
+      }
+      .yawo-btn-rename:hover {
+        background: rgba(255,255,255,.07) !important;
+        color: rgba(255,255,255,.9) !important;
+      }
+      .yawo-btn-rename svg { display: block; }
+
+      /* Input de renommage inline */
+      .yawo-rename-input {
+        background: rgba(0,0,0,.4);
+        border: 1px solid rgba(100,160,255,.5);
+        border-radius: 4px;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 1px 4px;
+        width: 100%;
+        outline: none;
+        min-width: 0;
+      }
+
       /* ── Section "Ajouter un overlay" ── */
       .yawo-add-section { border: none; }
       .yawo-add-section > summary {

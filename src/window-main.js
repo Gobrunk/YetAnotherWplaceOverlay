@@ -8,6 +8,10 @@ export class WindowMain extends Overlay {
         this.windowId = 'yawo-window-main';
     }
 
+    updateActiveOverlayName(name) {
+        this.setElementContent('yawo-active-overlay', name ?? '—');
+    }
+
     toggle() {
         if (document.querySelector(`#${this.windowId}`)) {
             this.setError('Main window already exists!');
@@ -33,9 +37,13 @@ export class WindowMain extends Overlay {
                             if (overlay.apiManager) overlay.apiManager.chargesTimerId = timerEl.id;
                         }).up()
                     .up()
-                    .addDiv({ class: 'yawo-stat-cell yawo-stat-full' })
+                    .addDiv({ class: 'yawo-stat-cell' })
                         .addSmall({ textContent: '📈 Next level', class: 'yawo-stat-label' }).up()
                         .addSpan({ id: 'yawo-next-level', class: 'yawo-stat-value' }).up()
+                    .up()
+                    .addDiv({ class: 'yawo-stat-cell' })
+                        .addSmall({ textContent: '🗂️ Overlay actif', class: 'yawo-stat-label' }).up()
+                        .addSpan({ id: 'yawo-active-overlay', class: 'yawo-stat-value', style: 'font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;' }).up()
                     .up()
                 .up()
                 .addHr().up()
@@ -85,6 +93,7 @@ export class WindowMain extends Overlay {
                 .up()
             .up()
         .mount(document.body);
+        this.updateActiveOverlayName(this.apiManager?.templateManager?.getActiveDisplayName());
         const savedPos = this.settingsManager?.settings?.windowPosition;
         if (savedPos?.x !== undefined && savedPos?.y !== undefined) {
             const winEl = document.querySelector(`#${this.windowId}`);
