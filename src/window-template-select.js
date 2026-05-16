@@ -69,10 +69,22 @@ export class WindowTemplateSelect extends Overlay {
                         .up()
                         .addHr().up()
                         .addSmall({ textContent: 'Image', class: 'yawo-form-label' }).up()
-                        .addFileInput({ class: 'yawo-file-upload', textContent: 'Choisir un fichier…', accept: 'image/png, image/jpeg, image/webp, image/bmp, image/gif' }).up()
+                        .addFileInput({ class: 'yawo-file-upload', textContent: 'Choisir un fichier…', accept: 'image/png, image/jpeg, image/webp, image/bmp, image/gif' }, (overlay, _wrapper, inputEl, buttonEl) => {
+                            buttonEl.style.cssText += 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
+                            inputEl.addEventListener('change', () => {
+                                buttonEl.title = inputEl.files[0]?.name || '';
+                                const nameInp = document.querySelector('#yawo-ts-name');
+                                if (nameInp && inputEl.files[0]) {
+                                    nameInp.value = inputEl.files[0].name.replace(/\.[^/.]+$/, '').slice(0, 25);
+                                }
+                            });
+                        })
+                        .addSmall({ textContent: 'Nom', class: 'yawo-form-label' }).up()
+                        .addInput({ type: 'text', id: 'yawo-ts-name', class: 'yawo-rename-input', placeholder: 'Nom (optionnel)', maxlength: 25 }).up()
                         .addButton({ innerHTML: '🖼️&thinsp;Ajouter', class: 'yawo-btn-create' }, (overlay, btn) => {
                             btn.onclick = () => {
                                 const fileInput = document.querySelector(`#${this.windowId} input.yawo-file-upload[type="file"]`);
+                                const nameInp   = document.querySelector('#yawo-ts-name');
                                 const tileXInp  = document.querySelector('#yawo-ts-tile-x');
                                 const tileYInp  = document.querySelector('#yawo-ts-tile-y');
                                 const pixelXInp = document.querySelector('#yawo-ts-pixel-x');
@@ -82,9 +94,11 @@ export class WindowTemplateSelect extends Overlay {
                                 if (!pixelXInp.checkValidity()) { pixelXInp.reportValidity(); return; }
                                 if (!pixelYInp.checkValidity()) { pixelYInp.reportValidity(); return; }
                                 if (fileInput?.files[0]) {
+                                    const fallbackName = fileInput.files[0].name.replace(/\.[^/.]+$/, '').slice(0, 25);
+                                    const overlayName  = nameInp?.value.trim() || fallbackName;
                                     this.#ctx?.apiManager?.templateManager?.createTemplate(
                                         fileInput.files[0],
-                                        fileInput.files[0]?.name.replace(/\.[^/.]+$/, ''),
+                                        overlayName,
                                         [Number(tileXInp.value), Number(tileYInp.value), Number(pixelXInp.value), Number(pixelYInp.value)]
                                     );
                                 } else {
@@ -161,6 +175,7 @@ export class WindowTemplateSelect extends Overlay {
                 input.type      = 'text';
                 input.value     = tmpl.displayName;
                 input.className = 'yawo-rename-input';
+                input.maxLength = 25;
                 name.replaceWith(input);
                 input.focus();
                 input.select();

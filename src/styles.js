@@ -76,7 +76,7 @@ export function injectStyles() {
 
       /* ── Grille de statistiques ── */
       .yawo-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; background: rgba(255,255,255,.04); border-radius: 6px; padding: 6px 8px; }
-      .yawo-stat-cell { display: flex; flex-direction: column; gap: 2px; }
+      .yawo-stat-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow: hidden; }
       .yawo-stat-full { grid-column: 1 / -1; }
       .yawo-stat-label { font-size: 10px; color: rgba(255,255,255,.45); }
       .yawo-stat-value { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.9); font-variant-numeric: tabular-nums; }
@@ -105,19 +105,19 @@ export function injectStyles() {
 
       /* ── Bouton saut de coordonnées ── */
       .yawo-jump-btn {
-        border: 1px solid rgba(255,255,255,.25) !important;
+        border: 1px solid rgba(80,160,255,.6) !important;
         border-radius: 50% !important;
-        padding: 2px 5px !important;
-        color: rgba(255,255,255,.6) !important;
-        background: none !important;
+        padding: 4px 6px !important;
+        color: rgba(120,185,255,.9) !important;
+        background: rgba(60,130,255,.12) !important;
         cursor: pointer !important;
         font-size: 11px !important;
         line-height: 1 !important;
         transition: background .12s, border-color .12s !important;
       }
       .yawo-jump-btn:hover {
-        background: rgba(255,255,255,.1) !important;
-        border-color: rgba(255,255,255,.45) !important;
+        background: rgba(60,130,255,.28) !important;
+        border-color: rgba(80,160,255,.9) !important;
       }
 
       /* ── Boutons standard (hors chrome, swatches, circulaires) ── */
