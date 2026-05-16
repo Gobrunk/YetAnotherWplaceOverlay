@@ -154,12 +154,14 @@ export class WindowColorFilter extends Overlay {
         refreshSoloBtnStyle();
         soloBtn.onclick = () => {
             this.templateManager._soloMode = !this.templateManager._soloMode;
+            this.templateManager.saveFilterState();
             refreshSoloBtnStyle();
             if (this.templateManager._soloMode) {
                 startSoloObs();
             } else {
                 stopSoloObs();
                 this.templateManager.hiddenColors.clear();
+                this.templateManager.saveFilterState();
                 document.querySelectorAll('#bm-color-dropdown [data-color-id]').forEach(row => {
                     const eye = row.querySelector('.bm-eye-toggle');
                     if (eye) { eye.dataset.state = 'shown'; eye.style.opacity = '0.72'; }
@@ -171,9 +173,9 @@ export class WindowColorFilter extends Overlay {
         const btnGroup = document.createElement('div');
         btnGroup.style.cssText = `display:flex; gap:4px; align-items:center;`;
         btnGroup.appendChild(soloBtn);
-        btnGroup.appendChild(mkBtn('✓ All',  'rgba(74,222,128,.15)',  'rgba(74,222,128,.9)',  () => { this.templateManager.hiddenColors.clear(); wrap.remove(); this.toggle(); }));
-        btnGroup.appendChild(mkBtn('✗ None', 'rgba(248,113,113,.15)', 'rgba(248,113,113,.9)', () => { for (const c of pal) { if (c.id > 0) this.templateManager.hiddenColors.set(c.id, true); } wrap.remove(); this.toggle(); }));
-        btnGroup.appendChild(mkBtn('↻',      'rgba(255,255,255,.08)', 'rgba(255,255,255,.7)', () => { wrap.remove(); this.toggle(); }));
+        btnGroup.appendChild(mkBtn('✓ All',  'rgba(74,222,128,.15)',  'rgba(74,222,128,.9)',  () => { this.templateManager.hiddenColors.clear(); this.templateManager.saveFilterState(); wrap.remove(); this.toggle(); }));
+        btnGroup.appendChild(mkBtn('✗ None', 'rgba(248,113,113,.15)', 'rgba(248,113,113,.9)', () => { for (const c of pal) { if (c.id > 0) this.templateManager.hiddenColors.set(c.id, true); } this.templateManager.saveFilterState(); wrap.remove(); this.toggle(); }));
+        btnGroup.appendChild(mkBtn('↻',      'rgba(255,255,255,.08)', 'rgba(255,255,255,.7)', () => { wrap.remove(); this.templateManager.refreshCorrectStats().then(() => this.toggle()); }));
 
         header.appendChild(titleEl);
         header.appendChild(btnGroup);
@@ -208,12 +210,14 @@ export class WindowColorFilter extends Overlay {
                 ev.stopPropagation();
                 if (toggleBtn.dataset.state === 'shown') {
                     this.templateManager.hiddenColors.set(color.id, true);
+                    this.templateManager.saveFilterState();
                     toggleBtn.dataset.state  = 'hidden';
                     toggleBtn.style.opacity  = '0.3';
                     toggleBtn.title          = `Afficher ${color.name} sur l'overlay`;
                     row.style.opacity        = '0.4';
                 } else {
                     this.templateManager.hiddenColors.delete(color.id);
+                    this.templateManager.saveFilterState();
                     toggleBtn.dataset.state  = 'shown';
                     toggleBtn.style.opacity  = '0.8';
                     toggleBtn.title          = `Masquer ${color.name} de l'overlay`;

@@ -692,7 +692,7 @@
             }
         }
 
-        enableDragging(windowSelector, handleSelector) {
+        enableDragging(windowSelector, handleSelector, onDragStop = null) {
             const windowEl = document.querySelector(windowSelector);
             const handleEl = document.querySelector(handleSelector);
             if (!windowEl || !handleEl) {
@@ -754,6 +754,7 @@
                 document.removeEventListener('mouseup',   stopDrag);
                 document.removeEventListener('touchend',  stopDrag);
                 document.removeEventListener('touchcancel', stopDrag);
+                if (typeof onDragStop === 'function') onDragStop(prevX, prevY);
             };
 
             const onMouseMove = e => {
@@ -972,6 +973,7 @@
             this.hiddenColors    = new Map();
             this._soloMode = false;
             this._soloObs  = null;
+            this.liveTileCache = {};
         }
 
         setWindowMain(windowMain)        { this.windowMain      = windowMain; }
@@ -1113,6 +1115,7 @@
 
             const liveImageData = ctx.getImageData(0, 0, scaledSize, scaledSize);
             const livePixels    = new Uint32Array(liveImageData.data.buffer);
+            this.liveTileCache[coordKey] = livePixels;
 
             for (const entry of matching) {
                 const hasErased   = !!entry.template.pixelStats?.colors?.get(-1);
@@ -1136,8 +1139,6 @@
                 if (this.hiddenColors.size !== 0 || hasErased)
                     ctx.drawImage(await createImageBitmap(new ImageData(new Uint8ClampedArray(outputPixels.buffer), entry.tileBitmap.width, entry.tileBitmap.height)), offsetX, offsetY);
 
-                if (entry.template.pixelStats.correct === undefined) entry.template.pixelStats.correct = {};
-                entry.template.pixelStats.correct[coordKey] = correctMap;
             }
             return canvas.convertToBlob({ type: 'image/png' });
         }
@@ -1147,6 +1148,43 @@
         }
 
         setEnabled(enabled) { this.isEnabled = enabled; }
+
+        loadFilterState(settings) {
+            const hidden = settings?.hiddenColors;
+            if (Array.isArray(hidden))
+                this.hiddenColors = new Map(hidden.map(id => [id, true]));
+            if (typeof settings?.soloMode === 'boolean')
+                this._soloMode = settings.soloMode;
+        }
+
+        saveFilterState() {
+            if (!this.settingsManager?.settings) return;
+            this.settingsManager.settings.hiddenColors = [...this.hiddenColors.keys()];
+            this.settingsManager.settings.soloMode     = this._soloMode;
+        }
+
+        async refreshCorrectStats() {
+            for (const tmpl of this.templates) {
+                if (!tmpl.pixelStats.correct) tmpl.pixelStats.correct = {};
+                for (const tileKey of Object.keys(tmpl.tiles)) {
+                    const parts    = tileKey.split(',');
+                    const coordKey = parts[0] + ',' + parts[1];
+                    const cached   = this.liveTileCache[coordKey];
+                    if (!cached) continue;
+                    const tileBitmap   = tmpl.tiles[tileKey];
+                    const offsetX      = Number(parts[2]) * this.pixelsPerTile;
+                    const offsetY      = Number(parts[3]) * this.pixelsPerTile;
+                    let templatePixels = tmpl.pixelData?.[tileKey]?.slice();
+                    if (!templatePixels) continue;
+                    const { correctMap } = this.#computePixelDiff({
+                        livePixels: cached, templatePixels,
+                        region: [offsetX, offsetY, tileBitmap.width, tileBitmap.height]
+                    });
+                    tmpl.pixelStats.correct[coordKey] = correctMap;
+                }
+            }
+            this.#saveCorrectToStorage();
+        }
 
         // ── Méthodes privées ──────────────────────────────────────
 
@@ -1201,6 +1239,18 @@
             GM.setValue('bmTemplates', JSON.stringify(this.storageData));
         }
 
+        #saveCorrectToStorage() {
+            if (!this.storageData) return;
+            for (const tmpl of this.templates) {
+                const entry = this.storageData.templates[`${tmpl.sortId} ${tmpl.authorId}`];
+                if (!entry) continue;
+                entry.correct = {};
+                for (const [coordKey, map] of Object.entries(tmpl.pixelStats?.correct ?? {}))
+                    entry.correct[coordKey] = Object.fromEntries(map);
+            }
+            GM.setValue('bmTemplates', JSON.stringify(this.storageData));
+        }
+
         async #importTemplates(data) {
             const entries      = data.templates;
             const storedVer    = data?.schemaVersion?.split(/[-\.+]/) ?? [];
@@ -1242,6 +1292,13 @@
                             }
                             const tmpl = new Template({ displayName: name, sortId: sortId || loaded.length || 0, authorId: authorId });
                             tmpl.pixelStats = pixelStats;
+                            if (entry.correct) {
+                                tmpl.pixelStats.correct = {};
+                                for (const [coordKey, colorObj] of Object.entries(entry.correct))
+                                    tmpl.pixelStats.correct[coordKey] = new Map(
+                                        Object.entries(colorObj).map(([k, v]) => [Number(k), v])
+                                    );
+                            }
                             tmpl.tiles      = imageBitmaps;
                             tmpl.pixelData  = pixelDataMap;
                             loaded.push(tmpl);
@@ -1249,6 +1306,7 @@
                     }
                     return loaded;
                 })({ tileSize: this.tileSize, pixelsPerTile: this.pixelsPerTile, templates: entries });
+                this.storageData = data;
             } else if (storedVer[0] < currentVer[0]) {
                 new WindowWizard(this.name, this.version, this.schemaVersion, this).toggle();
             } else {
@@ -1697,12 +1755,14 @@
             refreshSoloBtnStyle();
             soloBtn.onclick = () => {
                 this.templateManager._soloMode = !this.templateManager._soloMode;
+                this.templateManager.saveFilterState();
                 refreshSoloBtnStyle();
                 if (this.templateManager._soloMode) {
                     startSoloObs();
                 } else {
                     stopSoloObs();
                     this.templateManager.hiddenColors.clear();
+                    this.templateManager.saveFilterState();
                     document.querySelectorAll('#bm-color-dropdown [data-color-id]').forEach(row => {
                         const eye = row.querySelector('.bm-eye-toggle');
                         if (eye) { eye.dataset.state = 'shown'; eye.style.opacity = '0.72'; }
@@ -1714,9 +1774,9 @@
             const btnGroup = document.createElement('div');
             btnGroup.style.cssText = `display:flex; gap:4px; align-items:center;`;
             btnGroup.appendChild(soloBtn);
-            btnGroup.appendChild(mkBtn('✓ All',  'rgba(74,222,128,.15)',  'rgba(74,222,128,.9)',  () => { this.templateManager.hiddenColors.clear(); wrap.remove(); this.toggle(); }));
-            btnGroup.appendChild(mkBtn('✗ None', 'rgba(248,113,113,.15)', 'rgba(248,113,113,.9)', () => { for (const c of pal) { if (c.id > 0) this.templateManager.hiddenColors.set(c.id, true); } wrap.remove(); this.toggle(); }));
-            btnGroup.appendChild(mkBtn('↻',      'rgba(255,255,255,.08)', 'rgba(255,255,255,.7)', () => { wrap.remove(); this.toggle(); }));
+            btnGroup.appendChild(mkBtn('✓ All',  'rgba(74,222,128,.15)',  'rgba(74,222,128,.9)',  () => { this.templateManager.hiddenColors.clear(); this.templateManager.saveFilterState(); wrap.remove(); this.toggle(); }));
+            btnGroup.appendChild(mkBtn('✗ None', 'rgba(248,113,113,.15)', 'rgba(248,113,113,.9)', () => { for (const c of pal) { if (c.id > 0) this.templateManager.hiddenColors.set(c.id, true); } this.templateManager.saveFilterState(); wrap.remove(); this.toggle(); }));
+            btnGroup.appendChild(mkBtn('↻',      'rgba(255,255,255,.08)', 'rgba(255,255,255,.7)', () => { wrap.remove(); this.templateManager.refreshCorrectStats().then(() => this.toggle()); }));
 
             header.appendChild(titleEl);
             header.appendChild(btnGroup);
@@ -1751,12 +1811,14 @@
                     ev.stopPropagation();
                     if (toggleBtn.dataset.state === 'shown') {
                         this.templateManager.hiddenColors.set(color.id, true);
+                        this.templateManager.saveFilterState();
                         toggleBtn.dataset.state  = 'hidden';
                         toggleBtn.style.opacity  = '0.3';
                         toggleBtn.title          = `Afficher ${color.name} sur l'overlay`;
                         row.style.opacity        = '0.4';
                     } else {
                         this.templateManager.hiddenColors.delete(color.id);
+                        this.templateManager.saveFilterState();
                         toggleBtn.dataset.state  = 'shown';
                         toggleBtn.style.opacity  = '0.8';
                         toggleBtn.title          = `Masquer ${color.name} de l'overlay`;
@@ -2189,7 +2251,19 @@
                     .up()
                 .up()
             .mount(document.body);
-            this.enableDragging(`#${this.windowId}.bm-window`, `#${this.windowId} .bm-titlebar`);
+            const savedPos = this.settingsManager?.settings?.windowPosition;
+            if (savedPos?.x !== undefined && savedPos?.y !== undefined) {
+                const winEl = document.querySelector(`#${this.windowId}`);
+                if (winEl) {
+                    winEl.style.transform = `translate(${savedPos.x}px, ${savedPos.y}px)`;
+                    winEl.style.left  = '0px';
+                    winEl.style.top   = '0px';
+                    winEl.style.right = '';
+                }
+            }
+            this.enableDragging(`#${this.windowId}.bm-window`, `#${this.windowId} .bm-titlebar`, (x, y) => {
+                if (this.settingsManager?.settings) this.settingsManager.settings.windowPosition = { x, y };
+            });
         }
 
         // ── Méthodes privées ──────────────────────────────────────
@@ -2549,6 +2623,7 @@
 
     const storedTemplates = JSON.parse(GM_getValue('bmTemplates', '{}'));
     templateManager.importFromStorage(storedTemplates);
+    templateManager.loadFilterState(savedSettings);
 
     apiManager.startListening(windowMain);
 

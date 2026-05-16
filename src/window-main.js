@@ -134,7 +134,19 @@ export class WindowMain extends Overlay {
                 .up()
             .up()
         .mount(document.body);
-        this.enableDragging(`#${this.windowId}.bm-window`, `#${this.windowId} .bm-titlebar`);
+        const savedPos = this.settingsManager?.settings?.windowPosition;
+        if (savedPos?.x !== undefined && savedPos?.y !== undefined) {
+            const winEl = document.querySelector(`#${this.windowId}`);
+            if (winEl) {
+                winEl.style.transform = `translate(${savedPos.x}px, ${savedPos.y}px)`;
+                winEl.style.left  = '0px';
+                winEl.style.top   = '0px';
+                winEl.style.right = '';
+            }
+        }
+        this.enableDragging(`#${this.windowId}.bm-window`, `#${this.windowId} .bm-titlebar`, (x, y) => {
+            if (this.settingsManager?.settings) this.settingsManager.settings.windowPosition = { x, y };
+        });
     }
 
     // ── Méthodes privées ──────────────────────────────────────

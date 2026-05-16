@@ -364,7 +364,7 @@ export class Overlay {
         }
     }
 
-    enableDragging(windowSelector, handleSelector) {
+    enableDragging(windowSelector, handleSelector, onDragStop = null) {
         const windowEl = document.querySelector(windowSelector);
         const handleEl = document.querySelector(handleSelector);
         if (!windowEl || !handleEl) {
@@ -426,6 +426,7 @@ export class Overlay {
             document.removeEventListener('mouseup',   stopDrag);
             document.removeEventListener('touchend',  stopDrag);
             document.removeEventListener('touchcancel', stopDrag);
+            if (typeof onDragStop === 'function') onDragStop(prevX, prevY);
         };
 
         const onMouseMove = e => {

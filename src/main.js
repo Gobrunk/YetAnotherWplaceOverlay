@@ -25,6 +25,7 @@ templateManager.setSettingsManager(settingsManager);
 
 const storedTemplates = JSON.parse(GM_getValue('bmTemplates', '{}'));
 templateManager.importFromStorage(storedTemplates);
+templateManager.loadFilterState(savedSettings);
 
 apiManager.startListening(windowMain);
 

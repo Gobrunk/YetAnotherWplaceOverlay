@@ -22,6 +22,7 @@ export class TemplateManager {
         this.hiddenColors    = new Map();
         this._soloMode = false;
         this._soloObs  = null;
+        this.liveTileCache = {};
     }
 
     setWindowMain(windowMain)        { this.windowMain      = windowMain; }
@@ -163,6 +164,7 @@ export class TemplateManager {
 
         const liveImageData = ctx.getImageData(0, 0, scaledSize, scaledSize);
         const livePixels    = new Uint32Array(liveImageData.data.buffer);
+        this.liveTileCache[coordKey] = livePixels;
 
         for (const entry of matching) {
             const hasErased   = !!entry.template.pixelStats?.colors?.get(-1);
@@ -186,8 +188,6 @@ export class TemplateManager {
             if (this.hiddenColors.size !== 0 || hasErased)
                 ctx.drawImage(await createImageBitmap(new ImageData(new Uint8ClampedArray(outputPixels.buffer), entry.tileBitmap.width, entry.tileBitmap.height)), offsetX, offsetY);
 
-            if (entry.template.pixelStats.correct === undefined) entry.template.pixelStats.correct = {};
-            entry.template.pixelStats.correct[coordKey] = correctMap;
         }
         return canvas.convertToBlob({ type: 'image/png' });
     }
@@ -197,6 +197,43 @@ export class TemplateManager {
     }
 
     setEnabled(enabled) { this.isEnabled = enabled; }
+
+    loadFilterState(settings) {
+        const hidden = settings?.hiddenColors;
+        if (Array.isArray(hidden))
+            this.hiddenColors = new Map(hidden.map(id => [id, true]));
+        if (typeof settings?.soloMode === 'boolean')
+            this._soloMode = settings.soloMode;
+    }
+
+    saveFilterState() {
+        if (!this.settingsManager?.settings) return;
+        this.settingsManager.settings.hiddenColors = [...this.hiddenColors.keys()];
+        this.settingsManager.settings.soloMode     = this._soloMode;
+    }
+
+    async refreshCorrectStats() {
+        for (const tmpl of this.templates) {
+            if (!tmpl.pixelStats.correct) tmpl.pixelStats.correct = {};
+            for (const tileKey of Object.keys(tmpl.tiles)) {
+                const parts    = tileKey.split(',');
+                const coordKey = parts[0] + ',' + parts[1];
+                const cached   = this.liveTileCache[coordKey];
+                if (!cached) continue;
+                const tileBitmap   = tmpl.tiles[tileKey];
+                const offsetX      = Number(parts[2]) * this.pixelsPerTile;
+                const offsetY      = Number(parts[3]) * this.pixelsPerTile;
+                let templatePixels = tmpl.pixelData?.[tileKey]?.slice();
+                if (!templatePixels) continue;
+                const { correctMap } = this.#computePixelDiff({
+                    livePixels: cached, templatePixels,
+                    region: [offsetX, offsetY, tileBitmap.width, tileBitmap.height]
+                });
+                tmpl.pixelStats.correct[coordKey] = correctMap;
+            }
+        }
+        this.#saveCorrectToStorage();
+    }
 
     // ── Méthodes privées ──────────────────────────────────────
 
@@ -251,6 +288,18 @@ export class TemplateManager {
         GM.setValue('bmTemplates', JSON.stringify(this.storageData));
     }
 
+    #saveCorrectToStorage() {
+        if (!this.storageData) return;
+        for (const tmpl of this.templates) {
+            const entry = this.storageData.templates[`${tmpl.sortId} ${tmpl.authorId}`];
+            if (!entry) continue;
+            entry.correct = {};
+            for (const [coordKey, map] of Object.entries(tmpl.pixelStats?.correct ?? {}))
+                entry.correct[coordKey] = Object.fromEntries(map);
+        }
+        GM.setValue('bmTemplates', JSON.stringify(this.storageData));
+    }
+
     async #importTemplates(data) {
         const entries      = data.templates;
         const storedVer    = data?.schemaVersion?.split(/[-\.+]/) ?? [];
@@ -292,6 +341,13 @@ export class TemplateManager {
                         }
                         const tmpl = new Template({ displayName: name, sortId: sortId || loaded.length || 0, authorId: authorId || '' });
                         tmpl.pixelStats = pixelStats;
+                        if (entry.correct) {
+                            tmpl.pixelStats.correct = {};
+                            for (const [coordKey, colorObj] of Object.entries(entry.correct))
+                                tmpl.pixelStats.correct[coordKey] = new Map(
+                                    Object.entries(colorObj).map(([k, v]) => [Number(k), v])
+                                );
+                        }
                         tmpl.tiles      = imageBitmaps;
                         tmpl.pixelData  = pixelDataMap;
                         loaded.push(tmpl);
@@ -299,6 +355,7 @@ export class TemplateManager {
                 }
                 return loaded;
             })({ tileSize: this.tileSize, pixelsPerTile: this.pixelsPerTile, templates: entries });
+            this.storageData = data;
         } else if (storedVer[0] < currentVer[0]) {
             new WindowWizard(this.name, this.version, this.schemaVersion, this).toggle();
         } else {
