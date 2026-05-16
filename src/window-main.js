@@ -43,7 +43,7 @@ export class WindowMain extends Overlay {
                     .up()
                     .addDiv({ class: 'yawo-stat-cell' })
                         .addSmall({ textContent: '🗂️ Overlay actif', class: 'yawo-stat-label' }).up()
-                        .addSpan({ id: 'yawo-active-overlay', class: 'yawo-stat-value', style: 'font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;' }).up()
+                        .addSpan({ id: 'yawo-active-overlay', class: 'yawo-stat-value', style: 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap;' }).up()
                     .up()
                 .up()
                 .addHr().up()
