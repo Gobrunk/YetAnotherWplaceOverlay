@@ -161,8 +161,8 @@ export class WindowWizard extends Overlay {
         GM_deleteValue('yawoCoords');
         const templates = this.storedData?.templates;
         if (templates && Object.keys(templates).length > 0) {
-            for (const [, entry] of Object.entries(templates)) {
-                if (!templates.hasOwnProperty(entry)) {
+            for (const [key, entry] of Object.entries(templates)) {
+                if (!templates.hasOwnProperty(key)) {
                     const tmpl = new Template({ displayName: entry.name, tiles: entry.tiles });
                     tmpl.inferCoordsFromTiles();
                     const blob = await this.templateManager.compositeTemplateTiles(tmpl);

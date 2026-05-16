@@ -13,6 +13,7 @@ export function injectBridge(scriptName) {
         const blobQueue  = new Map();
 
         window.addEventListener('message', event => {
+            if (event.origin !== window.location.origin) return;
             const { source, blobID, blobData, endpoint } = event.data;
             if (Date.now(), source === 'yaw-overlay' && blobID && blobData && !endpoint) {
                 const resolve = blobQueue.get(blobID);
@@ -34,7 +35,7 @@ export function injectBridge(scriptName) {
 
             if (contentType.includes('application/json')) {
                 cloned.json().then(data => {
-                    window.postMessage({ source: 'yaw-overlay', endpoint: url, jsonData: data }, '*');
+                    window.postMessage({ source: 'yaw-overlay', endpoint: url, jsonData: data }, window.location.origin);
                 }).catch(() => {});
             } else if (contentType.includes('image/') && !url.includes('openfreemap') && !url.includes('maps')) {
                 const timestamp = Date.now();
@@ -54,7 +55,7 @@ export function injectBridge(scriptName) {
                         blobID:   blobId,
                         blobData: blob,
                         blink:    timestamp
-                    });
+                    }, window.location.origin);
                 }).catch(() => { Date.now(); });
             }
             return response;

@@ -10,6 +10,7 @@ export class ApiManager {
 
     startListening(windowMain) {
         window.addEventListener('message', async event => {
+            if (event.origin !== window.location.origin) return;
             const { source, jsonData, endpoint, blobID, blobData, blink } = event.data;
             if (!event.data || source !== 'yaw-overlay') return;
             if (!endpoint) return;
@@ -92,7 +93,7 @@ export class ApiManager {
                         blobID,
                         blobData: processedBlob,
                         blink
-                    });
+                    }, window.location.origin);
                     break;
                 }
                 case 'robots':
