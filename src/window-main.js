@@ -90,7 +90,7 @@ export class WindowMain extends Overlay {
                         }).up()
                         .addButton({ textContent: 'Create' }, (overlay, btn) => {
                             btn.onclick = () => {
-                                const fileInput = document.querySelector(`#${this.windowId} .bm-file-upload input[type="file"]`);
+                                const fileInput = document.querySelector(`#${this.windowId} input.bm-file-upload[type="file"]`);
                                 const tileXInp  = document.querySelector('#bm-tile-x');
                                 const tileYInp  = document.querySelector('#bm-tile-y');
                                 const pixelXInp = document.querySelector('#bm-pixel-x');

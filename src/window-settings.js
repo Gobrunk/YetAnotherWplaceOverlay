@@ -33,16 +33,11 @@ export class WindowSettings extends Overlay {
                 .addHr().up()
                 .addParagraph({ textContent: 'Settings take 5 seconds to save.' }).up()
                 .addDiv({ class: 'bm-col bm-sections' }, () => {
-                    this.buildPixelHighlightSection();
                     this.buildTemplateSection();
                 }).up()
             .up()
         .mount(this.mountTarget);
         this.enableDragging(`#${this.windowId}.bm-window`, `#${this.windowId} .bm-titlebar`);
-    }
-
-    buildPixelHighlightSection() {
-        this.#buildPlaceholderSection('Pixel Highlight');
     }
 
     buildTemplateSection() {

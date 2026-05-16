@@ -968,10 +968,8 @@
             this.templates       = [];
             this.isEnabled       = true;
             this.hiddenColors    = new Map();
-            // Flags d'état pour le solo mode et le highlight
             this._soloMode = false;
             this._soloObs  = null;
-            this._hlActive = false;
         }
 
         setWindowMain(windowMain)        { this.windowMain      = windowMain; }
@@ -1113,8 +1111,6 @@
 
             const liveImageData = ctx.getImageData(0, 0, scaledSize, scaledSize);
             const livePixels    = new Uint32Array(liveImageData.data.buffer);
-            const highlight     = this.settingsManager?.settings?.highlight ?? [[2, 0, 0]];
-            const isDefaultHl   = highlight?.length === 1 && highlight[0][0] === 2 && highlight[0][1] === 0 && highlight[0][2] === 0;
 
             for (const entry of matching) {
                 const hasErased   = !!entry.template.pixelStats?.colors?.get(-1);
@@ -1132,11 +1128,10 @@
 
                 const { correctMap, outputPixels } = this.#computePixelDiff({
                     livePixels, templatePixels,
-                    region:       [offsetX, offsetY, entry.tileBitmap.width, entry.tileBitmap.height],
-                    highlight, isDefaultHighlight: isDefaultHl
+                    region: [offsetX, offsetY, entry.tileBitmap.width, entry.tileBitmap.height]
                 });
 
-                if (this.hiddenColors.size !== 0 || hasErased || !isDefaultHl)
+                if (this.hiddenColors.size !== 0 || hasErased)
                     ctx.drawImage(await createImageBitmap(new ImageData(new Uint8ClampedArray(outputPixels.buffer), entry.tileBitmap.width, entry.tileBitmap.height)), offsetX, offsetY);
 
                 if (entry.template.pixelStats.correct === undefined) entry.template.pixelStats.correct = {};
@@ -1146,7 +1141,7 @@
         }
 
         importFromStorage(data) {
-            if (data?.whoami === 'BlueMarble') this.#importTemplates(data);
+            if (data?.whoami === 'YAWO') this.#importTemplates(data);
         }
 
         setEnabled(enabled) { this.isEnabled = enabled; }
@@ -1175,7 +1170,7 @@
 
         async #createEmptyStorage() {
             return {
-                whoami:        this.name.replace(' ', ''),
+                whoami:        'YAWO',
                 scriptVersion: this.version,
                 schemaVersion: this.schemaVersion,
                 templates:     {}
@@ -1259,12 +1254,11 @@
             }
         }
 
-        #computePixelDiff({ livePixels, templatePixels, region, highlight, isDefaultHighlight }) {
+        #computePixelDiff({ livePixels, templatePixels, region }) {
             const scale       = this.pixelsPerTile;
             const canvasSize  = this.tileSize * scale;
             const [offsetX, offsetY, regionW, regionH] = region;
             const tolerance   = this.paletteTolerance;
-            const showTransp  = !this.settingsManager?.settings?.flags?.includes('hl-noTrans');
             const { jt: colorLookup } = this.paletteCache;
             const correctMap  = new Map();
 
@@ -1300,15 +1294,6 @@
                             templatePixels[(row + 1) * regionW + col]          = ALPHA_GRAY;
                             templatePixels[row * regionW + (col - 1)]          = ALPHA_GRAY;
                             templatePixels[row * regionW + (col + 1)]          = ALPHA_GRAY;
-                        }
-                    }
-
-                    // Highlight des pixels incorrects
-                    if (!isDefaultHighlight && tmplA > tolerance && liveColor !== tmplColor && (showTransp || liveA > tolerance)) {
-                        const currentPx = templatePixels[row * regionW + col];
-                        for (const [mode, dx, dy] of highlight) {
-                            const fillPx = mode !== 0 ? (mode !== 1 ? currentPx : 0xFF0000FF) : 0;
-                            templatePixels[(row + dy) * regionW + (col + dx)] = fillPx;
                         }
                     }
 
@@ -1462,16 +1447,11 @@
                     .addHr().up()
                     .addParagraph({ textContent: 'Settings take 5 seconds to save.' }).up()
                     .addDiv({ class: 'bm-col bm-sections' }, () => {
-                        this.buildPixelHighlightSection();
                         this.buildTemplateSection();
                     }).up()
                 .up()
             .mount(this.mountTarget);
             this.enableDragging(`#${this.windowId}.bm-window`, `#${this.windowId} .bm-titlebar`);
-        }
-
-        buildPixelHighlightSection() {
-            this.#buildPlaceholderSection('Pixel Highlight');
         }
 
         buildTemplateSection() {
@@ -1505,63 +1485,6 @@
             else if (idx === -1 && forceValue !== false)  this.settings?.flags?.push(flag);
         }
 
-        buildPixelHighlightSection() {
-            const svgGrid = '<svg viewBox="0 0 3 3"><path d="M0,0H3V3H0ZM0,1H3M0,2H3M1,0V3M2,0V3" fill="#fff"/><path d="M1,1H2V2H1Z" fill="#2f4f4f"/></svg>';
-            const svgCross = '<svg viewBox="0 0 3 3"><path d="M0,0H3V3H0Z" fill="#fff"/><path d="M1,0H2V1H3V2H2V3H1V2H0V1H1Z" fill="brown"/><path d="M1,1H2V2H1Z" fill="#2f4f4f"/></svg>';
-            const highlight = this.settings?.highlight ?? [[1,0,1],[2,0,0],[1,-1,0],[1,1,0],[1,0,-1]];
-
-            this.addDiv({ class: 'bm-col' })
-                .addHeading(2, { textContent: 'Pixel Highlight' }).up()
-                .addHr().up()
-                .addDiv({ class: 'bm-col', style: 'margin-left: 1.5ch;' })
-                    .addCheckbox({ textContent: 'Highlight transparent pixels' }, (ov, label, input) => {
-                        input.checked  = !this.settings?.flags?.includes('hl-noTrans');
-                        input.onchange = e => this.toggleFlag('hl-noTrans', !e.target.checked);
-                    }).up()
-                    .addParagraph({ id: 'bm-preset-label', textContent: 'Choose a preset:', style: 'font-weight: 700;' }).up()
-                    .addDiv({ class: 'bm-row', role: 'group', 'aria-labelledby': 'bm-preset-label' })
-                        .addDiv({ class: 'bm-preset-cell' })
-                            .addSpan({ textContent: 'None' }).up()
-                            .addButton({ innerHTML: svgGrid, 'aria-label': 'Preset "None"' }, (ov, btn) => {
-                                btn.onclick = () => this.#applyHighlightPreset('None');
-                            }).up()
-                        .up()
-                        .addDiv({ class: 'bm-preset-cell' })
-                            .addSpan({ textContent: 'Cross' }).up()
-                            .addButton({ innerHTML: svgCross, 'aria-label': 'Preset "Cross Shape"' }, (ov, btn) => {
-                                btn.onclick = () => this.#applyHighlightPreset('Cross');
-                            }).up()
-                        .up()
-                        .addDiv({ class: 'bm-preset-cell' })
-                            .addSpan({ textContent: 'X' }).up()
-                            .addButton({ innerHTML: svgCross.replace('d="M1,0H2V1H3V2H2V3H1V2H0V1H1Z"', 'd="M0,0V1H3V0H2V3H3V2H0V3H1V0Z"'), 'aria-label': 'Preset "X Shape"' }, (ov, btn) => {
-                                btn.onclick = () => this.#applyHighlightPreset('X');
-                            }).up()
-                        .up()
-                        .addDiv({ class: 'bm-preset-cell' })
-                            .addSpan({ textContent: 'Full' }).up()
-                            .addButton({ innerHTML: svgGrid.replace('#fff', '#2f4f4f'), 'aria-label': 'Preset "Full Template"' }, (ov, btn) => {
-                                btn.onclick = () => this.#applyHighlightPreset('Full');
-                            }).up()
-                        .up()
-                    .up()
-                    .addParagraph({ id: 'bm-custom-label', textContent: 'Create a custom pattern:', style: 'font-weight: 700;' }).up()
-                    .addDiv({ class: 'bm-pixel-grid', role: 'group', 'aria-labelledby': 'bm-custom-label' });
-
-            for (let col = -1; col <= 1; col++) {
-                for (let row = -1; row <= 1; row++) {
-                    const existing = highlight[highlight.findIndex(([, c, r]) => c === col && r === row)]?.[0] ?? 0;
-                    let statusLabel = 'Disabled';
-                    if (existing === 1) statusLabel = 'Incorrect';
-                    else if (existing === 2) statusLabel = 'Template';
-                    this.addButton({ 'data-status': statusLabel, 'aria-label': `Sub-pixel ${statusLabel.toLowerCase()}` }, (ov, btn) => {
-                        btn.onclick = () => this.#onSubpixelClick(btn, [col, row]);
-                    }).up();
-                }
-            }
-            this.up().up().up().up();
-        }
-
         buildTemplateSection() {
             this.addDiv({ class: 'bm-col' })
                 .addHeading(2, { textContent: 'Template' }).up()
@@ -1590,53 +1513,6 @@
             }
         }
 
-        #onSubpixelClick(btn, [col, row]) {
-            btn.disabled = true;
-            const highlight = this.settings?.highlight ?? [[1,0,1],[2,0,0],[1,-1,0],[1,1,0],[1,0,-1]];
-            const statusMap = { Disabled: 'Incorrect', Incorrect: 'Template', Template: 'Disabled' };
-            const modeMap   = { Disabled: [1, col, row], Incorrect: [2, col, row], Template: [0, col, row] };
-            const nextStatus = statusMap[btn.dataset.status];
-            const nextMode   = modeMap[btn.dataset.status];
-            btn.dataset.status = nextStatus;
-            btn.ariaLabel      = `Sub-pixel ${nextStatus.toLowerCase()}`;
-            const existingIdx = highlight.findIndex(([, c, r]) => c === nextMode[1] && r === nextMode[2]);
-            if (nextMode[0] !== 0) {
-                if (existingIdx !== -1) highlight[existingIdx] = nextMode;
-                else highlight.push(nextMode);
-            } else {
-                if (existingIdx !== -1) highlight.splice(existingIdx, 1);
-            }
-            this.settings.highlight = highlight;
-            btn.disabled = false;
-        }
-
-        async #applyHighlightPreset(preset) {
-            const buttons = document.querySelectorAll('.bm-preset-cell button');
-            for (const btn of buttons) btn.disabled = true;
-            const presets = {
-                None:  [0, 0, 0, 0, 2, 0, 0, 0, 0],
-                Cross: [0, 1, 0, 1, 2, 1, 0, 1, 0],
-                X:     [1, 0, 1, 0, 2, 0, 1, 0, 1],
-                Full:  [2, 2, 2, 2, 2, 2, 2, 2, 2]
-            };
-            const targetValues = presets[preset] ?? presets.None;
-            const gridButtons  = document.querySelector('.bm-pixel-grid')?.childNodes ?? [];
-            for (let i = 0; i < gridButtons.length; i++) {
-                const cellBtn  = gridButtons[i];
-                const statusMap = { Disabled: 0, Incorrect: 1, Template: 2 };
-                const current  = statusMap[cellBtn.dataset.status] ?? 0;
-                let delta = targetValues[i] - current;
-                if (delta !== 0) {
-                    delta += delta < 0 ? 3 : 0;
-                    cellBtn.click();
-                    if (delta === 2) {
-                        for (let t = 0; t < 200 && cellBtn.disabled; t += 10) await sleep(10);
-                        cellBtn.click();
-                    }
-                }
-            }
-            for (const btn of buttons) btn.disabled = false;
-        }
     }
 
     class ConfettiManager {
@@ -1833,25 +1709,8 @@
                 }
             };
 
-            // Bouton Highlight
-            const hlOnBg  = 'rgba(251,191,36,.25)', hlOnFg  = 'rgba(251,191,36,1)';
-            const hlOffBg = 'rgba(255,255,255,.08)', hlOffFg = 'rgba(255,255,255,.5)';
-            const hlBtn = document.createElement('button');
-            hlBtn.title = 'Surligner le pixel incorrect le plus proche du curseur';
-            const refreshHlBtnStyle = () => {
-                const on = this.templateManager._hlActive;
-                hlBtn.textContent = '🎯';
-                hlBtn.style.cssText = `background:${on ? hlOnBg : hlOffBg}; border:1px solid ${on ? 'rgba(251,191,36,.5)' : 'rgba(255,255,255,.15)'}; color:${on ? hlOnFg : hlOffFg}; border-radius:5px; padding:3px 6px; font-size:11px; cursor:pointer; transition:all .12s; box-shadow:${on ? '0 0 6px rgba(251,191,36,.3)' : 'none'};`;
-            };
-            refreshHlBtnStyle();
-            hlBtn.onclick = () => {
-                this.templateManager._hlActive = !this.templateManager._hlActive;
-                refreshHlBtnStyle();
-            };
-
             const btnGroup = document.createElement('div');
             btnGroup.style.cssText = `display:flex; gap:4px; align-items:center;`;
-            btnGroup.appendChild(hlBtn);
             btnGroup.appendChild(soloBtn);
             btnGroup.appendChild(mkBtn('✓ All',  'rgba(74,222,128,.15)',  'rgba(74,222,128,.9)',  () => { this.templateManager.hiddenColors.clear(); wrap.remove(); this.toggle(); }));
             btnGroup.appendChild(mkBtn('✗ None', 'rgba(248,113,113,.15)', 'rgba(248,113,113,.9)', () => { for (const c of pal) { if (c.id > 0) this.templateManager.hiddenColors.set(c.id, true); } wrap.remove(); this.toggle(); }));
@@ -2284,7 +2143,7 @@
                             }).up()
                             .addButton({ textContent: 'Create' }, (overlay, btn) => {
                                 btn.onclick = () => {
-                                    const fileInput = document.querySelector(`#${this.windowId} .bm-file-upload input[type="file"]`);
+                                    const fileInput = document.querySelector(`#${this.windowId} input.bm-file-upload[type="file"]`);
                                     const tileXInp  = document.querySelector('#bm-tile-x');
                                     const tileYInp  = document.querySelector('#bm-tile-y');
                                     const pixelXInp = document.querySelector('#bm-pixel-x');
@@ -2608,15 +2467,7 @@
       .bm-color-row { display: flex; align-items: center; gap: 6px; padding: 3px 4px; border-radius: 4px; }
       .bm-color-row:hover { background: rgba(255,255,255,.05); }
 
-      /* ── Grille de sous-pixels (3×3) ── */
-      .bm-pixel-grid { display: grid; grid-template-columns: repeat(3, 1.6em); grid-template-rows: repeat(3, 1.6em); gap: 2px; }
-      .bm-pixel-grid button { width: 100%; height: 100%; cursor: pointer; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.07); border-radius: 2px; font-size: 0; }
-      .bm-pixel-grid button:hover { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.35); }
-      .bm-pixel-grid button[data-status="Incorrect"] { background: rgba(220,60,60,.35); border-color: rgba(220,60,60,.6); }
-      .bm-pixel-grid button[data-status="Template"]  { background: rgba(60,180,60,.35); border-color: rgba(60,180,60,.6); }
-
       /* ── Prévisualisation template ── */
-      .bm-preset-cell   { display: flex; flex-direction: column; align-items: center; gap: 2px; }
       .bm-template-thumb { width: 2.5rem; height: 2.5rem; flex-shrink: 0; border-radius: 4px; overflow: hidden; background: rgba(255,255,255,.06); }
       .bm-template-info  { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 

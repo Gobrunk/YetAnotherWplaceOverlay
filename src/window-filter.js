@@ -168,25 +168,8 @@ export class WindowColorFilter extends Overlay {
             }
         };
 
-        // Bouton Highlight
-        const hlOnBg  = 'rgba(251,191,36,.25)', hlOnFg  = 'rgba(251,191,36,1)';
-        const hlOffBg = 'rgba(255,255,255,.08)', hlOffFg = 'rgba(255,255,255,.5)';
-        const hlBtn = document.createElement('button');
-        hlBtn.title = 'Surligner le pixel incorrect le plus proche du curseur';
-        const refreshHlBtnStyle = () => {
-            const on = this.templateManager._hlActive;
-            hlBtn.textContent = '🎯';
-            hlBtn.style.cssText = `background:${on ? hlOnBg : hlOffBg}; border:1px solid ${on ? 'rgba(251,191,36,.5)' : 'rgba(255,255,255,.15)'}; color:${on ? hlOnFg : hlOffFg}; border-radius:5px; padding:3px 6px; font-size:11px; cursor:pointer; transition:all .12s; box-shadow:${on ? '0 0 6px rgba(251,191,36,.3)' : 'none'};`;
-        };
-        refreshHlBtnStyle();
-        hlBtn.onclick = () => {
-            this.templateManager._hlActive = !this.templateManager._hlActive;
-            refreshHlBtnStyle();
-        };
-
         const btnGroup = document.createElement('div');
         btnGroup.style.cssText = `display:flex; gap:4px; align-items:center;`;
-        btnGroup.appendChild(hlBtn);
         btnGroup.appendChild(soloBtn);
         btnGroup.appendChild(mkBtn('✓ All',  'rgba(74,222,128,.15)',  'rgba(74,222,128,.9)',  () => { this.templateManager.hiddenColors.clear(); wrap.remove(); this.toggle(); }));
         btnGroup.appendChild(mkBtn('✗ None', 'rgba(248,113,113,.15)', 'rgba(248,113,113,.9)', () => { for (const c of pal) { if (c.id > 0) this.templateManager.hiddenColors.set(c.id, true); } wrap.remove(); this.toggle(); }));

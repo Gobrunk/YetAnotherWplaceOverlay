@@ -20,10 +20,8 @@ export class TemplateManager {
         this.templates       = [];
         this.isEnabled       = true;
         this.hiddenColors    = new Map();
-        // Flags d'état pour le solo mode et le highlight
         this._soloMode = false;
         this._soloObs  = null;
-        this._hlActive = false;
     }
 
     setWindowMain(windowMain)        { this.windowMain      = windowMain; }
@@ -165,8 +163,6 @@ export class TemplateManager {
 
         const liveImageData = ctx.getImageData(0, 0, scaledSize, scaledSize);
         const livePixels    = new Uint32Array(liveImageData.data.buffer);
-        const highlight     = this.settingsManager?.settings?.highlight ?? [[2, 0, 0]];
-        const isDefaultHl   = highlight?.length === 1 && highlight[0][0] === 2 && highlight[0][1] === 0 && highlight[0][2] === 0;
 
         for (const entry of matching) {
             const hasErased   = !!entry.template.pixelStats?.colors?.get(-1);
@@ -184,11 +180,10 @@ export class TemplateManager {
 
             const { correctMap, outputPixels } = this.#computePixelDiff({
                 livePixels, templatePixels,
-                region:       [offsetX, offsetY, entry.tileBitmap.width, entry.tileBitmap.height],
-                highlight, isDefaultHighlight: isDefaultHl
+                region: [offsetX, offsetY, entry.tileBitmap.width, entry.tileBitmap.height]
             });
 
-            if (this.hiddenColors.size !== 0 || hasErased || !isDefaultHl)
+            if (this.hiddenColors.size !== 0 || hasErased)
                 ctx.drawImage(await createImageBitmap(new ImageData(new Uint8ClampedArray(outputPixels.buffer), entry.tileBitmap.width, entry.tileBitmap.height)), offsetX, offsetY);
 
             if (entry.template.pixelStats.correct === undefined) entry.template.pixelStats.correct = {};
@@ -198,7 +193,7 @@ export class TemplateManager {
     }
 
     importFromStorage(data) {
-        if (data?.whoami === 'BlueMarble') this.#importTemplates(data);
+        if (data?.whoami === 'YAWO') this.#importTemplates(data);
     }
 
     setEnabled(enabled) { this.isEnabled = enabled; }
@@ -227,7 +222,7 @@ export class TemplateManager {
 
     async #createEmptyStorage() {
         return {
-            whoami:        this.name.replace(' ', ''),
+            whoami:        'YAWO',
             scriptVersion: this.version,
             schemaVersion: this.schemaVersion,
             templates:     {}
@@ -311,12 +306,11 @@ export class TemplateManager {
         }
     }
 
-    #computePixelDiff({ livePixels, templatePixels, region, highlight, isDefaultHighlight }) {
+    #computePixelDiff({ livePixels, templatePixels, region }) {
         const scale       = this.pixelsPerTile;
         const canvasSize  = this.tileSize * scale;
         const [offsetX, offsetY, regionW, regionH] = region;
         const tolerance   = this.paletteTolerance;
-        const showTransp  = !this.settingsManager?.settings?.flags?.includes('hl-noTrans');
         const { jt: colorLookup } = this.paletteCache;
         const correctMap  = new Map();
 
@@ -352,15 +346,6 @@ export class TemplateManager {
                         templatePixels[(row + 1) * regionW + col]          = ALPHA_GRAY;
                         templatePixels[row * regionW + (col - 1)]          = ALPHA_GRAY;
                         templatePixels[row * regionW + (col + 1)]          = ALPHA_GRAY;
-                    }
-                }
-
-                // Highlight des pixels incorrects
-                if (!isDefaultHighlight && tmplA > tolerance && liveColor !== tmplColor && (showTransp || liveA > tolerance)) {
-                    const currentPx = templatePixels[row * regionW + col];
-                    for (const [mode, dx, dy] of highlight) {
-                        const fillPx = mode !== 0 ? (mode !== 1 ? currentPx : 0xFF0000FF) : 0;
-                        templatePixels[(row + dy) * regionW + (col + dx)] = fillPx;
                     }
                 }
 

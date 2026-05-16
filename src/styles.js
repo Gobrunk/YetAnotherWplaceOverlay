@@ -183,15 +183,7 @@ export function injectStyles() {
       .bm-color-row { display: flex; align-items: center; gap: 6px; padding: 3px 4px; border-radius: 4px; }
       .bm-color-row:hover { background: rgba(255,255,255,.05); }
 
-      /* ── Grille de sous-pixels (3×3) ── */
-      .bm-pixel-grid { display: grid; grid-template-columns: repeat(3, 1.6em); grid-template-rows: repeat(3, 1.6em); gap: 2px; }
-      .bm-pixel-grid button { width: 100%; height: 100%; cursor: pointer; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.07); border-radius: 2px; font-size: 0; }
-      .bm-pixel-grid button:hover { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.35); }
-      .bm-pixel-grid button[data-status="Incorrect"] { background: rgba(220,60,60,.35); border-color: rgba(220,60,60,.6); }
-      .bm-pixel-grid button[data-status="Template"]  { background: rgba(60,180,60,.35); border-color: rgba(60,180,60,.6); }
-
       /* ── Prévisualisation template ── */
-      .bm-preset-cell   { display: flex; flex-direction: column; align-items: center; gap: 2px; }
       .bm-template-thumb { width: 2.5rem; height: 2.5rem; flex-shrink: 0; border-radius: 4px; overflow: hidden; background: rgba(255,255,255,.06); }
       .bm-template-info  { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
