@@ -651,8 +651,8 @@
             btn.style.textDecoration = 'none';
             const windowEl  = btn.closest('.bm-window');
             const titlebar  = btn.closest('.bm-titlebar');
-            const heading   = windowEl.querySelector('h1');
             const contentEl = windowEl.querySelector('.bm-content');
+            const heading   = contentEl?.querySelector('h1');
             if (windowEl.parentElement) windowEl.parentElement.append(windowEl);
             if ('expanded' === btn.dataset.buttonStatus) {
                 contentEl.style.height = contentEl.scrollHeight + 'px';
@@ -664,16 +664,18 @@
                     btn.style.textDecoration = '';
                     contentEl.removeEventListener('transitionend', handler);
                 });
-                const clone = heading.cloneNode(true);
-                const label = clone.textContent;
-                btn.nextElementSibling.appendChild(clone);
+                const label = heading?.textContent ?? titlebar.querySelector('h1')?.textContent ?? '';
+                if (heading) {
+                    const clone = heading.cloneNode(true);
+                    btn.nextElementSibling.appendChild(clone);
+                }
                 btn.textContent = '▶';
                 btn.dataset.buttonStatus = 'collapsed';
                 btn.ariaLabel = `Unminimize window "${label}"`;
             } else {
-                const inlineHeading = titlebar.querySelector('h1');
-                const label         = inlineHeading.textContent;
-                inlineHeading.remove();
+                const clonedHeading = btn.nextElementSibling?.querySelector('h1');
+                const label         = clonedHeading?.textContent ?? titlebar.querySelector('h1')?.textContent ?? '';
+                clonedHeading?.remove();
                 contentEl.style.display = '';
                 contentEl.style.height  = '0';
                 windowEl.style.width    = '';
@@ -1346,8 +1348,8 @@
                                 timerEl.dataset.endDate = Date.now() + (charges.max - charges.count) * charges.cooldownMs;
                             }
                         }
-                        windowMain.setElementContent('bm-droplets',   `Droplets: <b>${formatNumber(jsonData.droplets)}</b>`);
-                        windowMain.setElementContent('bm-next-level',  `Next level in <b>${formatNumber(pixelsToNextLevel)}</b> pixel${pixelsToNextLevel === 1 ? '' : 's'}`);
+                        windowMain.setElementContent('bm-droplets',   `<b>${formatNumber(jsonData.droplets)}</b>`);
+                        windowMain.setElementContent('bm-next-level',  `<b>${formatNumber(pixelsToNextLevel)}</b> pixel${pixelsToNextLevel === 1 ? '' : 's'}`);
                         break;
                     }
                     case 'pixel': {
@@ -2073,23 +2075,24 @@
                         btn.onclick    = () => overlay.toggleMinimize(btn);
                         btn.ontouchend = () => btn.click();
                     }).up()
-                    .addDiv().up()
+                    .addHeading(1, { textContent: this.name, style: 'font-size:11px; font-weight:600; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin:0;' }).up()
                 .up()
                 .addDiv({ class: 'bm-content' })
-                    .addDiv({ class: 'bm-col' })
-                        .addImage({ class: 'bm-logo-img' }).up()
-                        .addHeading(1, { textContent: this.name }).up()
-                    .up()
-                    .addHr().up()
-                    .addDiv({ class: 'bm-col' })
-                        .addSpan({ id: 'bm-droplets',   textContent: 'Droplets:' }).up()
-                        .addBr().up()
-                        .addSpan({ id: 'bm-next-level', textContent: 'Next level in...' }).up()
-                        .addBr().up()
-                        .addSpan({ textContent: 'Charges: ' }).up()
-                        .addCountdownTimer(Date.now(), 1000, { style: 'font-weight: 700;' }, (overlay, timerEl) => {
-                            if (overlay.apiManager) overlay.apiManager.chargesTimerId = timerEl.id;
-                        }).up()
+                    .addDiv({ class: 'bm-stat-grid' })
+                        .addDiv({ class: 'bm-stat-cell' })
+                            .addSmall({ textContent: '💧 Droplets', class: 'bm-stat-label' }).up()
+                            .addSpan({ id: 'bm-droplets', class: 'bm-stat-value' }).up()
+                        .up()
+                        .addDiv({ class: 'bm-stat-cell' })
+                            .addSmall({ textContent: '⚡ Charges', class: 'bm-stat-label' }).up()
+                            .addCountdownTimer(Date.now(), 1000, { class: 'bm-stat-value' }, (overlay, timerEl) => {
+                                if (overlay.apiManager) overlay.apiManager.chargesTimerId = timerEl.id;
+                            }).up()
+                        .up()
+                        .addDiv({ class: 'bm-stat-cell bm-stat-full' })
+                            .addSmall({ textContent: '📈 Next level', class: 'bm-stat-label' }).up()
+                            .addSpan({ id: 'bm-next-level', class: 'bm-stat-value' }).up()
+                        .up()
                     .up()
                     .addHr().up()
                     .addDiv({ class: 'bm-col' })
@@ -2123,25 +2126,25 @@
                         .addDiv({ class: 'bm-col' })
                             .addFileInput({ class: 'bm-file-upload', textContent: 'Upload Template', accept: 'image/png, image/jpeg, image/webp, image/bmp, image/gif' }).up()
                         .up()
-                        .addDiv({ class: 'bm-col bm-wrap' })
-                            .addButton({ textContent: 'Disable', 'data-button-status': 'shown' }, (overlay, btn) => {
+                        .addDiv({ class: 'bm-col bm-wrap bm-action-btns' })
+                            .addButton({ innerHTML: '🚫 Disable', 'data-button-status': 'shown' }, (overlay, btn) => {
                                 btn.onclick = () => {
                                     btn.disabled = true;
                                     if (btn.dataset.buttonStatus === 'shown') {
                                         overlay.apiManager?.templateManager?.setEnabled(false);
                                         btn.dataset.buttonStatus = 'hidden';
-                                        btn.textContent = 'Enable';
+                                        btn.innerHTML = '✅ Enable';
                                         overlay.setStatus('Disabled templates!');
                                     } else {
                                         overlay.apiManager?.templateManager?.setEnabled(true);
                                         btn.dataset.buttonStatus = 'shown';
-                                        btn.textContent = 'Disable';
+                                        btn.innerHTML = '🚫 Disable';
                                         overlay.setStatus('Enabled templates!');
                                     }
                                     btn.disabled = false;
                                 };
                             }).up()
-                            .addButton({ textContent: 'Create' }, (overlay, btn) => {
+                            .addButton({ innerHTML: '🖼️ Create' }, (overlay, btn) => {
                                 btn.onclick = () => {
                                     const fileInput = document.querySelector(`#${this.windowId} input.bm-file-upload[type="file"]`);
                                     const tileXInp  = document.querySelector('#bm-tile-x');
@@ -2160,7 +2163,7 @@
                                     }
                                 };
                             }).up()
-                            .addButton({ textContent: 'Filter', 'data-bm-filter': '1' }, (overlay, btn) => {
+                            .addButton({ innerHTML: '🎨 Filter', 'data-bm-filter': '1' }, (overlay, btn) => {
                                 btn.onclick = () => new WindowColorFilter(overlay).toggle();
                             }).up()
                         .up()
@@ -2290,7 +2293,7 @@
         z-index: 9000;
         display: flex;
         flex-direction: column;
-        width: 252px;
+        width: 280px;
         background: #18181b;
         border: 1px solid rgba(255,255,255,.12);
         border-radius: 10px;
@@ -2345,13 +2348,25 @@
       .bm-spaced { justify-content: space-between; }
       .bm-hidden { display: none !important; }
 
-      /* Ligne de coordonnées : force la rangée horizontale */
+      /* Ligne de coordonnées : force la rangée horizontale et centrée */
       .bm-col > .bm-col:has(.bm-jump-btn) {
         flex-direction: row;
         align-items: center;
         flex-wrap: wrap;
         gap: 4px;
+        justify-content: center;
       }
+
+      /* ── Boutons d'action (Disable / Create / Filter) ── */
+      .bm-action-btns { flex-wrap: nowrap !important; }
+      .bm-action-btns button { flex: 1; padding: 3px 4px !important; text-align: center; min-width: 0; white-space: nowrap; }
+
+      /* ── Grille de statistiques ── */
+      .bm-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; background: rgba(255,255,255,.04); border-radius: 6px; padding: 6px 8px; }
+      .bm-stat-cell { display: flex; flex-direction: column; gap: 2px; }
+      .bm-stat-full { grid-column: 1 / -1; }
+      .bm-stat-label { font-size: 10px; color: rgba(255,255,255,.45); }
+      .bm-stat-value { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.9); font-variant-numeric: tabular-nums; }
 
       /* ── Séparateurs ── */
       .bm-window hr {
@@ -2433,7 +2448,7 @@
 
       /* Input de coordonnées (largeur fixe, pas de spinners) */
       .bm-coord-input {
-        width: 5.5ch;
+        width: 6.5ch;
         font-size: 11px;
         font-family: inherit;
         font-variant-numeric: tabular-nums;

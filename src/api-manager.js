@@ -35,8 +35,8 @@ export class ApiManager {
                             timerEl.dataset.endDate = Date.now() + (charges.max - charges.count) * charges.cooldownMs;
                         }
                     }
-                    windowMain.setElementContent('bm-droplets',   `Droplets: <b>${formatNumber(jsonData.droplets)}</b>`);
-                    windowMain.setElementContent('bm-next-level',  `Next level in <b>${formatNumber(pixelsToNextLevel)}</b> pixel${pixelsToNextLevel === 1 ? '' : 's'}`);
+                    windowMain.setElementContent('bm-droplets',   `<b>${formatNumber(jsonData.droplets)}</b>`);
+                    windowMain.setElementContent('bm-next-level',  `<b>${formatNumber(pixelsToNextLevel)}</b> pixel${pixelsToNextLevel === 1 ? '' : 's'}`);
                     break;
                 }
                 case 'pixel': {

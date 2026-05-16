@@ -6,7 +6,7 @@ export function injectStyles() {
         z-index: 9000;
         display: flex;
         flex-direction: column;
-        width: 252px;
+        width: 280px;
         background: #18181b;
         border: 1px solid rgba(255,255,255,.12);
         border-radius: 10px;
@@ -61,13 +61,25 @@ export function injectStyles() {
       .bm-spaced { justify-content: space-between; }
       .bm-hidden { display: none !important; }
 
-      /* Ligne de coordonnées : force la rangée horizontale */
+      /* Ligne de coordonnées : force la rangée horizontale et centrée */
       .bm-col > .bm-col:has(.bm-jump-btn) {
         flex-direction: row;
         align-items: center;
         flex-wrap: wrap;
         gap: 4px;
+        justify-content: center;
       }
+
+      /* ── Boutons d'action (Disable / Create / Filter) ── */
+      .bm-action-btns { flex-wrap: nowrap !important; }
+      .bm-action-btns button { flex: 1; padding: 3px 4px !important; text-align: center; min-width: 0; white-space: nowrap; }
+
+      /* ── Grille de statistiques ── */
+      .bm-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; background: rgba(255,255,255,.04); border-radius: 6px; padding: 6px 8px; }
+      .bm-stat-cell { display: flex; flex-direction: column; gap: 2px; }
+      .bm-stat-full { grid-column: 1 / -1; }
+      .bm-stat-label { font-size: 10px; color: rgba(255,255,255,.45); }
+      .bm-stat-value { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.9); font-variant-numeric: tabular-nums; }
 
       /* ── Séparateurs ── */
       .bm-window hr {
@@ -149,7 +161,7 @@ export function injectStyles() {
 
       /* Input de coordonnées (largeur fixe, pas de spinners) */
       .bm-coord-input {
-        width: 5.5ch;
+        width: 6.5ch;
         font-size: 11px;
         font-family: inherit;
         font-variant-numeric: tabular-nums;

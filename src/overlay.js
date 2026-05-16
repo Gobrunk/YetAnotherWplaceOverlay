@@ -323,8 +323,8 @@ export class Overlay {
         btn.style.textDecoration = 'none';
         const windowEl  = btn.closest('.bm-window');
         const titlebar  = btn.closest('.bm-titlebar');
-        const heading   = windowEl.querySelector('h1');
         const contentEl = windowEl.querySelector('.bm-content');
+        const heading   = contentEl?.querySelector('h1');
         if (windowEl.parentElement) windowEl.parentElement.append(windowEl);
         if ('expanded' === btn.dataset.buttonStatus) {
             contentEl.style.height = contentEl.scrollHeight + 'px';
@@ -336,16 +336,18 @@ export class Overlay {
                 btn.style.textDecoration = '';
                 contentEl.removeEventListener('transitionend', handler);
             });
-            const clone = heading.cloneNode(true);
-            const label = clone.textContent;
-            btn.nextElementSibling.appendChild(clone);
+            const label = heading?.textContent ?? titlebar.querySelector('h1')?.textContent ?? '';
+            if (heading) {
+                const clone = heading.cloneNode(true);
+                btn.nextElementSibling.appendChild(clone);
+            }
             btn.textContent = '▶';
             btn.dataset.buttonStatus = 'collapsed';
             btn.ariaLabel = `Unminimize window "${label}"`;
         } else {
-            const inlineHeading = titlebar.querySelector('h1');
-            const label         = inlineHeading.textContent;
-            inlineHeading.remove();
+            const clonedHeading = btn.nextElementSibling?.querySelector('h1');
+            const label         = clonedHeading?.textContent ?? titlebar.querySelector('h1')?.textContent ?? '';
+            clonedHeading?.remove();
             contentEl.style.display = '';
             contentEl.style.height  = '0';
             windowEl.style.width    = '';

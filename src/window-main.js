@@ -20,23 +20,24 @@ export class WindowMain extends Overlay {
                     btn.onclick    = () => overlay.toggleMinimize(btn);
                     btn.ontouchend = () => btn.click();
                 }).up()
-                .addDiv().up()
+                .addHeading(1, { textContent: this.name, style: 'font-size:11px; font-weight:600; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin:0;' }).up()
             .up()
             .addDiv({ class: 'bm-content' })
-                .addDiv({ class: 'bm-col' })
-                    .addImage({ class: 'bm-logo-img' }).up()
-                    .addHeading(1, { textContent: this.name }).up()
-                .up()
-                .addHr().up()
-                .addDiv({ class: 'bm-col' })
-                    .addSpan({ id: 'bm-droplets',   textContent: 'Droplets:' }).up()
-                    .addBr().up()
-                    .addSpan({ id: 'bm-next-level', textContent: 'Next level in...' }).up()
-                    .addBr().up()
-                    .addSpan({ textContent: 'Charges: ' }).up()
-                    .addCountdownTimer(Date.now(), 1000, { style: 'font-weight: 700;' }, (overlay, timerEl) => {
-                        if (overlay.apiManager) overlay.apiManager.chargesTimerId = timerEl.id;
-                    }).up()
+                .addDiv({ class: 'bm-stat-grid' })
+                    .addDiv({ class: 'bm-stat-cell' })
+                        .addSmall({ textContent: '💧 Droplets', class: 'bm-stat-label' }).up()
+                        .addSpan({ id: 'bm-droplets', class: 'bm-stat-value' }).up()
+                    .up()
+                    .addDiv({ class: 'bm-stat-cell' })
+                        .addSmall({ textContent: '⚡ Charges', class: 'bm-stat-label' }).up()
+                        .addCountdownTimer(Date.now(), 1000, { class: 'bm-stat-value' }, (overlay, timerEl) => {
+                            if (overlay.apiManager) overlay.apiManager.chargesTimerId = timerEl.id;
+                        }).up()
+                    .up()
+                    .addDiv({ class: 'bm-stat-cell bm-stat-full' })
+                        .addSmall({ textContent: '📈 Next level', class: 'bm-stat-label' }).up()
+                        .addSpan({ id: 'bm-next-level', class: 'bm-stat-value' }).up()
+                    .up()
                 .up()
                 .addHr().up()
                 .addDiv({ class: 'bm-col' })
@@ -70,25 +71,25 @@ export class WindowMain extends Overlay {
                     .addDiv({ class: 'bm-col' })
                         .addFileInput({ class: 'bm-file-upload', textContent: 'Upload Template', accept: 'image/png, image/jpeg, image/webp, image/bmp, image/gif' }).up()
                     .up()
-                    .addDiv({ class: 'bm-col bm-wrap' })
-                        .addButton({ textContent: 'Disable', 'data-button-status': 'shown' }, (overlay, btn) => {
+                    .addDiv({ class: 'bm-col bm-wrap bm-action-btns' })
+                        .addButton({ innerHTML: '🚫 Disable', 'data-button-status': 'shown' }, (overlay, btn) => {
                             btn.onclick = () => {
                                 btn.disabled = true;
                                 if (btn.dataset.buttonStatus === 'shown') {
                                     overlay.apiManager?.templateManager?.setEnabled(false);
                                     btn.dataset.buttonStatus = 'hidden';
-                                    btn.textContent = 'Enable';
+                                    btn.innerHTML = '✅ Enable';
                                     overlay.setStatus('Disabled templates!');
                                 } else {
                                     overlay.apiManager?.templateManager?.setEnabled(true);
                                     btn.dataset.buttonStatus = 'shown';
-                                    btn.textContent = 'Disable';
+                                    btn.innerHTML = '🚫 Disable';
                                     overlay.setStatus('Enabled templates!');
                                 }
                                 btn.disabled = false;
                             };
                         }).up()
-                        .addButton({ textContent: 'Create' }, (overlay, btn) => {
+                        .addButton({ innerHTML: '🖼️ Create' }, (overlay, btn) => {
                             btn.onclick = () => {
                                 const fileInput = document.querySelector(`#${this.windowId} input.bm-file-upload[type="file"]`);
                                 const tileXInp  = document.querySelector('#bm-tile-x');
@@ -107,7 +108,7 @@ export class WindowMain extends Overlay {
                                 }
                             };
                         }).up()
-                        .addButton({ textContent: 'Filter', 'data-bm-filter': '1' }, (overlay, btn) => {
+                        .addButton({ innerHTML: '🎨 Filter', 'data-bm-filter': '1' }, (overlay, btn) => {
                             btn.onclick = () => new WindowColorFilter(overlay).toggle();
                         }).up()
                     .up()
