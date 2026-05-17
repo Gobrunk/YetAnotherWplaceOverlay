@@ -8,6 +8,11 @@ export class ApiManager {
         this.lastClickCoords = [];
     }
 
+    navigateToCoords(coords) {
+        if (!coords?.length) return;
+        window.postMessage({ source: 'yaw-overlay', action: 'navigate', coords }, window.location.origin);
+    }
+
     startListening(windowMain) {
         window.addEventListener('message', async event => {
             if (event.origin !== window.location.origin) return;

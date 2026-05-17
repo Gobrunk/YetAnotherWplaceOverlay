@@ -271,6 +271,20 @@ export function injectStyles() {
       }
       .yawo-btn-rename svg { display: block; }
 
+      /* Bouton pin (navigation vers le pixel ancre) */
+      .yawo-btn-pin {
+        background: rgba(60,130,255,.10) !important;
+        border-color: rgba(80,160,255,.45) !important;
+        color: rgba(120,185,255,.85) !important;
+        padding: 3px 7px !important;
+      }
+      .yawo-btn-pin:hover {
+        background: rgba(60,130,255,.24) !important;
+        border-color: rgba(80,160,255,.85) !important;
+        color: rgba(120,185,255,1) !important;
+      }
+      .yawo-btn-pin svg { display: block; }
+
       /* Input de renommage inline */
       .yawo-rename-input {
         background: rgba(0,0,0,.4);

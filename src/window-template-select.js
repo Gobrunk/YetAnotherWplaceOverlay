@@ -199,7 +199,14 @@ export class WindowTemplateSelect extends Overlay {
                 if (confirm(`Supprimer "${tmpl.displayName}" ?`)) tm.deleteTemplate(key);
             };
 
-            btnRow.append(activateBtn, renameBtn, deleteBtn);
+            const pinBtn = document.createElement('button');
+            pinBtn.className = 'yawo-btn-pin';
+            pinBtn.title     = 'Aller au pixel ancre';
+            pinBtn.disabled  = !tmpl.coords;
+            pinBtn.innerHTML = '<svg viewBox="0 0 14 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 1a4 4 0 0 1 4 4c0 3-4 9-4 9S3 8 3 5a4 4 0 0 1 4-4z"/><circle cx="7" cy="5" r="1.4" fill="currentColor" stroke="none"/></svg>';
+            pinBtn.onclick   = () => this.#ctx?.apiManager?.navigateToCoords(tmpl.coords);
+
+            btnRow.append(activateBtn, pinBtn, renameBtn, deleteBtn);
             card.append(info, btnRow);
             container.appendChild(card);
         }
