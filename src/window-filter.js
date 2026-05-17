@@ -53,7 +53,11 @@ export class WindowColorFilter extends Overlay {
 
         let totalPixels = 0;
         const ieMap = new Map(), neMap = new Map();
-        for (const tmpl of this.templateManager.templates) {
+        const activeKey = this.templateManager.activeTemplateKey;
+        const visibleTemplates = activeKey
+            ? this.templateManager.templates.filter(t => `${t.sortId} ${t.authorId}` === activeKey)
+            : this.templateManager.templates;
+        for (const tmpl of visibleTemplates) {
             totalPixels += tmpl.pixelStats?.total ?? 0;
             const colors = tmpl.pixelStats?.colors ?? new Map();
             for (const [cid, cnt] of colors) ieMap.set(cid, (ieMap.get(cid) ?? 0) + Number(cnt));
@@ -524,7 +528,11 @@ export class WindowColorFilter extends Overlay {
         this.correctByColor = new Map();
         this.tilesChecked   = 0;
         this.totalTiles     = 0;
-        for (const tmpl of this.templateManager.templates) {
+        const activeKey2 = this.templateManager.activeTemplateKey;
+        const visibleTemplates2 = activeKey2
+            ? this.templateManager.templates.filter(t => `${t.sortId} ${t.authorId}` === activeKey2)
+            : this.templateManager.templates;
+        for (const tmpl of visibleTemplates2) {
             const total = tmpl.pixelStats?.total ?? 0;
             this.pixelsTotal += total;
             const colors = tmpl.pixelStats?.colors ?? new Map();

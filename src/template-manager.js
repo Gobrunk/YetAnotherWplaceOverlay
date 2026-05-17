@@ -167,6 +167,29 @@ export class TemplateManager {
         if (!this.isEnabled) return tileBlob;
         const scaledSize = this.tileSize * this.pixelsPerTile;
         const coordKey   = tileCoords[0].toString().padStart(4, '0') + ',' + tileCoords[1].toString().padStart(4, '0');
+        // Phase 1 : vérifier si au moins un template couvre cette tuile
+        const anyCovers = this.templates.some(t =>
+            Object.keys(t.tiles).some(k => k.startsWith(coordKey))
+        );
+        if (!anyCovers) {
+            this.windowMain.setStatus(`Sleeping\nVersion: ${this.version}`);
+            return tileBlob;
+        }
+
+        // Phase 2 : décoder et mettre en cache les pixels live pour tous les templates
+        const liveBitmap = await createImageBitmap(tileBlob);
+        const canvas     = new OffscreenCanvas(scaledSize, scaledSize);
+        const ctx        = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        ctx.beginPath(); ctx.rect(0, 0, scaledSize, scaledSize); ctx.clip();
+        ctx.clearRect(0, 0, scaledSize, scaledSize);
+        ctx.drawImage(liveBitmap, 0, 0, scaledSize, scaledSize);
+
+        const liveImageData = ctx.getImageData(0, 0, scaledSize, scaledSize);
+        const livePixels    = new Uint32Array(liveImageData.data.buffer);
+        this.liveTileCache[coordKey] = livePixels;
+
+        // Phase 3 : filtrer sur le template actif pour le rendu
         const toRender   = this.activeTemplateKey
             ? this.templates.filter(t => `${t.sortId} ${t.authorId}` === this.activeTemplateKey)
             : this.templates;
@@ -193,18 +216,6 @@ export class TemplateManager {
         const visibleCount = toRender.filter(t => Object.keys(t.tiles).some(k => k.startsWith(coordKey))).length;
         const totalPx      = formatNumber(toRender.filter(t => Object.keys(t.tiles).some(k => k.startsWith(coordKey))).reduce((acc, t) => acc + (t.pixelStats.total || 0), 0));
         this.windowMain.setStatus(`Displaying ${visibleCount} template${visibleCount === 1 ? '' : 's'}.\nTotal pixels: ${totalPx}`);
-
-        const liveBitmap = await createImageBitmap(tileBlob);
-        const canvas     = new OffscreenCanvas(scaledSize, scaledSize);
-        const ctx        = canvas.getContext('2d');
-        ctx.imageSmoothingEnabled = false;
-        ctx.beginPath(); ctx.rect(0, 0, scaledSize, scaledSize); ctx.clip();
-        ctx.clearRect(0, 0, scaledSize, scaledSize);
-        ctx.drawImage(liveBitmap, 0, 0, scaledSize, scaledSize);
-
-        const liveImageData = ctx.getImageData(0, 0, scaledSize, scaledSize);
-        const livePixels    = new Uint32Array(liveImageData.data.buffer);
-        this.liveTileCache[coordKey] = livePixels;
 
         for (const entry of matching) {
             const hasErased   = !!entry.template.pixelStats?.colors?.get(-1);
