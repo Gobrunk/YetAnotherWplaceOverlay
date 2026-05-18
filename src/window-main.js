@@ -1,6 +1,5 @@
 import { Overlay } from './overlay.js';
 import { WindowColorFilter } from './window-filter.js';
-import { WindowWizard } from './window-wizard.js';
 
 export class WindowMain extends Overlay {
     constructor(name, version) {
@@ -79,12 +78,6 @@ export class WindowMain extends Overlay {
                     .addDiv({ class: 'yawo-wrap' })
                         .addButton({ class: 'yawo-chrome-btn', innerHTML: '⚙️', title: 'Settings' }, (overlay, btn) => {
                             btn.onclick = () => overlay.settingsManager.toggle();
-                        }).up()
-                        .addButton({ class: 'yawo-chrome-btn', innerHTML: '🧙', title: 'Template Wizard' }, (overlay, btn) => {
-                            btn.onclick = () => {
-                                const tm = overlay.apiManager?.templateManager;
-                                new WindowWizard(this.name, this.version, tm?.schemaVersion, tm).toggle();
-                            };
                         }).up()
                         .addButton({ class: 'yawo-chrome-btn', innerHTML: '🎨', title: 'Template Color Converter' }, (overlay, btn) => {
                             btn.onclick = () => window.open('https://pepoafonso.github.io/color_converter_wplace/', '_blank', 'noopener noreferrer');

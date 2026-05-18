@@ -19,20 +19,58 @@ export class SettingsManager extends WindowSettings {
     }
 
     buildTemplateSection() {
+        const getMode = () => {
+            if (this.settings?.flags?.includes('hl-noSkip')) return 'none';
+            if (this.settings?.flags?.includes('hl-agSkip')) return 'aggressive';
+            return 'skip';
+        };
+
+        const modes = [
+            { id: 'skip',       label: 'Skip empty',      desc: 'Tiles with no visible pixels are ignored. Recommended.' },
+            { id: 'aggressive', label: 'Aggressive skip',  desc: 'Quick rougher scan — may miss tiles with only a few pixels.' },
+            { id: 'none',       label: 'Include all',      desc: 'Every tile is imported, even fully transparent ones.' },
+        ];
+
+        const btnRefs = {};
+        let descRef   = null;
+
+        const refresh = () => {
+            const current = getMode();
+            for (const { id } of modes) {
+                const btn = btnRefs[id];
+                if (!btn) continue;
+                btn.style.background  = current === id ? 'rgba(255,255,255,.12)' : '';
+                btn.style.borderColor = current === id ? 'rgba(255,255,255,.38)' : '';
+                btn.style.color       = current === id ? 'rgba(255,255,255,.95)' : '';
+            }
+            if (descRef) descRef.textContent = modes.find(m => m.id === current)?.desc ?? '';
+        };
+
+        const setMode = (id) => {
+            if (id === 'skip')       { this.toggleFlag('hl-noSkip', false); this.toggleFlag('hl-agSkip', false); }
+            if (id === 'aggressive') { this.toggleFlag('hl-noSkip', false); this.toggleFlag('hl-agSkip', true);  }
+            if (id === 'none')       { this.toggleFlag('hl-noSkip', true);  this.toggleFlag('hl-agSkip', false); }
+            refresh();
+        };
+
         this.addDiv({ class: 'yawo-col' })
             .addHeading(2, { textContent: 'Template' }).up()
             .addHr().up()
-            .addDiv({ class: 'yawo-col', style: 'margin-left: 1.5ch;' })
-                .addCheckbox({ textContent: 'Template creation should skip transparent tiles' }, (ov, label, input) => {
-                    input.checked  = !this.settings?.flags?.includes('hl-noSkip');
-                    input.onchange = e => this.toggleFlag('hl-noSkip', !e.target.checked);
+            .addDiv({ class: 'yawo-col', style: 'margin-left:1.5ch; gap:6px;' })
+                .addSmall({ textContent: 'Transparent tiles', class: 'yawo-form-label' }).up()
+                .addDiv({ class: 'yawo-wrap' }, (overlay) => {
+                    for (const { id, label } of modes) {
+                        overlay.addButton({ textContent: label }, (ov, btn) => {
+                            btnRefs[id] = btn;
+                            btn.onclick = () => setMode(id);
+                        }).up();
+                    }
                 }).up()
-                .addCheckbox({ innerHTML: 'Experimental: Template creation should <em>aggressively</em> skip transparent tiles' }, (ov, label, input) => {
-                    input.checked  = !!this.settings?.flags?.includes('hl-agSkip');
-                    input.onchange = e => this.toggleFlag('hl-agSkip', e.target.checked);
-                }).up()
+                .addSmall({}, (ov, el) => { descRef = el; }).up()
             .up()
         .up();
+
+        refresh();
     }
 
     // ── Private methods ───────────────────────────────────────

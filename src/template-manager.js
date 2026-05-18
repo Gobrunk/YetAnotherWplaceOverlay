@@ -1,6 +1,5 @@
 import { Template } from './template.js';
 import { COLOR_PALETTE } from './palette.js';
-import { WindowWizard } from './window-wizard.js';
 import { encodeBase, base64ToUint8, sleep, consoleLog, consoleError, consoleWarn, formatNumber } from './utils.js';
 
 export class TemplateManager {
@@ -367,9 +366,6 @@ export class TemplateManager {
         const scriptVer    = data?.scriptVersion;
 
         if (storedVer[0] === currentVer[0]) {
-            if (storedVer[1] !== currentVer[1])
-                new WindowWizard(this.name, this.version, this.schemaVersion, this).toggle();
-
             this.templates = await (async ({ tileSize, pixelsPerTile, templates }) => {
                 const loaded = [];
                 if (Object.keys(entries).length > 0) {
@@ -422,7 +418,6 @@ export class TemplateManager {
             }
             this.windowMain?.updateActiveOverlayName(this.#getActiveDisplayName());
         } else if (storedVer[0] < currentVer[0]) {
-            new WindowWizard(this.name, this.version, this.schemaVersion, this).toggle();
         } else {
             this.windowMain.setError(`Template version ${data?.schemaVersion} is unsupported.\nUse Yet Another Wplace Overlay version ${scriptVer} or load a new template.`);
         }
