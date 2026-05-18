@@ -25,6 +25,7 @@ templateManager.windowTemplateSelect = windowTemplateSelect;
 
 windowMain.setApiManager(apiManager);
 windowMain.setSettingsManager(settingsManager);
+windowTemplateSelect.setSettingsManager(settingsManager);
 templateManager.setWindowMain(windowMain);
 templateManager.setSettingsManager(settingsManager);
 
