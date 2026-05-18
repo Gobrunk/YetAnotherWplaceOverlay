@@ -132,7 +132,7 @@ export class Template {
         this.coords = topLeft;
     }
 
-    // ── Méthodes privées ──────────────────────────────────────
+    // ── Private methods ───────────────────────────────────────
 
     #countPixelColors(imageData, paletteCache) {
         const pixels    = new Uint32Array(imageData.data.buffer);

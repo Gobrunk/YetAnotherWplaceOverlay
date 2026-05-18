@@ -167,7 +167,7 @@ export class TemplateManager {
         if (!this.isEnabled) return tileBlob;
         const scaledSize = this.tileSize * this.pixelsPerTile;
         const coordKey   = tileCoords[0].toString().padStart(4, '0') + ',' + tileCoords[1].toString().padStart(4, '0');
-        // Phase 1 : vérifier si au moins un template couvre cette tuile
+        // Phase 1: check if at least one template covers this tile
         const anyCovers = this.templates.some(t =>
             Object.keys(t.tiles).some(k => k.startsWith(coordKey))
         );
@@ -176,7 +176,7 @@ export class TemplateManager {
             return tileBlob;
         }
 
-        // Phase 2 : décoder et mettre en cache les pixels live pour tous les templates
+        // Phase 2: decode and cache live pixels for all templates
         const liveBitmap = await createImageBitmap(tileBlob);
         const canvas     = new OffscreenCanvas(scaledSize, scaledSize);
         const ctx        = canvas.getContext('2d');
@@ -189,7 +189,7 @@ export class TemplateManager {
         const livePixels    = new Uint32Array(liveImageData.data.buffer);
         this.liveTileCache[coordKey] = livePixels;
 
-        // Phase 3 : filtrer sur le template actif pour le rendu
+        // Phase 3: filter on the active template for rendering
         const toRender   = this.activeTemplateKey
             ? this.templates.filter(t => `${t.sortId} ${t.authorId}` === this.activeTemplateKey)
             : this.templates;
@@ -290,7 +290,7 @@ export class TemplateManager {
 
     getActiveDisplayName() { return this.#getActiveDisplayName(); }
 
-    // ── Méthodes privées ──────────────────────────────────────
+    // ── Private methods ───────────────────────────────────────
 
     #getActiveDisplayName() {
         const tmpl = this.templates.find(t => `${t.sortId} ${t.authorId}` === this.activeTemplateKey);
@@ -447,7 +447,7 @@ export class TemplateManager {
                 const tmplColor = colorLookup.get(tmplPx) ?? -2;
                 const liveColor = colorLookup.get(livePx) ?? -2;
 
-                // Couleur cachée : remplacer par le pixel live
+                // Hidden color: replace with live pixel
                 if (this.hiddenColors.get(tmplColor))
                     templatePixels[row * regionW + col] = livePx;
 

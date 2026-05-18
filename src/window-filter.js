@@ -41,7 +41,7 @@ export class WindowColorFilter extends Overlay {
 
         const { palette: pal } = this.templateManager.paletteCache;
 
-        // Ordre du jeu : lit la position des éléments #color-N dans le DOM de la palette
+        // Game order: reads the position of #color-N elements in the palette DOM
         const gameOrderMap = new Map();
         document.querySelectorAll('[id^="color-"]').forEach((el, idx) => {
             const id = parseInt(el.id.slice(6), 10);
@@ -137,7 +137,7 @@ export class WindowColorFilter extends Overlay {
 
         const shownCount = sortedPal.filter(p => p.id > 0 && (ieMap.get(p.id) ?? 0) > 0).length;
         const titleEl = document.createElement('div');
-        titleEl.textContent = `Couleurs (${shownCount})`;
+        titleEl.textContent = `Colors (${shownCount})`;
 
         const mkBtn = (label, bg, fg, onclick) => {
             const btn = document.createElement('button');
@@ -149,11 +149,11 @@ export class WindowColorFilter extends Overlay {
             return btn;
         };
 
-        // Bouton Solo
+        // Solo button
         const soloOnBg  = 'rgba(251,191,36,.25)', soloOnFg  = 'rgba(251,191,36,1)';
         const soloOffBg = 'rgba(255,255,255,.08)', soloOffFg = 'rgba(255,255,255,.6)';
         const soloBtn = document.createElement('button');
-        soloBtn.title = 'Afficher uniquement la couleur sélectionnée sur Wplace';
+        soloBtn.title = 'Show only the selected color on Wplace';
         const refreshSoloBtnStyle = () => {
             const on = this.templateManager._soloMode;
             soloBtn.textContent = '◎ Solo';
@@ -178,7 +178,7 @@ export class WindowColorFilter extends Overlay {
             }
         };
 
-        // Span pour éviter le style .yawo-titlebar > div (flex:1) sur le groupe de boutons
+        // Span to avoid .yawo-titlebar > div (flex:1) style on the button group
         const btnGroup = document.createElement('span');
         btnGroup.style.cssText = `display:flex; gap:4px; align-items:center; flex-shrink:0;`;
         btnGroup.appendChild(soloBtn);
@@ -226,7 +226,7 @@ export class WindowColorFilter extends Overlay {
             const toggleBtn = document.createElement('button');
             toggleBtn.className = 'yawo-eye-toggle';
             toggleBtn.dataset.state = isHidden ? 'hidden' : 'shown';
-            toggleBtn.title = isHidden ? `Afficher ${color.name} sur l'overlay` : `Masquer ${color.name} de l'overlay`;
+            toggleBtn.title = isHidden ? `Show ${color.name} on the overlay` : `Hide ${color.name} from the overlay`;
             toggleBtn.style.cssText = `background:none; border:none; cursor:pointer; padding:0; font-size:13px; flex-shrink:0; line-height:1; opacity:${isHidden ? '0.3' : '0.8'}; transition:opacity .15s;`;
             toggleBtn.textContent = '👁';
             toggleBtn.onclick = ev => {
@@ -236,14 +236,14 @@ export class WindowColorFilter extends Overlay {
                     this.templateManager.saveFilterState();
                     toggleBtn.dataset.state  = 'hidden';
                     toggleBtn.style.opacity  = '0.3';
-                    toggleBtn.title          = `Afficher ${color.name} sur l'overlay`;
+                    toggleBtn.title          = `Show ${color.name} on the overlay`;
                     row.style.opacity        = '0.4';
                 } else {
                     this.templateManager.hiddenColors.delete(color.id);
                     this.templateManager.saveFilterState();
                     toggleBtn.dataset.state  = 'shown';
                     toggleBtn.style.opacity  = '0.8';
-                    toggleBtn.title          = `Masquer ${color.name} de l'overlay`;
+                    toggleBtn.title          = `Hide ${color.name} from the overlay`;
                     row.style.opacity        = '1';
                 }
             };
@@ -282,7 +282,7 @@ export class WindowColorFilter extends Overlay {
         wrap.appendChild(content);
         document.body.appendChild(wrap);
 
-        // ── Position : restaure la sauvegarde ou se place sous l'ancre ──
+        // ── Position: restores saved position or places below anchor ──
         const savedPos = this.settingsManager?.settings?.filterWindowPosition;
         if (savedPos?.x !== undefined && savedPos?.y !== undefined) {
             wrap.style.transform = `translate(${savedPos.x}px, ${savedPos.y}px)`;
@@ -391,7 +391,7 @@ export class WindowColorFilter extends Overlay {
         this.#sortColorList(this.sortPrimary, this.sortSecondary, this.showUnused);
     }
 
-    // ── Méthodes privées ──────────────────────────────────────
+    // ── Private methods ───────────────────────────────────────
 
     #buildColorList(container) {
         const isCompact = container.closest(`#${this.windowId}`)?.classList.contains('yawo-compact');

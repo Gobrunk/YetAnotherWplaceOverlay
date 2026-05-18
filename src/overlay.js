@@ -11,12 +11,12 @@ export class Overlay {
         this.settingsManager = null;
     }
 
-    // ── Injection de dépendances ──────────────────────────────
+    // ── Dependency injection ──────────────────────────────────
 
     setApiManager(mgr)      { this.apiManager = mgr; }
     setSettingsManager(mgr) { this.settingsManager = mgr; }
 
-    // ── Navigation dans la hiérarchie ─────────────────────────
+    // ── Hierarchy navigation ──────────────────────────────────
 
     up() {
         if (this.#parentStack.length > 0)
@@ -31,7 +31,7 @@ export class Overlay {
         this.#parentStack   = [];
     }
 
-    // ── Création d'éléments ───────────────────────────────────
+    // ── Element creation ──────────────────────────────────────
 
     #createElement(tag, defaults = {}, attrs = {}) {
         const el = document.createElement(tag);
@@ -61,7 +61,7 @@ export class Overlay {
         else el[key] = val;
     }
 
-    // ── Éléments HTML standards ───────────────────────────────
+    // ── Standard HTML elements ────────────────────────────────
 
     addDiv(attrs = {}, cb = () => {}) {
         cb(this, this.#createElement('div', {}, attrs));
@@ -128,7 +128,7 @@ export class Overlay {
         return this;
     }
 
-    // ── Éléments de formulaire ────────────────────────────────
+    // ── Form elements ─────────────────────────────────────────
 
     addCheckbox(attrs = {}, cb = () => {}) {
         const labelContent = {};
@@ -205,7 +205,7 @@ export class Overlay {
         return this;
     }
 
-    // ── Listes ────────────────────────────────────────────────
+    // ── Lists ─────────────────────────────────────────────────
 
     addOrderedList(attrs = {}, cb = () => {}) {
         cb(this, this.#createElement('ol', {}, attrs));
@@ -227,7 +227,7 @@ export class Overlay {
         return this;
     }
 
-    // ── Tableaux ──────────────────────────────────────────────
+    // ── Tables ────────────────────────────────────────────────
 
     addTable(attrs = {}, cb = () => {}) {
         cb(this, this.#createElement('table', {}, attrs));
@@ -269,7 +269,7 @@ export class Overlay {
         return this;
     }
 
-    // ── Éléments spéciaux ─────────────────────────────────────
+    // ── Special elements ──────────────────────────────────────
 
     addTitleBar(attrs = {}, cb = () => {}) {
         cb(this, this.#createElement('div', { class: 'yawo-titlebar' }, attrs));
@@ -295,7 +295,7 @@ export class Overlay {
         return this;
     }
 
-    // ── Manipulation du DOM ───────────────────────────────────
+    // ── DOM manipulation ──────────────────────────────────────
 
     setElementContent(id, value, useTextContent = false) {
         const el = document.getElementById(id.replace(/^#/, ''));
@@ -315,7 +315,7 @@ export class Overlay {
         this.setElementContent(this.#statusAreaId, 'Error: ' + msg, true);
     }
 
-    // ── Fenêtre : minimize / drag ─────────────────────────────
+    // ── Window: minimize / drag ───────────────────────────────
 
     toggleMinimize(btn) {
         if (btn.disabled) return;

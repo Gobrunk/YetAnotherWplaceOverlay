@@ -35,7 +35,7 @@ export class SettingsManager extends WindowSettings {
         .up();
     }
 
-    // ── Méthodes privées ──────────────────────────────────────
+    // ── Private methods ───────────────────────────────────────
 
     async #autoSave() {
         const serialized = JSON.stringify(this.settings);

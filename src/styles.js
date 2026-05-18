@@ -1,6 +1,6 @@
 export function injectStyles() {
     GM_addStyle(`
-      /* ── Fenêtre principale ── */
+      /* ── Main window ── */
       .yawo-window {
         position: fixed;
         z-index: 9000;
@@ -20,7 +20,7 @@ export function injectStyles() {
         overflow: hidden;
       }
 
-      /* ── Barre de titre ── */
+      /* ── Title bar ── */
       .yawo-titlebar {
         display: flex;
         align-items: center;
@@ -61,7 +61,7 @@ export function injectStyles() {
       .yawo-spaced { justify-content: space-between; }
       .yawo-hidden { display: none !important; }
 
-      /* Ligne de coordonnées : force la rangée horizontale et centrée */
+      /* Coordinate row: forces horizontal centered layout */
       .yawo-col > .yawo-col:has(.yawo-jump-btn) {
         flex-direction: row;
         align-items: center;
@@ -70,7 +70,7 @@ export function injectStyles() {
         justify-content: center;
       }
 
-      /* ── Boutons d'action (Disable / Create / Filter) ── */
+      /* ── Action buttons (Disable / Create / Filter) ── */
       .yawo-action-btns { flex-wrap: nowrap !important; }
       .yawo-action-btns button { flex: 1; padding: 3px 4px !important; text-align: center; min-width: 0; white-space: nowrap; }
 
@@ -81,14 +81,14 @@ export function injectStyles() {
       .yawo-stat-label { font-size: 10px; color: rgba(255,255,255,.45); }
       .yawo-stat-value { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.9); font-variant-numeric: tabular-nums; }
 
-      /* ── Séparateurs ── */
+      /* ── Separators ── */
       .yawo-window hr {
         border: none;
         border-top: 1px solid rgba(255,255,255,.08);
         margin: 2px 0;
       }
 
-      /* ── Boutons chrome (minimize, close…) ── */
+      /* ── Chrome buttons (minimize, close…) ── */
       .yawo-chrome-btn {
         background: none;
         border: none;
@@ -103,7 +103,7 @@ export function injectStyles() {
       .yawo-chrome-btn:hover { color: rgba(255,255,255,.85); background: rgba(255,255,255,.08); }
       .yawo-chrome-btn svg { width: 1em; height: 1em; fill: currentColor; display: block; }
 
-      /* ── Bouton saut de coordonnées ── */
+      /* ── Coordinate jump button ── */
       .yawo-jump-btn {
         border: 1px solid rgba(80,160,255,.6) !important;
         border-radius: 50% !important;
@@ -120,7 +120,7 @@ export function injectStyles() {
         border-color: rgba(80,160,255,.9) !important;
       }
 
-      /* ── Boutons standard (hors chrome, swatches, circulaires) ── */
+      /* ── Standard buttons (excl. chrome, swatches, circular) ── */
       .yawo-window button:not(.yawo-eye-btn):not(.yawo-chrome-btn):not(.yawo-info-btn):not(.yawo-jump-btn) {
         background: rgba(255,255,255,.07);
         border: 1px solid rgba(255,255,255,.14);
@@ -159,7 +159,7 @@ export function injectStyles() {
         background: rgba(255,255,255,.1);
       }
 
-      /* Input de coordonnées (largeur fixe, pas de spinners) */
+      /* Coordinate input (fixed width, no spinners) */
       .yawo-coord-input {
         width: 6.5ch;
         font-size: 11px;
@@ -199,7 +199,7 @@ export function injectStyles() {
       .yawo-template-thumb { width: 2.5rem; height: 2.5rem; flex-shrink: 0; border-radius: 4px; overflow: hidden; background: rgba(255,255,255,.06); }
       .yawo-template-info  { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
-      /* ── Bouton info circulaire ── */
+      /* ── Circular info button ── */
       .yawo-info-btn {
         border: 1px solid rgba(255,255,255,.3);
         border-radius: 50%;
@@ -238,7 +238,7 @@ export function injectStyles() {
         background: rgba(100,160,255,.07);
       }
 
-      /* Bouton "Actif" vert */
+      /* "Active" green button */
       .yawo-btn-success {
         border-color: rgba(34,197,94,.45) !important;
         color: rgba(34,197,94,.9) !important;
@@ -246,7 +246,7 @@ export function injectStyles() {
         cursor: default !important;
       }
 
-      /* Bouton danger (suppression) */
+      /* Danger button (delete) */
       .yawo-btn-danger {
         border-color: rgba(239,68,68,.35) !important;
         color: rgba(239,68,68,.75) !important;
@@ -259,7 +259,7 @@ export function injectStyles() {
       }
       .yawo-btn-danger svg { display: block; }
 
-      /* Bouton renommage */
+      /* Rename button */
       .yawo-btn-rename {
         border-color: rgba(255,255,255,.2) !important;
         color: rgba(255,255,255,.45) !important;
@@ -271,7 +271,7 @@ export function injectStyles() {
       }
       .yawo-btn-rename svg { display: block; }
 
-      /* Bouton pin (navigation vers le pixel ancre) */
+      /* Pin button (navigate to anchor pixel) */
       .yawo-btn-pin {
         background: rgba(60,130,255,.10) !important;
         border-color: rgba(80,160,255,.45) !important;
@@ -299,7 +299,7 @@ export function injectStyles() {
         min-width: 0;
       }
 
-      /* ── Section "Ajouter un overlay" ── */
+      /* ── "Add an overlay" section ── */
       .yawo-add-section { border: none; }
       .yawo-add-section > summary {
         list-style: none;

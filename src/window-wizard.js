@@ -54,7 +54,7 @@ export class WindowWizard extends Overlay {
         this.#buildTemplateList();
     }
 
-    // ── Méthodes privées ──────────────────────────────────────
+    // ── Private methods ───────────────────────────────────────
 
     #buildStatusSection() {
         const stored  = this.schemaVersion?.split(/[-\.+]/) ?? [];
