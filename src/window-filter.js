@@ -186,12 +186,6 @@ export class WindowColorFilter extends Overlay {
         btnGroup.appendChild(mkBtn('✓ All',  'rgba(74,222,128,.15)',  'rgba(74,222,128,.9)',  () => { this.templateManager.hiddenColors.clear(); this.templateManager.saveFilterState(); wrap.remove(); this.toggle(); }));
         btnGroup.appendChild(mkBtn('✗ None', 'rgba(248,113,113,.15)', 'rgba(248,113,113,.9)', () => { for (const c of pal) { if (c.id > 0) this.templateManager.hiddenColors.set(c.id, true); } this.templateManager.saveFilterState(); wrap.remove(); this.toggle(); }));
         btnGroup.appendChild(mkBtn('↻',      'rgba(255,255,255,.08)', 'rgba(255,255,255,.7)', () => { wrap.remove(); this.templateManager.refreshCorrectStats().then(() => this.toggle()); }));
-        const navBtn = mkBtn('⇨', 'rgba(255,200,0,.12)', 'rgba(255,200,0,.8)', () => {
-            const coords = this.templateManager.findNearestIncorrectPixel(null);
-            if (coords) this.apiManager?.navigateToCoords(coords, 20);
-        });
-        navBtn.title = 'Go to nearest incorrect pixel';
-        btnGroup.appendChild(navBtn);
 
         const closeBtn = document.createElement('button');
         closeBtn.className = 'yawo-chrome-btn';
@@ -280,13 +274,23 @@ export class WindowColorFilter extends Overlay {
 
             const gotoBtn = document.createElement('button');
             gotoBtn.title = `Go to nearest incorrect ${color.name} pixel`;
-            gotoBtn.style.cssText = `background:none; border:none; cursor:pointer; padding:0 2px; font-size:13px; flex-shrink:0; line-height:1; opacity:${pct < 100 ? '0.55' : '0.15'}; transition:opacity .15s;`;
+            gotoBtn.style.cssText = `background:none; border:none; cursor:pointer; padding:0 2px; font-size:13px; flex-shrink:0; line-height:1; opacity:0.55; transition:opacity .15s;`;
             gotoBtn.textContent = '⇨';
-            gotoBtn.disabled = pct >= 100;
             gotoBtn.onclick = ev => {
                 ev.stopPropagation();
                 const coords = this.templateManager.findNearestIncorrectPixel(color.id);
-                if (coords) this.apiManager?.navigateToCoords(coords, 20);
+                if (coords) {
+                    this.apiManager?.navigateToCoords(coords, 20);
+                } else {
+                    const toast = document.createElement('div');
+                    toast.textContent = 'Nothing found — try ↻ to refresh stats';
+                    toast.style.cssText = `position:fixed; background:rgba(0,0,0,.85); color:#fff; font-size:11px; padding:4px 8px; border-radius:4px; pointer-events:none; z-index:99999; white-space:nowrap; opacity:1; transition:opacity .4s;`;
+                    const rect = gotoBtn.getBoundingClientRect();
+                    toast.style.top  = `${rect.bottom + 4}px`;
+                    toast.style.left = `${rect.left}px`;
+                    document.body.appendChild(toast);
+                    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 2500);
+                }
             };
 
             row.appendChild(toggleBtn);
