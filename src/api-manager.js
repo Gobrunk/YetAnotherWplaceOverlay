@@ -8,9 +8,11 @@ export class ApiManager {
         this.lastClickCoords = [];
     }
 
-    navigateToCoords(coords) {
+    navigateToCoords(coords, zoom) {
         if (!coords?.length) return;
-        window.postMessage({ source: 'yaw-overlay', action: 'navigate', coords }, window.location.origin);
+        const msg = { source: 'yaw-overlay', action: 'navigate', coords };
+        if (zoom !== undefined) msg.zoom = zoom;
+        window.postMessage(msg, window.location.origin);
     }
 
     startListening(windowMain) {

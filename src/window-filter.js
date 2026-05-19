@@ -10,6 +10,7 @@ export class WindowColorFilter extends Overlay {
         this.mountTarget     = document.body;
         this.templateManager = ctx.apiManager?.templateManager ?? ctx;
         this.settingsManager = ctx.settingsManager ?? null;
+        this.apiManager      = ctx.apiManager ?? (typeof ctx.navigateToCoords === 'function' ? ctx : null);
 
         const { palette } = this.templateManager.paletteCache;
         this.palette        = palette;
@@ -185,6 +186,12 @@ export class WindowColorFilter extends Overlay {
         btnGroup.appendChild(mkBtn('✓ All',  'rgba(74,222,128,.15)',  'rgba(74,222,128,.9)',  () => { this.templateManager.hiddenColors.clear(); this.templateManager.saveFilterState(); wrap.remove(); this.toggle(); }));
         btnGroup.appendChild(mkBtn('✗ None', 'rgba(248,113,113,.15)', 'rgba(248,113,113,.9)', () => { for (const c of pal) { if (c.id > 0) this.templateManager.hiddenColors.set(c.id, true); } this.templateManager.saveFilterState(); wrap.remove(); this.toggle(); }));
         btnGroup.appendChild(mkBtn('↻',      'rgba(255,255,255,.08)', 'rgba(255,255,255,.7)', () => { wrap.remove(); this.templateManager.refreshCorrectStats().then(() => this.toggle()); }));
+        const navBtn = mkBtn('⇨', 'rgba(255,200,0,.12)', 'rgba(255,200,0,.8)', () => {
+            const coords = this.templateManager.findNearestIncorrectPixel(null);
+            if (coords) this.apiManager?.navigateToCoords(coords, 20);
+        });
+        navBtn.title = 'Go to nearest incorrect pixel';
+        btnGroup.appendChild(navBtn);
 
         const closeBtn = document.createElement('button');
         closeBtn.className = 'yawo-chrome-btn';
@@ -271,11 +278,23 @@ export class WindowColorFilter extends Overlay {
             statsEl.style.cssText = `color:${barColor}; font-size:11px; white-space:nowrap; width:36px; flex-shrink:0; text-align:right; font-weight:600;`;
             statsEl.textContent = `${pct}%`;
 
+            const gotoBtn = document.createElement('button');
+            gotoBtn.title = `Go to nearest incorrect ${color.name} pixel`;
+            gotoBtn.style.cssText = `background:none; border:none; cursor:pointer; padding:0 2px; font-size:13px; flex-shrink:0; line-height:1; opacity:${pct < 100 ? '0.55' : '0.15'}; transition:opacity .15s;`;
+            gotoBtn.textContent = '⇨';
+            gotoBtn.disabled = pct >= 100;
+            gotoBtn.onclick = ev => {
+                ev.stopPropagation();
+                const coords = this.templateManager.findNearestIncorrectPixel(color.id);
+                if (coords) this.apiManager?.navigateToCoords(coords, 20);
+            };
+
             row.appendChild(toggleBtn);
             row.appendChild(swatch);
             row.appendChild(nameEl);
             row.appendChild(barWrap);
             row.appendChild(statsEl);
+            row.appendChild(gotoBtn);
             list.appendChild(row);
         }
         content.appendChild(list);

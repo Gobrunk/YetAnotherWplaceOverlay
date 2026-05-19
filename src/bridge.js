@@ -30,7 +30,7 @@ export function injectBridge(scriptName) {
 
         window.addEventListener('message', event => {
             if (event.origin !== window.location.origin) return;
-            const { source, blobID, blobData, endpoint, coords } = event.data;
+            const { source, blobID, blobData, endpoint, coords, zoom } = event.data;
 
             if (source === 'yaw-overlay' && coords) {
                 if (window.realMap) {
@@ -51,9 +51,9 @@ export function injectBridge(scriptName) {
                     }
 
                     if (globalX > 0 && globalY > 0) {
-                        const lng = (globalX *  0.00017576271035647372) - 179.98283466471804;
-                        const lat = (globalY * -0.00010119261941028525) + 120.55105627917947;
-                        window.realMap.jumpTo({ center: [lng, lat], zoom: 12 });
+                        const lng = (globalX / 2048000) * 360 - 180;
+                        const lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * globalY / 2048000))) * (180 / Math.PI);
+                        window.realMap.jumpTo({ center: [lng, lat], zoom: zoom ?? 12 });
                     } else {
                         console.warn(`%c${scriptName}%c: Unknown coordonate format :`, logStyle, '', coords);
                     }

@@ -423,6 +423,63 @@ export class TemplateManager {
         }
     }
 
+    findNearestIncorrectPixel(colorId = null) {
+        const scale      = this.pixelsPerTile;
+        const canvasSize = this.tileSize * scale;
+        const { jt: colorLookup } = this.paletteCache;
+        const tolerance  = this.paletteTolerance;
+        const activeKey  = this.activeTemplateKey;
+        const templates  = activeKey
+            ? this.templates.filter(t => `${t.sortId} ${t.authorId}` === activeKey)
+            : this.templates;
+
+        for (const tmpl of templates) {
+            for (const tileKey of Object.keys(tmpl.tiles).sort()) {
+                const parts    = tileKey.split(',');
+                const tileX    = Number(parts[0]);
+                const tileY    = Number(parts[1]);
+                const pixelOX  = Number(parts[2]);
+                const pixelOY  = Number(parts[3]);
+                const coordKey = parts[0] + ',' + parts[1];
+                const livePixels     = this.liveTileCache[coordKey];
+                if (!livePixels) continue;
+                const templatePixels = tmpl.pixelData?.[tileKey];
+                if (!templatePixels) continue;
+                const tileBitmap = tmpl.tiles[tileKey];
+                const regionW    = tileBitmap.width;
+                const regionH    = tileBitmap.height;
+                const offsetX    = pixelOX * scale;
+                const offsetY    = pixelOY * scale;
+
+                for (let row = 1; row < regionH; row += scale) {
+                    for (let col = 1; col < regionW; col += scale) {
+                        const liveY     = offsetY + row - 1;
+                        const liveX     = offsetX + col;
+                        const livePx    = livePixels[liveY * canvasSize + liveX];
+                        const tmplPx    = templatePixels[row * regionW + col];
+                        const tmplA     = tmplPx >>> 24 & 255;
+                        const liveA     = livePx >>> 24 & 255;
+                        if (tmplA <= tolerance) continue;
+                        const tmplColor = colorLookup.get(tmplPx) ?? -2;
+                        if (tmplColor === -2) continue;
+                        const liveColor = colorLookup.get(livePx) ?? -2;
+
+                        const isCorrect = tmplColor === -1
+                            ? liveA <= tolerance
+                            : liveA > tolerance && liveColor === tmplColor;
+
+                        if (!isCorrect) {
+                            if (colorId !== null && tmplColor !== colorId) continue;
+                            console.log(`🎯 Direction le pixel !`, tileX, tileY, pixelOX + (col - 1) / scale, pixelOY + (row - 1) / scale);
+                            return [tileX, tileY, pixelOX + (col - 1) / scale, pixelOY + (row - 1) / scale];
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     #computePixelDiff({ livePixels, templatePixels, region }) {
         const scale       = this.pixelsPerTile;
         const canvasSize  = this.tileSize * scale;
