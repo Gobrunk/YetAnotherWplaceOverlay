@@ -4,13 +4,49 @@ A Tampermonkey userscript that enhances the experience on [wplace.live](https://
 
 ## Features
 
-- **Template overlay** — Upload an image and display it as a semi-transparent overlay on the canvas to guide pixel placement. Supports multi-tile templates with pixel-accurate diff highlighting.
-- **Pixel highlight** — Visually mark incorrect pixels with configurable patterns (Cross, X, Full, or custom sub-pixel grid).
-- **Color filter** — Hide specific palette colors from the overlay.
-- **Palette menu reposition** — Button to move the Wplace color palette from bottom to top of the screen and vice versa.
-- **Droplets & charge timer** — Displays your current droplets count and a live countdown to the next charge refill.
-- **Template import/export** — Save templates to userscript storage and download them as PNG files.
-- **Migration wizard** — Automatic schema migration when the template storage format changes between versions.
+### Dashboard
+
+A compact HUD that stays on screen at all times. Shows your current droplets count, a live countdown to the next charge refill, your next level progress, and the name of the currently active overlay.
+
+### Multi-overlay management
+
+Open the Overlays window to manage all your templates in one place. You can add, rename, activate, or remove overlays independently. Only the active overlay is rendered on the canvas.
+
+### Template overlay
+
+Upload a PNG image and it is displayed as a semi-transparent overlay on the canvas to guide pixel placement. Multi-tile templates are supported — the overlay spans across tile boundaries. Incorrect pixels are highlighted in real time as tile data is received.
+
+### Color filter & stats
+
+A detachable color window that gives you full visibility into the state of your overlay:
+
+- **Search** — filter colors by name or hex value
+- **Sort** — order by color ID, name, total pixels, correct pixels, or completion percentage, ascending or descending
+- **Rolling filter** — toggle a color off to hide its pixels from the overlay
+- **Per-color stats** — see how many pixels of each color are correct vs. total, with a completion progress bar
+- **Go to** — jump directly to the nearest incorrect pixel of a given color
+
+### Nearest incomplete pixel
+
+A global button to jump to the closest pixel anywhere in the template that still needs to be placed.
+
+### Pixel highlight
+
+Visually mark incorrect pixels with a configurable pattern: Cross, X, Full block, or a custom sub-pixel grid overlay.
+
+### Palette reposition
+
+A button injected into the Wplace color palette to move it from the bottom of the screen to the top and back.
+
+### Persistent windows
+
+All overlay windows (main dashboard, overlays list, settings, color filter) remember their position across sessions.
+
+### Template import/export
+
+Templates are saved to userscript storage (GM storage) and can be exported as PNG files at any time.
+
+---
 
 ## Installation
 
@@ -20,6 +56,8 @@ A Tampermonkey userscript that enhances the experience on [wplace.live](https://
 4. Navigate to [wplace.live](https://wplace.live) — the overlay panel will appear automatically.
 
 > **Note:** Do not install `src/main.js` directly. Always use the bundled `tampermonkey.js`.
+
+---
 
 ## Development
 
@@ -46,79 +84,30 @@ npm run watch
 
 The build bundles `src/main.js` and all its imports into `tampermonkey.js` via Rollup (IIFE format), prepending the Tampermonkey `@userscript` header automatically.
 
-## Project structure
+### Project structure
 
 ```
 src/
-  main.js              # Entry point — wires up all managers and bootstraps the UI
-  overlay.js           # Base class: fluent DOM builder + window utilities (drag, minimize)
-  window-main.js       # Main overlay window (template form, coords, status)
-  window-settings.js   # Settings window (pixel highlight, template options)
-  window-wizard.js     # Migration wizard (schema version upgrade)
-  window-filter.js     # Color filter window
-  template.js          # Template data model
-  template-manager.js  # Template logic: create, render tile overlay, import/export
-  api-manager.js       # Intercepts Wplace API calls (droplets, charges, tile data)
-  settings-manager.js  # Settings persistence (auto-save to GM storage)
-  palette.js           # Wplace color palette data
-  styles.js            # CSS injection via GM_addStyle
-  bridge.js            # Page-to-script communication bridge
-  confetti.js          # Confetti animation
-  utils.js             # Shared utilities (encode, base64, sleep, logging...)
-rollup.config.js       # Build config
-tampermonkey.js        # Build output (do not edit manually)
+  main.js                    # Entry point — wires up all managers and bootstraps the UI
+  overlay.js                 # Base class: fluent DOM builder + window utilities (drag, minimize)
+  window-main.js             # Main dashboard window
+  window-template-select.js  # Overlay management window (add, rename, activate, remove)
+  window-settings.js         # Settings window
+  window-filter.js           # Color filter window (search, sort, stats, navigation)
+  template.js                # Template data model
+  template-manager.js        # Template logic: render, diff, import/export
+  api-manager.js             # Intercepts Wplace API calls (droplets, charges, tile data)
+  settings-manager.js        # Settings persistence (GM storage)
+  palette.js                 # Wplace color palette data
+  styles.js                  # CSS injection
+  bridge.js                  # Page-to-script communication bridge
+  confetti.js                # Confetti animation
+  utils.js                   # Shared utilities
+rollup.config.js             # Build config
+tampermonkey.js              # Build output (do not edit manually)
 ```
 
-## Conventions
-
-### Commit messages — Conventional Commits
-
-Format: `<type>(<scope>): <description>`
-
-| Type       | Usage                                          |
-|------------|------------------------------------------------|
-| `feat`     | New feature                                    |
-| `fix`      | Bug fix                                        |
-| `chore`    | Build, config, dependencies                    |
-| `refactor` | Code restructuring without behavior change     |
-| `style`    | CSS or formatting only                         |
-| `docs`     | Documentation                                  |
-| `perf`     | Performance improvement                        |
-
-**Scopes:**
-
-| Scope      | Corresponds to                              |
-|------------|---------------------------------------------|
-| `overlay`  | `overlay.js`                                |
-| `template` | `template.js`, `template-manager.js`        |
-| `api`      | `api-manager.js`                            |
-| `settings` | `settings-manager.js`, `window-settings.js` |
-| `ui`       | Windows, wizard, filter                     |
-| `build`    | Rollup, `package.json`                      |
-
-**Examples:**
-
-```
-feat(template): add opacity slider per template
-fix(api): handle missing canvas element on page load
-chore(build): upgrade rollup to v5
-style(ui): align palette move button with DaisyUI tokens
-refactor(overlay): extract drag logic into separate method
-docs: add README and commit conventions
-```
-
-### Code style
-
-| Element           | Convention          | Example                        |
-|-------------------|---------------------|--------------------------------|
-| Files             | `kebab-case`        | `template-manager.js`          |
-| Classes           | `PascalCase`        | `TemplateManager`, `Overlay`   |
-| Functions/methods | `camelCase`         | `renderTileOverlay()`          |
-| Private methods   | `#camelCase`        | `#buildPaletteCache()`         |
-| Constants         | `SCREAMING_SNAKE_CASE` | `SCRIPT_NAME`, `COLOR_PALETTE` |
-| DOM IDs           | `bm-kebab-case`     | `bm-move-btn`, `bm-status`     |
-| CSS classes       | `bm-kebab-case`     | `bm-window`, `bm-titlebar`     |
-| GM storage keys   | `bmCamelCase`       | `bmUserSettings`, `bmTemplates` |
+---
 
 ## License
 
