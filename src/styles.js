@@ -365,6 +365,35 @@ export function injectStyles() {
         border-color: rgba(255,255,255,.32) !important;
       }
 
+      /* ── Range slider ── */
+      .yawo-window input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        height: 4px;
+        background: rgba(255,255,255,.15) !important;
+        border-radius: 2px;
+        outline: none;
+        cursor: pointer;
+        padding: 0;
+        border: none !important;
+      }
+      .yawo-window input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.85);
+        cursor: pointer;
+      }
+      .yawo-window input[type="range"]::-moz-range-thumb {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.85);
+        cursor: pointer;
+        border: none;
+      }
+
       /* ── Scrollbars ── */
       .yawo-window ::-webkit-scrollbar       { width: 4px; height: 4px; }
       .yawo-window ::-webkit-scrollbar-track { background: transparent; }

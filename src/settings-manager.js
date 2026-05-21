@@ -4,7 +4,8 @@ export class SettingsManager extends WindowSettings {
     constructor(name, version, settings) {
         super(name, version);
         this.settings           = settings;
-        this.settings.flags     ??= [];
+        this.settings.flags          ??= [];
+        this.settings.overlayOpacity ??= 1.0;
         this.savedSettings      = structuredClone(this.settings);
         this.storageKey         = 'yawoUserSettings';
         this.saveIntervalMs     = 5000;
@@ -71,6 +72,33 @@ export class SettingsManager extends WindowSettings {
         .up();
 
         refresh();
+    }
+
+    buildOverlaySection() {
+        let valueRef  = null;
+        const opacity = this.settings?.overlayOpacity ?? 1.0;
+
+        this.addDiv({ class: 'yawo-col' })
+            .addHeading(2, { textContent: 'Overlay' }).up()
+            .addHr().up()
+            .addDiv({ class: 'yawo-col', style: 'margin-left:1.5ch; gap:6px;' })
+                .addSmall({ textContent: 'Opacity', class: 'yawo-form-label' }).up()
+                .addDiv({ class: 'yawo-row' })
+                    .addInput({ type: 'range', min: '0.1', max: '1', step: '0.05',
+                                value: opacity.toString(), style: 'flex:1;' }, (ov, input) => {
+                        input.oninput = () => {
+                            const val = parseFloat(input.value);
+                            this.settings.overlayOpacity = val;
+                            if (valueRef) valueRef.textContent = Math.round(val * 100) + '%';
+                        };
+                    }).up()
+                    .addSmall({ textContent: Math.round(opacity * 100) + '%',
+                                style: 'min-width:3ch; text-align:right;' }, (ov, el) => {
+                        valueRef = el;
+                    }).up()
+                .up()
+            .up()
+        .up();
     }
 
     // ── Private methods ───────────────────────────────────────

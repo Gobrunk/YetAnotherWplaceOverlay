@@ -216,14 +216,19 @@ export class TemplateManager {
         const totalPx      = formatNumber(toRender.filter(t => Object.keys(t.tiles).some(k => k.startsWith(coordKey))).reduce((acc, t) => acc + (t.pixelStats.total || 0), 0));
         this.windowMain.setStatus(`Displaying ${visibleCount} template${visibleCount === 1 ? '' : 's'}.\nTotal pixels: ${totalPx}`);
 
+        const overlayOpacity = this.settingsManager?.settings?.overlayOpacity ?? 1.0;
+
         for (const entry of matching) {
             const hasErased   = !!entry.template.pixelStats?.colors?.get(-1);
             let templatePixels = entry.pixelData?.slice();
             const offsetX = Number(entry.pixelOffset[0]) * this.pixelsPerTile;
             const offsetY = Number(entry.pixelOffset[1]) * this.pixelsPerTile;
 
-            if (this.hiddenColors.size === 0 && !hasErased)
+            if (this.hiddenColors.size === 0 && !hasErased) {
+                ctx.globalAlpha = overlayOpacity;
                 ctx.drawImage(entry.tileBitmap, offsetX, offsetY);
+                ctx.globalAlpha = 1;
+            }
 
             if (!templatePixels) {
                 const img = ctx.getImageData(offsetX, offsetY, entry.tileBitmap.width, entry.tileBitmap.height);
@@ -235,8 +240,11 @@ export class TemplateManager {
                 region: [offsetX, offsetY, entry.tileBitmap.width, entry.tileBitmap.height]
             });
 
-            if (this.hiddenColors.size !== 0 || hasErased)
+            if (this.hiddenColors.size !== 0 || hasErased) {
+                ctx.globalAlpha = overlayOpacity;
                 ctx.drawImage(await createImageBitmap(new ImageData(new Uint8ClampedArray(outputPixels.buffer), entry.tileBitmap.width, entry.tileBitmap.height)), offsetX, offsetY);
+                ctx.globalAlpha = 1;
+            }
 
         }
         return canvas.convertToBlob({ type: 'image/png' });

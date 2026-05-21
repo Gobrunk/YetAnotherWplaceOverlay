@@ -28,6 +28,7 @@ export class WindowSettings extends Overlay {
                 .addParagraph({ textContent: 'Settings take 5 seconds to save.' }).up()
                 .addDiv({ class: 'yawo-col yawo-sections' }, () => {
                     this.buildTemplateSection();
+                    this.buildOverlaySection();
                 }).up()
             .up()
         .mount(this.mountTarget);
@@ -47,6 +48,10 @@ export class WindowSettings extends Overlay {
 
     buildTemplateSection() {
         this.#buildPlaceholderSection('Template');
+    }
+
+    buildOverlaySection() {
+        this.#buildPlaceholderSection('Overlay');
     }
 
     #buildPlaceholderSection(title) {
