@@ -285,6 +285,35 @@ export function injectStyles() {
       }
       .yawo-btn-pin svg { display: block; }
 
+      /* More-options popover (appended to body, position:fixed) */
+      .yawo-more-popover {
+        position: fixed;
+        display: none;
+        align-items: center;
+        gap: 4px;
+        padding: 4px;
+        background: #18181b;
+        border: 1px solid rgba(255,255,255,.18);
+        border-radius: 6px;
+        box-shadow: 0 4px 16px rgba(0,0,0,.55);
+        z-index: 10000;
+        font-family: 'Roboto Mono', monospace, sans-serif;
+        font-size: 12px;
+      }
+      .yawo-more-popover button {
+        background: rgba(255,255,255,.07);
+        border: 1px solid rgba(255,255,255,.14);
+        color: rgba(255,255,255,.78);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-family: inherit;
+        cursor: pointer;
+        transition: background .12s, border-color .12s;
+        line-height: 1;
+      }
+      .yawo-more-popover button:hover { background: rgba(255,255,255,.14); }
+
       /* Input de renommage inline */
       .yawo-rename-input {
         background: rgba(0,0,0,.4);
@@ -299,10 +328,10 @@ export function injectStyles() {
         min-width: 0;
       }
 
-      /* ── "Add an overlay" section ── */
-      .yawo-add-section { border: none; }
-      .yawo-add-section > summary {
-        list-style: none;
+      /* ── Add / Import tab bar ── */
+      .yawo-tab-bar { display: flex; gap: 4px; }
+      .yawo-tab-btn {
+        flex: 1;
         cursor: pointer;
         padding: 5px 8px;
         border-radius: 6px;
@@ -313,18 +342,26 @@ export function injectStyles() {
         transition: background .12s, color .12s, border-color .12s;
         user-select: none;
       }
-      .yawo-add-section > summary::-webkit-details-marker,
-      .yawo-add-section > summary::marker { display: none; content: ''; }
-      .yawo-add-section > summary:hover {
+      .yawo-tab-btn:hover {
         background: rgba(255,255,255,.05);
         color: rgba(255,255,255,.75);
         border-color: rgba(255,255,255,.22);
       }
-      .yawo-add-section[open] > summary {
+      .yawo-tab-btn--active {
         border-radius: 6px 6px 0 0;
         border-bottom-color: transparent;
         color: rgba(255,255,255,.75);
         background: rgba(255,255,255,.04);
+      }
+      .yawo-tab-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px;
+        background: rgba(255,255,255,.03);
+        border: 1px dashed rgba(255,255,255,.14);
+        border-top: none;
+        border-radius: 0 0 6px 6px;
       }
       .yawo-add-body {
         display: flex;

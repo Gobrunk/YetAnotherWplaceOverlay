@@ -1,6 +1,6 @@
 import { Template } from './template.js';
 import { COLOR_PALETTE } from './palette.js';
-import { encodeBase, base64ToUint8, sleep, consoleLog, consoleError, consoleWarn, formatNumber } from './utils.js';
+import { encodeBase, base64ToUint8, uint8ToBase64, sleep, consoleLog, consoleError, consoleWarn, formatNumber } from './utils.js';
 
 export class TemplateManager {
     constructor(name, version) {
@@ -103,6 +103,29 @@ export class TemplateManager {
             await this.#downloadTemplate(tmpl);
             await sleep(500);
         }
+    }
+
+    async generateShareCode(key) {
+        const entry = this.storageData?.templates?.[key];
+        if (!entry) throw new Error('Template not found');
+        const blob   = await this.compositeTemplateTiles({ tiles: entry.tiles });
+        const bytes  = new Uint8Array(await blob.arrayBuffer());
+        const coords = entry.coords.replace(/\s/g, '');
+        return `YAWO:v1:${coords}:${uint8ToBase64(bytes)}`;
+    }
+
+    async importFromShareCode(code, displayName) {
+        const parts = code.trim().split(':');
+        if (parts[0] !== 'YAWO' || parts[1] !== 'v1' || parts.length < 4)
+            throw new Error('Invalid share code');
+        const coords = parts[2].split(',').map(Number);
+        if (coords.length !== 4 || coords.some(isNaN))
+            throw new Error('Invalid coordinates in code');
+        const imgB64 = parts.slice(3).join(':');
+        const bytes  = base64ToUint8(imgB64);
+        const file   = new File([bytes], 'shared.png', { type: 'image/png' });
+        const name   = displayName?.trim() || `Import ${coords[0]},${coords[1]}`;
+        await this.createTemplate(file, name, coords);
     }
 
     async loadFromStorage() {

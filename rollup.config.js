@@ -3,7 +3,7 @@ import terser from '@rollup/plugin-terser';
 const BANNER = `// ==UserScript==
 // @name            Yet Another Wplace Overlay
 // @name:en         Yet Another Wplace Overlay
-// @version         1.8.0
+// @version         1.9.0
 // @description     A userscript to enhance the user experience on Wplace.live. This includes, but is not limited to: uploading images to display locally on a canvas, adding a button to move the Wplace color palette menu, and other QoL features.
 // @description:en  A userscript to enhance the user experience on Wplace.live. This includes, but is not limited to: uploading images to display locally on a canvas, adding a button to move the Wplace color palette menu, and other QoL features.
 // @author          Gobrunk
