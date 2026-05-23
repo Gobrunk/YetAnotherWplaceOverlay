@@ -454,7 +454,7 @@ export class TemplateManager {
         }
     }
 
-    findNearestIncorrectPixel(colorId = null) {
+    findNearestIncorrectPixel(colorId = null, refCoords = null) {
         const scale      = this.pixelsPerTile;
         const canvasSize = this.tileSize * scale;
         const { jt: colorLookup } = this.paletteCache;
@@ -463,6 +463,11 @@ export class TemplateManager {
         const templates  = activeKey
             ? this.templates.filter(t => `${t.sortId} ${t.authorId}` === activeKey)
             : this.templates;
+
+        const refAbsX = refCoords ? Number(refCoords[0]) * this.tileSize + Number(refCoords[2]) : null;
+        const refAbsY = refCoords ? Number(refCoords[1]) * this.tileSize + Number(refCoords[3]) : null;
+        let bestCoords = null;
+        let bestDist   = Infinity;
 
         for (const tmpl of templates) {
             for (const tileKey of Object.keys(tmpl.tiles).sort()) {
@@ -501,14 +506,25 @@ export class TemplateManager {
 
                         if (!isCorrect) {
                             if (colorId !== null && tmplColor !== colorId) continue;
-                            console.log(`🎯 Direction le pixel !`, tileX, tileY, pixelOX + (col - 1) / scale, pixelOY + (row - 1) / scale);
-                            return [tileX, tileY, pixelOX + (col - 1) / scale, pixelOY + (row - 1) / scale];
+                            const px = pixelOX + (col - 1) / scale;
+                            const py = pixelOY + (row - 1) / scale;
+                            if (refAbsX === null) {
+                                console.log(`🎯 Direction le pixel !`, tileX, tileY, px, py);
+                                return [tileX, tileY, px, py];
+                            }
+                            const absX = tileX * this.tileSize + px;
+                            const absY = tileY * this.tileSize + py;
+                            const dx = absX - refAbsX;
+                            const dy = absY - refAbsY;
+                            const dist = dx * dx + dy * dy;
+                            if (dist < bestDist) { bestDist = dist; bestCoords = [tileX, tileY, px, py]; }
                         }
                     }
                 }
             }
         }
-        return null;
+        if (bestCoords) console.log(`🎯 Direction le pixel !`, ...bestCoords);
+        return bestCoords;
     }
 
     #computePixelDiff({ livePixels, templatePixels, region }) {

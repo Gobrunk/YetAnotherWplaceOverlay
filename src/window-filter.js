@@ -366,7 +366,8 @@ export class WindowColorFilter extends Overlay {
             gotoBtn.textContent = '⇨';
             gotoBtn.onclick = ev => {
                 ev.stopPropagation();
-                const coords = this.templateManager.findNearestIncorrectPixel(color.id);
+                const ref    = this.apiManager?.lastClickCoords?.length === 4 ? this.apiManager.lastClickCoords : null;
+                const coords = this.templateManager.findNearestIncorrectPixel(color.id, ref);
                 if (coords) {
                     this.apiManager?.navigateToCoords(coords, 20);
                 } else {
