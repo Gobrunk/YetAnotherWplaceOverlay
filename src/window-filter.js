@@ -1,37 +1,18 @@
 import { Overlay } from './overlay.js';
-import { ConfettiManager } from './confetti.js';
-import { rgbToHex, calculateLuminance, formatNumber, formatPercent, formatDate } from './utils.js';
+import { formatNumber } from './utils.js';
 
 export class WindowColorFilter extends Overlay {
     constructor(ctx) {
         super(ctx.name, ctx.version);
-        this.windowId        = 'yawo-window-filter';
-        this.listContainerId = 'yawo-filter-list';
-        this.mountTarget     = document.body;
+        this.windowId    = 'yawo-window-filter';
+        this.mountTarget = document.body;
         this.templateManager = ctx.apiManager?.templateManager ?? ctx;
         this.settingsManager = ctx.settingsManager ?? null;
         this.apiManager      = ctx.apiManager ?? (typeof ctx.navigateToCoords === 'function' ? ctx : null);
 
         const { palette } = this.templateManager.paletteCache;
-        this.palette        = palette;
-        this.tilesChecked   = 0;
-        this.totalTiles     = 0;
-        this.totalByColor   = new Map();
-        this.correctByColor = new Map();
-        this.correctTotal   = 0;
-        this.pixelsTotal    = 0;
-        this.timeRemaining  = 0;
-        this.formattedEta   = '';
-        this.sortPrimary    = 'id';
-        this.sortSecondary  = 'ascending';
-        this.showUnused     = false;
-
-        this.#eyeShownSvg  = '<svg viewBox="0 0 .5 6 3"><path d="M0,2Q3-1 6,2Q3,5 0,2H2A1,1 0 1 0 3,1Q3,2 2,2"/></svg>';
-        this.#eyeHiddenSvg = '<svg viewBox="0 1 12 6"><mask id="a"><path d="M0,0H12V8L0,2" fill="#fff"/></mask><path d="M0,4Q6-2 12,4Q6,10 0,4H4A2,2 0 1 0 6,2Q6,4 4,4ZM1,2L10,6.5L9.5,7L.5,2.5" mask="url(#a)"/></svg>';
+        this.palette = palette;
     }
-
-    #eyeShownSvg  = '';
-    #eyeHiddenSvg = '';
 
     toggle() {
         const existing = document.querySelector('#yawo-color-dropdown');
@@ -265,8 +246,12 @@ export class WindowColorFilter extends Overlay {
         const gotoSpacer = document.createElement('div');
         gotoSpacer.style.cssText = `width:${GOTO_W}px; flex-shrink:0;`;
 
+        const premiumSpacer = document.createElement('div');
+        premiumSpacer.style.cssText = `width:14px; flex-shrink:0;`;
+
         headerRow.appendChild(filterBtn);
         headerRow.appendChild(swatchSpacer);
+        headerRow.appendChild(premiumSpacer);
         headerRow.appendChild(nameHdr);
         headerRow.appendChild(statsHdr);
         headerRow.appendChild(gotoSpacer);
@@ -334,6 +319,11 @@ export class WindowColorFilter extends Overlay {
             const swatch = document.createElement('div');
             swatch.style.cssText = `width:14px; height:14px; flex-shrink:0; border-radius:3px; background:rgb(${r},${g},${b}); border:1px solid rgba(255,255,255,.15);`;
 
+            const starEl = document.createElement('span');
+            starEl.style.cssText = `font-size:10px; flex-shrink:0; width:14px; text-align:center; color:${color.premium ? 'rgba(251,191,36,.85)' : 'transparent'}; line-height:1;`;
+            starEl.textContent = '★';
+            if (color.premium) starEl.title = 'Premium color';
+
             const nameEl = document.createElement('span');
             nameEl.style.cssText = `flex:1; color:rgba(255,255,255,.85); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;`;
             nameEl.textContent = color.name;
@@ -384,6 +374,7 @@ export class WindowColorFilter extends Overlay {
 
             row.appendChild(toggleBtn);
             row.appendChild(swatch);
+            row.appendChild(starEl);
             row.appendChild(nameEl);
             row.appendChild(statsWrap);
             row.appendChild(gotoBtn);
@@ -434,258 +425,4 @@ export class WindowColorFilter extends Overlay {
         });
     }
 
-    toggleCompact() {
-        if (document.querySelector(`#${this.windowId}`)) {
-            document.querySelector(`#${this.windowId}`).remove();
-            return;
-        }
-        this.addDiv({ id: this.windowId, class: 'yawo-window yawo-compact' })
-            .addTitleBar()
-                .addButton({ class: 'yawo-chrome-btn', textContent: '▼', 'aria-label': 'Minimize window "Color Filter"', 'data-button-status': 'expanded' }, (overlay, btn) => {
-                    btn.onclick = () => {
-                        const statsEl = document.querySelector('#yawo-compact-stats');
-                        if (statsEl) statsEl.style.display = btn.dataset.buttonStatus === 'expanded' ? 'none' : '';
-                        overlay.toggleMinimize(btn);
-                    };
-                    btn.ontouchend = () => btn.click();
-                }).up()
-                .addDiv()
-                    .addSpan({ id: 'yawo-compact-stats', class: 'yawo-text-bold' }).up()
-                .up()
-                .addDiv({ class: 'yawo-row' })
-                    .addButton({ class: 'yawo-chrome-btn', textContent: '🗖', 'aria-label': 'Switch to fullscreen mode for "Color Filter"' }, (overlay, btn) => {
-                        btn.onclick    = () => { document.querySelector(`#${this.windowId}`)?.remove(); this.toggle(); };
-                        btn.ontouchend = () => btn.click();
-                    }).up()
-                    .addButton({ class: 'yawo-chrome-btn', textContent: '✖', 'aria-label': 'Close window "Color Filter"' }, (overlay, btn) => {
-                        btn.onclick    = () => document.querySelector(`#${this.windowId}`)?.remove();
-                        btn.ontouchend = () => btn.click();
-                    }).up()
-                .up()
-            .up()
-            .addDiv({ class: 'yawo-content' })
-                .addDiv({ class: 'yawo-col yawo-spaced' })
-                    .addHeading(1, { textContent: 'Color Filter' }).up()
-                .up()
-                .addHr().up()
-                .addDiv({ class: 'yawo-col yawo-wrap yawo-spaced', style: 'gap: 1.5ch;' })
-                    .addButton({ textContent: 'None' },    (overlay, btn) => { btn.onclick = () => this.#setAllVisibility(false); }).up()
-                    .addButton({ textContent: 'Refresh' }, (overlay, btn) => { btn.onclick = () => { btn.disabled = true; this.refreshStats(); btn.disabled = false; }; }).up()
-                    .addButton({ textContent: 'All' },     (overlay, btn) => { btn.onclick = () => this.#setAllVisibility(true); }).up()
-                .up()
-                .addDiv({ class: 'yawo-col yawo-sections' }).up()
-            .up()
-        .mount(this.mountTarget);
-        this.enableDragging(`#${this.windowId}.yawo-window`, `#${this.windowId} .yawo-titlebar`);
-
-        const sectionsEl = document.querySelector(`#${this.windowId} .yawo-sections`);
-        this.#buildColorList(sectionsEl);
-        this.#sortColorList(this.sortPrimary, this.sortSecondary, this.showUnused);
-    }
-
-    refreshStats() {
-        this.#aggregateStats();
-        const listEl   = document.querySelector(`#${this.listContainerId}`);
-        const statsObj = {};
-        for (const color of this.palette) {
-            const total   = this.totalByColor.get(color.id) ?? 0;
-            const correct = this.correctByColor.get(color.id) ?? 0;
-            let correctStr = '0', pctStr = formatPercent(1);
-            if (total !== 0) {
-                const corrVal = this.correctByColor.get(color.id) ?? '???';
-                if (typeof corrVal !== 'number' && this.tilesChecked === this.totalTiles && color.id) {
-                    // still calculating
-                }
-                correctStr = typeof corrVal === 'string' ? corrVal : formatNumber(corrVal);
-                pctStr     = isNaN(corrVal / total) ? '???' : formatPercent(corrVal / total);
-            }
-            const incorrect = parseInt(total) - parseInt(correct);
-            statsObj[color.id] = { total, totalStr: formatNumber(total), correct, correctStr, pctStr, incorrect };
-        }
-        if (document.querySelector('#yawo-compact-stats')) {
-            const t = this.correctTotal.toString().length > 7 ? this.correctTotal.toString().slice(0, 2) + '…' + this.correctTotal.toString().slice(-3) : this.correctTotal.toString();
-            const e = this.pixelsTotal.toString().length > 7 ? this.pixelsTotal.toString().slice(0, 2) + '…' + this.pixelsTotal.toString().slice(-3) : this.pixelsTotal.toString();
-            this.setElementContent('yawo-compact-stats', `${t}/${e}`, true);
-        }
-        if (!listEl) return statsObj;
-        for (const row of Array.from(listEl.children)) {
-            const colorId = parseInt(row.dataset.id);
-            const { correct, correctStr, pctStr, total, totalStr, incorrect } = statsObj[colorId];
-            row.dataset.correct   = Number.isNaN(parseInt(correct)) ? '0' : correct;
-            row.dataset.total     = total;
-            row.dataset.percent   = pctStr.endsWith('%') ? pctStr.slice(0, -1) : '0';
-            row.dataset.incorrect = incorrect || 0;
-            const statTextEl = document.querySelector(`#${this.windowId} .yawo-color-row[data-id="${colorId}"] .yawo-stat-text`);
-            if (statTextEl) statTextEl.textContent = `${correctStr} / ${totalStr}`;
-            const detailEl = document.querySelector(`#${this.windowId} .yawo-color-row[data-id="${colorId}"] .yawo-detail-text`);
-            if (detailEl) detailEl.textContent = `${typeof incorrect !== 'number' || isNaN(incorrect) ? '???' : incorrect} incorrect pixel${incorrect === 1 ? '' : 's'}. Completed: ${pctStr}`;
-        }
-        this.#sortColorList(this.sortPrimary, this.sortSecondary, this.showUnused);
-    }
-
-    // ── Private methods ───────────────────────────────────────
-
-    #buildColorList(container) {
-        const isCompact = container.closest(`#${this.windowId}`)?.classList.contains('yawo-compact');
-        const builder   = new Overlay(this.name, this.version);
-        builder.addDiv({ id: this.listContainerId });
-        const stats = this.refreshStats();
-
-        for (const color of this.palette) {
-            const hexColor = '#' + rgbToHex(color.rgb).toUpperCase();
-            const lum      = calculateLuminance(color.rgb);
-            let textColor  = 1.05 / (lum + 0.05) > (lum + 0.05) / 0.05 ? 'white' : 'black';
-            if (!color.id) textColor = 'transparent';
-            const textClass = textColor === 'white' ? 'yawo-text-light' : 'yawo-text-dark';
-            const { correct, correctStr, pctStr, total, totalStr, incorrect } = stats[color.id];
-            const isHidden = !!this.templateManager.hiddenColors.get(color.id);
-
-            const eyeShownSvg  = this.#eyeShownSvg.replace('<svg', `<svg fill="${textColor}"`);
-            const eyeHiddenSvg = this.#eyeHiddenSvg.replace('<svg', `<svg fill="${textColor}"`);
-
-            if (isCompact) {
-                const starBg = `background-size: auto 100%; background-repeat: repeat-x; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50,5L79,91L2,39L98,39L21,91' fill='${textColor}' fill-opacity='.1'/></svg>");`;
-                builder.addDiv({
-                    class: 'yawo-col yawo-color-row yawo-wrap', 'data-id': color.id, 'data-name': color.name,
-                    'data-premium': +color.premium, 'data-correct': Number.isNaN(parseInt(correct)) ? '0' : correct,
-                    'data-total': total, 'data-percent': pctStr.endsWith('%') ? pctStr.slice(0, -1) : '0', 'data-incorrect': incorrect || 0
-                })
-                    .addDiv({ class: 'yawo-color-swatch', style: `background-color: rgb(${color.rgb?.map(v => Number(v) || 0).join(',')});${color.premium ? starBg : ''}` })
-                        .addButton({
-                            class: 'yawo-eye-btn ' + textClass, 'data-state': isHidden ? 'hidden' : 'shown',
-                            'aria-label': isHidden ? `Show the color ${color.name || ''} on templates.` : `Hide the color ${color.name || ''} on templates.`,
-                            innerHTML: isHidden ? eyeHiddenSvg : eyeShownSvg
-                        }, (ov, btn) => {
-                            btn.onclick = () => {
-                                btn.style.textDecoration = 'none'; btn.disabled = true;
-                                if (btn.dataset.state === 'shown') {
-                                    btn.innerHTML = eyeHiddenSvg; btn.dataset.state = 'hidden';
-                                    btn.ariaLabel = `Show the color ${color.name || ''} on templates.`;
-                                    this.templateManager.hiddenColors.set(color.id, true);
-                                } else {
-                                    btn.innerHTML = eyeShownSvg; btn.dataset.state = 'shown';
-                                    btn.ariaLabel = `Hide the color ${color.name || ''} on templates.`;
-                                    this.templateManager.hiddenColors.delete(color.id);
-                                }
-                                btn.disabled = false; btn.style.textDecoration = '';
-                            };
-                            if (!color.id) btn.disabled = true;
-                        }).up()
-                    .up()
-                    .addSmall({ textContent: `#${color.id.toString().padStart(2, 0)}`, style: `color: ${color.id === -1 || color.id === 0 ? 'white' : textColor}` }).up()
-                    .addHeading(2, { textContent: color.name, style: `color: ${color.id === -1 || color.id === 0 ? 'white' : textColor}` }).up()
-                    .addSmall({ class: 'yawo-stat-text', textContent: `${correctStr} / ${totalStr}`, style: `color: ${color.id === -1 || color.id === 0 ? 'white' : textColor}; flex: 1 1 auto; text-align: right;` }).up()
-                .up();
-            } else {
-                builder.addDiv({
-                    class: 'yawo-col yawo-color-row yawo-wrap', 'data-id': color.id, 'data-name': color.name,
-                    'data-premium': +color.premium, 'data-correct': Number.isNaN(parseInt(correct)) ? '0' : correct,
-                    'data-total': total, 'data-percent': pctStr.endsWith('%') ? pctStr.slice(0, -1) : '0', 'data-incorrect': incorrect || 0
-                })
-                    .addDiv({ class: 'yawo-row', style: 'flex-direction: column;' })
-                        .addDiv({ class: 'yawo-color-swatch', style: `background-color: rgb(${color.rgb?.map(v => Number(v) || 0).join(',')});` })
-                            .addButton({
-                                class: 'yawo-eye-btn ' + textClass, 'data-state': isHidden ? 'hidden' : 'shown',
-                                'aria-label': isHidden ? `Show the color ${color.name || ''} on templates.` : `Hide the color ${color.name || ''} on templates.`,
-                                innerHTML: isHidden ? eyeHiddenSvg : eyeShownSvg
-                            }, (ov, btn) => {
-                                btn.onclick = () => {
-                                    btn.style.textDecoration = 'none'; btn.disabled = true;
-                                    if (btn.dataset.state === 'shown') {
-                                        btn.innerHTML = eyeHiddenSvg; btn.dataset.state = 'hidden';
-                                        btn.ariaLabel = `Show the color ${color.name || ''} on templates.`;
-                                        this.templateManager.hiddenColors.set(color.id, true);
-                                    } else {
-                                        btn.innerHTML = eyeShownSvg; btn.dataset.state = 'shown';
-                                        btn.ariaLabel = `Hide the color ${color.name || ''} on templates.`;
-                                        this.templateManager.hiddenColors.delete(color.id);
-                                    }
-                                    btn.disabled = false; btn.style.textDecoration = '';
-                                };
-                                if (!color.id) btn.disabled = true;
-                            }).up()
-                        .up()
-                        .addSmall({ textContent: color.id === -2 ? '???????' : formatNumber(total) }).up()
-                    .up()
-                    .addDiv({ class: 'yawo-wrap' })
-                        .addHeading(2, { textContent: (color.premium ? '★ ' : '') + color.name }).up()
-                        .addDiv({ class: 'yawo-wrap', style: 'gap: 1.5ch;' })
-                            .addSmall({ textContent: `#${color.id.toString().padStart(2, 0)}` }).up()
-                            .addSmall({ class: 'yawo-stat-text', textContent: `${correctStr} / ${totalStr}` }).up()
-                        .up()
-                        .addParagraph({ class: 'yawo-detail-text', textContent: `${typeof incorrect !== 'number' || isNaN(incorrect) ? '???' : incorrect} incorrect pixel${incorrect === 1 ? '' : 's'}. Completed: ${pctStr}` }).up()
-                    .up()
-                .up();
-            }
-        }
-        builder.up().mount(container);
-    }
-
-    #sortColorList(primary, secondary, showUnused) {
-        this.sortPrimary   = primary;
-        this.sortSecondary = secondary;
-        this.showUnused    = showUnused;
-        const listEl = document.querySelector(`#${this.listContainerId}`);
-        if (!listEl) return;
-        const rows = Array.from(listEl.children);
-        rows.sort((a, b) => {
-            const aVal = a.getAttribute('data-' + primary);
-            const bVal = b.getAttribute('data-' + primary);
-            const aNum = parseFloat(aVal), bNum = parseFloat(bVal);
-            const bothNum = !isNaN(aNum) && !isNaN(bNum);
-            if (showUnused) a.classList.remove('yawo-hidden');
-            else if (!Number(a.getAttribute('data-total'))) a.classList.add('yawo-hidden');
-            if (bothNum) return secondary === 'ascending' ? aNum - bNum : bNum - aNum;
-            const al = aVal.toLowerCase(), bl = bVal.toLowerCase();
-            return al < bl ? (secondary === 'ascending' ? -1 : 1) : al > bl ? (secondary === 'ascending' ? 1 : -1) : 0;
-        });
-        rows.forEach(row => listEl.appendChild(row));
-    }
-
-    #setAllVisibility(show) {
-        const listEl = document.querySelector(`#${this.listContainerId}`);
-        if (!listEl) return;
-        for (const row of Array.from(listEl.children)) {
-            if (row.classList.contains('yawo-hidden')) continue;
-            const btn = row.querySelector('.yawo-color-swatch button');
-            if (!btn) continue;
-            if ((btn.dataset.state === 'hidden') === show) btn.click();
-        }
-    }
-
-    #aggregateStats() {
-        this.pixelsTotal    = 0;
-        this.correctTotal   = 0;
-        this.totalByColor   = new Map();
-        this.correctByColor = new Map();
-        this.tilesChecked   = 0;
-        this.totalTiles     = 0;
-        const activeKey2 = this.templateManager.activeTemplateKey;
-        const visibleTemplates2 = activeKey2
-            ? this.templateManager.templates.filter(t => `${t.sortId} ${t.authorId}` === activeKey2)
-            : this.templateManager.templates;
-        for (const tmpl of visibleTemplates2) {
-            const total = tmpl.pixelStats?.total ?? 0;
-            this.pixelsTotal += total;
-            const colors = tmpl.pixelStats?.colors ?? new Map();
-            for (const [colorId, cnt] of colors) {
-                this.totalByColor.set(colorId, (this.totalByColor.get(colorId) ?? 0) + (Number(cnt) || 0));
-            }
-            const correct = tmpl.pixelStats?.correct ?? {};
-            this.tilesChecked += Object.keys(correct).length;
-            this.totalTiles   += Object.keys(tmpl.tiles ?? {}).length;
-            for (const tileCorr of Object.values(correct)) {
-                for (const [colorId, cnt] of tileCorr) {
-                    const val = Number(cnt) || 0;
-                    this.correctTotal += val;
-                    this.correctByColor.set(colorId, (this.correctByColor.get(colorId) ?? 0) + val);
-                }
-            }
-        }
-        if (this.correctTotal >= this.pixelsTotal && this.pixelsTotal && this.tilesChecked === this.totalTiles) {
-            new ConfettiManager().launch(document.querySelector(`#${this.windowId}`));
-        }
-        this.timeRemaining = new Date(30 * (this.pixelsTotal - this.correctTotal) * 1000 + Date.now());
-        this.formattedEta  = formatDate(this.timeRemaining);
-    }
 }

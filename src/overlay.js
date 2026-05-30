@@ -327,9 +327,9 @@ export class Overlay {
         const heading   = contentEl?.querySelector('h1');
         if (windowEl.parentElement) windowEl.parentElement.append(windowEl);
         if ('expanded' === btn.dataset.buttonStatus) {
-            contentEl.style.height = contentEl.scrollHeight + 'px';
-            windowEl.style.width   = windowEl.scrollWidth + 'px';
-            contentEl.style.height = '0';
+            contentEl.style.height  = contentEl.scrollHeight + 'px';
+            windowEl.style.minWidth = windowEl.clientWidth + 'px';
+            contentEl.style.height  = '0';
             contentEl.addEventListener('transitionend', function handler() {
                 contentEl.style.display = 'none';
                 btn.disabled = false;
@@ -348,10 +348,13 @@ export class Overlay {
             const clonedHeading = btn.nextElementSibling?.querySelector('h1');
             const label         = clonedHeading?.textContent ?? titlebar.querySelector('h1')?.textContent ?? '';
             clonedHeading?.remove();
-            contentEl.style.display = '';
-            contentEl.style.height  = '0';
-            windowEl.style.width    = '';
-            contentEl.style.height  = contentEl.scrollHeight + 'px';
+            contentEl.style.display   = '';
+            contentEl.style.height    = '0';
+            contentEl.style.overflowY = 'hidden';
+            windowEl.style.minWidth   = '';
+            const targetHeight = contentEl.scrollHeight;
+            contentEl.style.overflowY = '';
+            contentEl.style.height    = targetHeight + 'px';
             contentEl.addEventListener('transitionend', function handler() {
                 contentEl.style.height = '';
                 btn.disabled = false;
