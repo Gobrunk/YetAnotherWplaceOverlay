@@ -327,6 +327,12 @@ export class Overlay {
         const heading   = contentEl?.querySelector('h1');
         if (windowEl.parentElement) windowEl.parentElement.append(windowEl);
         if ('expanded' === btn.dataset.buttonStatus) {
+            const savedResizeH = windowEl.style.height;
+            if (savedResizeH) {
+                windowEl.dataset.savedResizeH = savedResizeH;
+                windowEl.style.height = '';
+                windowEl.classList.remove('yawo-window-resized');
+            }
             contentEl.style.height  = contentEl.scrollHeight + 'px';
             windowEl.style.minWidth = windowEl.clientWidth + 'px';
             contentEl.style.height  = '0';
@@ -348,6 +354,12 @@ export class Overlay {
             const clonedHeading = btn.nextElementSibling?.querySelector('h1');
             const label         = clonedHeading?.textContent ?? titlebar.querySelector('h1')?.textContent ?? '';
             clonedHeading?.remove();
+            const savedResizeH = windowEl.dataset.savedResizeH;
+            if (savedResizeH) {
+                windowEl.style.height = savedResizeH;
+                windowEl.classList.add('yawo-window-resized');
+                delete windowEl.dataset.savedResizeH;
+            }
             contentEl.style.display   = '';
             contentEl.style.height    = '0';
             contentEl.style.overflowY = 'hidden';
@@ -450,6 +462,92 @@ export class Overlay {
         handleEl.addEventListener('touchstart', e => {
             const touch = e?.touches?.[0];
             if (touch) { startDrag(touch.clientX, touch.clientY); e.preventDefault(); }
+        }, { passive: false });
+    }
+
+    enableResizing(windowSelector, onResizeStop = null, savedSize = null) {
+        const MIN_W = 220, MIN_H = 100;
+        const windowEl = document.querySelector(windowSelector);
+        if (!windowEl) {
+            this.setError(`Can not resize! ${windowSelector} not found!`);
+            return;
+        }
+
+        if (savedSize?.w !== undefined && savedSize?.h !== undefined) {
+            windowEl.style.width  = savedSize.w + 'px';
+            windowEl.style.height = savedSize.h + 'px';
+            windowEl.classList.add('yawo-window-resized');
+        }
+
+        const handleEl = document.createElement('div');
+        handleEl.className = 'yawo-resize-handle';
+        windowEl.appendChild(handleEl);
+
+        let isResizing = false, animFrame = null;
+        let startX, startY, startW, startH, targetW, targetH, prevW, prevH;
+
+        const tick = () => {
+            if (isResizing) {
+                if (Math.abs(prevW - targetW) > 0.5 || Math.abs(prevH - targetH) > 0.5) {
+                    prevW = targetW; prevH = targetH;
+                    windowEl.style.width  = prevW + 'px';
+                    windowEl.style.height = prevH + 'px';
+                    windowEl.classList.add('yawo-window-resized');
+                }
+                animFrame = requestAnimationFrame(tick);
+            }
+        };
+
+        const startResize = (clientX, clientY) => {
+            isResizing = true;
+            const rect = windowEl.getBoundingClientRect();
+            startX = clientX; startY = clientY;
+            startW = rect.width; startH = rect.height;
+            prevW = startW; prevH = startH; targetW = startW; targetH = startH;
+            windowEl.style.right = '';
+            document.body.style.userSelect = 'none';
+            handleEl.classList.add('yawo-resizing');
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('touchmove', onTouchMove, { passive: false });
+            document.addEventListener('mouseup',   stopResize);
+            document.addEventListener('touchend',  stopResize);
+            document.addEventListener('touchcancel', stopResize);
+            if (animFrame) cancelAnimationFrame(animFrame);
+            tick();
+        };
+
+        const stopResize = () => {
+            isResizing = false;
+            if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+            document.body.style.userSelect = '';
+            handleEl.classList.remove('yawo-resizing');
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('touchmove', onTouchMove);
+            document.removeEventListener('mouseup',   stopResize);
+            document.removeEventListener('touchend',  stopResize);
+            document.removeEventListener('touchcancel', stopResize);
+            if (typeof onResizeStop === 'function') onResizeStop(prevW, prevH);
+        };
+
+        const onMouseMove = e => {
+            if (isResizing) {
+                targetW = Math.max(MIN_W, startW + (e.clientX - startX));
+                targetH = Math.max(MIN_H, startH + (e.clientY - startY));
+            }
+        };
+
+        const onTouchMove = e => {
+            if (!isResizing) return;
+            const t = e.touches[0]; if (!t) return;
+            targetW = Math.max(MIN_W, startW + (t.clientX - startX));
+            targetH = Math.max(MIN_H, startH + (t.clientY - startY));
+            e.preventDefault();
+        };
+
+        handleEl.addEventListener('mousedown', e => { e.preventDefault(); e.stopPropagation(); startResize(e.clientX, e.clientY); });
+        handleEl.addEventListener('touchstart', e => {
+            const t = e?.touches?.[0]; if (!t) return;
+            startResize(t.clientX, t.clientY); e.preventDefault(); e.stopPropagation();
         }, { passive: false });
     }
 }

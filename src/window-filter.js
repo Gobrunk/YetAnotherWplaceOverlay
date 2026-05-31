@@ -271,7 +271,8 @@ export class WindowColorFilter extends Overlay {
 
         // ── Liste scrollable ──────────────────────────────────
         const list = document.createElement('div');
-        list.style.cssText = `max-height:320px; overflow-y:auto; padding:4px 0;`;
+        list.className = 'yawo-filter-list';
+        list.style.cssText = `overflow-y:auto; padding:4px 0;`;
 
         const rowData = [];
 
@@ -423,6 +424,11 @@ export class WindowColorFilter extends Overlay {
                 this.settingsManager.settings.filterWindowPosition = { x, y };
             }
         });
+        this.enableResizing(
+            '#yawo-color-dropdown.yawo-window',
+            (w, h) => { if (this.settingsManager?.settings) this.settingsManager.settings.filterWindowSize = { w, h }; },
+            this.settingsManager?.settings?.filterWindowSize
+        );
     }
 
 }

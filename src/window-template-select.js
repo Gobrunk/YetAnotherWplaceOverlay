@@ -15,6 +15,22 @@ export class WindowTemplateSelect extends Overlay {
         const existing = document.querySelector(`#${this.windowId}`);
         if (existing) { this.#cleanPopovers(); existing.remove(); return; }
 
+        const growToFit = () => {
+            const win = document.querySelector(`#${this.windowId}`);
+            if (!win?.style.height) return;
+            const content = win.querySelector('.yawo-content');
+            const titlebar = win.querySelector('.yawo-titlebar');
+            if (!content || !titlebar) return;
+            const available = win.offsetHeight - titlebar.offsetHeight;
+            if (content.scrollHeight > available) {
+                const newH = content.scrollHeight + titlebar.offsetHeight + 2;
+                win.style.height = newH + 'px';
+                win.classList.add('yawo-window-resized');
+                if (this.settingsManager?.settings)
+                    this.settingsManager.settings.templateWindowSize = { w: win.offsetWidth, h: newH };
+            }
+        };
+
         this.addDiv({ id: this.windowId, class: 'yawo-window', style: 'top: 10px; left: 10px; width: 300px;' })
             .addTitleBar()
                 .addButton({ class: 'yawo-chrome-btn', textContent: '▼', 'aria-label': 'Minimize', 'data-button-status': 'expanded' }, (overlay, btn) => {
@@ -43,6 +59,7 @@ export class WindowTemplateSelect extends Overlay {
                             impTab.classList.remove('yawo-tab-btn--active');
                             addPanel.style.display = isOpen ? 'none' : '';
                             addTab.classList.toggle('yawo-tab-btn--active', !isOpen);
+                            growToFit();
                         };
                     }).up()
                     .addButton({ id: 'yawo-tab-import', class: 'yawo-tab-btn', innerHTML: '📥&thinsp;Import' }, (overlay, btn) => {
@@ -57,6 +74,7 @@ export class WindowTemplateSelect extends Overlay {
                             addTab.classList.remove('yawo-tab-btn--active');
                             impPanel.style.display = isOpen ? 'none' : '';
                             impTab.classList.toggle('yawo-tab-btn--active', !isOpen);
+                            growToFit();
                         };
                     }).up()
                 .up()
@@ -169,6 +187,11 @@ export class WindowTemplateSelect extends Overlay {
                 this.settingsManager.settings.templateWindowPosition = { x, y };
             }
         });
+        this.enableResizing(
+            `#${this.windowId}.yawo-window`,
+            (w, h) => { if (this.settingsManager?.settings) this.settingsManager.settings.templateWindowSize = { w, h }; },
+            this.settingsManager?.settings?.templateWindowSize
+        );
     }
 
     refresh() {

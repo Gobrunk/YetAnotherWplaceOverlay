@@ -51,7 +51,17 @@ export function injectStyles() {
         padding: 8px;
         overflow-y: auto;
         max-height: 80vh;
+        flex: 1 1 auto;
+        min-height: 0;
         transition: height .2s ease;
+      }
+      .yawo-window-resized .yawo-content {
+        max-height: none;
+      }
+      .yawo-window-resized .yawo-filter-list {
+        flex: 1 0 auto;
+        max-height: none;
+        overflow-y: auto;
       }
 
       /* ── Groupes et lignes ── */
@@ -72,7 +82,7 @@ export function injectStyles() {
 
       /* ── Action buttons (Disable / Create / Filter) ── */
       .yawo-action-btns { flex-wrap: nowrap !important; }
-      .yawo-action-btns button { flex: 1; padding: 3px 4px !important; text-align: center; min-width: 0; white-space: nowrap; }
+      .yawo-action-btns button { flex: 1; padding: 3px 4px !important; text-align: center; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
       /* ── Grille de statistiques ── */
       .yawo-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; background: rgba(255,255,255,.04); border-radius: 6px; padding: 6px 8px; }
@@ -430,6 +440,29 @@ export function injectStyles() {
         cursor: pointer;
         border: none;
       }
+
+      /* ── Resize handle ── */
+      .yawo-resize-handle {
+        position: absolute;
+        bottom: 4px;
+        right: 4px;
+        width: 12px;
+        height: 12px;
+        cursor: nwse-resize;
+        z-index: 1;
+        background-image:
+          radial-gradient(circle, rgba(255,255,255,.35) 1.5px, transparent 1.5px),
+          radial-gradient(circle, rgba(255,255,255,.35) 1.5px, transparent 1.5px),
+          radial-gradient(circle, rgba(255,255,255,.35) 1.5px, transparent 1.5px);
+        background-size: 5px 5px;
+        background-position: 1px 9px, 5px 5px, 9px 1px;
+        background-repeat: no-repeat;
+        opacity: 0;
+        transition: opacity .15s;
+      }
+      .yawo-window:hover .yawo-resize-handle { opacity: 1; }
+      .yawo-resize-handle.yawo-resizing      { opacity: 1; }
+      .yawo-window:has([data-button-status="collapsed"]) .yawo-resize-handle { display: none; }
 
       /* ── Scrollbars ── */
       .yawo-window ::-webkit-scrollbar       { width: 4px; height: 4px; }
