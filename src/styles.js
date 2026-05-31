@@ -68,7 +68,6 @@ export function injectStyles() {
       .yawo-col    { display: flex; flex-direction: column; gap: 4px; }
       .yawo-row    { display: flex; flex-direction: row; align-items: center; gap: 4px; }
       .yawo-wrap   { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px; }
-      .yawo-spaced { justify-content: space-between; }
       .yawo-hidden { display: none !important; }
 
       /* Coordinate row: forces horizontal centered layout */
@@ -191,22 +190,9 @@ export function injectStyles() {
       /* ── Texte courant ── */
       .yawo-window p, .yawo-window label, .yawo-window small { color: rgba(255,255,255,.6); margin: 0; }
       .yawo-text-light { color: rgba(255,255,255,.9); }
-      .yawo-text-dark  { color: #000; }
-      .yawo-text-bold  { font-weight: bold; }
       .yawo-countdown  { font-variant-numeric: tabular-nums; }
 
-      /* ── Swatches couleur ── */
-      .yawo-color-swatch { width: 1.5rem; height: 1.5rem; flex-shrink: 0; border-radius: 3px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
-      .yawo-eye-btn      { background: none; border: none; cursor: pointer; padding: 0; width: 100%; height: 100%; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-      .yawo-eye-btn svg  { width: 100%; height: 100%; }
-      .yawo-logo-img     { max-width: 1.5rem; max-height: 1.5rem; object-fit: contain; }
-
-      /* ── Ligne couleur ── */
-      .yawo-color-row { display: flex; align-items: center; gap: 6px; padding: 3px 4px; border-radius: 4px; }
-      .yawo-color-row:hover { background: rgba(255,255,255,.05); }
-
       /* ── Prévisualisation template ── */
-      .yawo-template-thumb { width: 2.5rem; height: 2.5rem; flex-shrink: 0; border-radius: 4px; overflow: hidden; background: rgba(255,255,255,.06); }
       .yawo-template-info  { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
       /* ── Circular info button ── */

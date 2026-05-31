@@ -83,21 +83,6 @@ export class Overlay {
         return this;
     }
 
-    addDetails(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('details', {}, attrs));
-        return this;
-    }
-
-    addSummary(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('summary', {}, attrs));
-        return this;
-    }
-
-    addImage(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('img', {}, attrs));
-        return this;
-    }
-
     addHeading(level, attrs = {}, cb = () => {}) {
         cb(this, this.#createElement('h' + level, {}, attrs));
         return this;
@@ -108,56 +93,7 @@ export class Overlay {
         return this;
     }
 
-    addBr(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('br', {}, attrs));
-        return this;
-    }
-
-    addForm(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('form', {}, attrs));
-        return this;
-    }
-
-    addFieldset(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('fieldset', {}, attrs));
-        return this;
-    }
-
-    addLegend(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('legend', {}, attrs));
-        return this;
-    }
-
     // ── Form elements ─────────────────────────────────────────
-
-    addCheckbox(attrs = {}, cb = () => {}) {
-        const labelContent = {};
-        if (attrs.textContent)  { labelContent.textContent = attrs.textContent; delete attrs.textContent; }
-        else if (attrs.innerHTML) { labelContent.innerHTML = attrs.innerHTML;   delete attrs.innerHTML;   }
-        const labelEl = this.#createElement('label', labelContent);
-        const inputEl = this.#createElement('input', { type: 'checkbox' }, attrs);
-        labelEl.insertBefore(inputEl, labelEl.firstChild);
-        this.up();
-        cb(this, labelEl, inputEl);
-        return this;
-    }
-
-    addSelect(attrs = {}, cb = () => {}) {
-        const labelEl = this.#createElement('label', {
-            textContent: attrs.textContent ?? '',
-            for: attrs.id ?? ''
-        });
-        delete attrs.textContent;
-        this.up();
-        const selectEl = this.#createElement('select', {}, attrs);
-        cb(this, labelEl, selectEl);
-        return this;
-    }
-
-    addOption(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('option', {}, attrs));
-        return this;
-    }
 
     addInput(attrs = {}, cb = () => {}) {
         cb(this, this.#createElement('input', {}, attrs));
@@ -189,83 +125,6 @@ export class Overlay {
 
     addButton(attrs = {}, cb = () => {}) {
         cb(this, this.#createElement('button', {}, attrs));
-        return this;
-    }
-
-    addHelpButton(attrs = {}, cb = () => {}) {
-        const title = attrs.title ?? attrs.textContent ?? 'Help: No info';
-        delete attrs.textContent;
-        attrs.title = `Help: ${title}`;
-        const buttonEl = this.#createElement('button', {
-            textContent: '?',
-            className:   'yawo-info-btn',
-            onclick:     () => this.setElementContent(this.#statusAreaId, title)
-        }, attrs);
-        cb(this, buttonEl);
-        return this;
-    }
-
-    // ── Lists ─────────────────────────────────────────────────
-
-    addOrderedList(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('ol', {}, attrs));
-        return this;
-    }
-
-    addUnorderedList(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('ul', {}, attrs));
-        return this;
-    }
-
-    addMenu(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('menu', {}, attrs));
-        return this;
-    }
-
-    addListItem(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('li', {}, attrs));
-        return this;
-    }
-
-    // ── Tables ────────────────────────────────────────────────
-
-    addTable(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('table', {}, attrs));
-        return this;
-    }
-
-    addTableCaption(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('caption', {}, attrs));
-        return this;
-    }
-
-    addTableHead(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('thead', {}, attrs));
-        return this;
-    }
-
-    addTableBody(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('tbody', {}, attrs));
-        return this;
-    }
-
-    addTableFoot(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('tfoot', {}, attrs));
-        return this;
-    }
-
-    addTableRow(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('tr', {}, attrs));
-        return this;
-    }
-
-    addTableHeaderCell(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('th', {}, attrs));
-        return this;
-    }
-
-    addTableDataCell(attrs = {}, cb = () => {}) {
-        cb(this, this.#createElement('td', {}, attrs));
         return this;
     }
 
@@ -386,7 +245,7 @@ export class Overlay {
             this.setError(`Can not drag! ${windowEl ? '' : windowSelector} ${windowEl || handleEl ? '' : 'and '}${handleEl ? '' : handleSelector} was not found!`);
             return;
         }
-        let startOffsetX, isDragging = false, translateX = 0, animFrame = null;
+        let startOffsetX, isDragging = false, animFrame = null;
         let prevX = 0, prevY = 0, targetX = 0, targetY = 0, startOffsetY = 0;
         let boundingRect = null;
 

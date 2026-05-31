@@ -85,8 +85,7 @@ export function injectBridge(scriptName) {
                     window.postMessage({ source: 'yaw-overlay', endpoint: url, jsonData: data }, window.location.origin);
                 }).catch(() => {});
             } else if (contentType.includes('image/') && !url.includes('openfreemap') && !url.includes('maps')) {
-                const timestamp = Date.now();
-                const blob      = await cloned.blob();
+                const blob = await cloned.blob();
                 return new Promise(resolve => {
                     const blobId = crypto.randomUUID();
                     blobQueue.set(blobId, processedBlob => {
@@ -100,8 +99,7 @@ export function injectBridge(scriptName) {
                         source:   'yaw-overlay',
                         endpoint: url,
                         blobID:   blobId,
-                        blobData: blob,
-                        blink:    timestamp
+                        blobData: blob
                     }, window.location.origin);
                 }).catch(() => {});
             }

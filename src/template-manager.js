@@ -1,6 +1,6 @@
 import { Template } from './template.js';
 import { COLOR_PALETTE } from './palette.js';
-import { encodeBase, base64ToUint8, uint8ToBase64, sleep, consoleLog, consoleError, consoleWarn, formatNumber } from './utils.js';
+import { encodeBase, base64ToUint8, uint8ToBase64, formatNumber } from './utils.js';
 
 export class TemplateManager {
     constructor(name, version) {
@@ -97,14 +97,6 @@ export class TemplateManager {
         if (key === this.activeTemplateKey) this.windowMain?.updateActiveOverlayName(trimmed);
     }
 
-    async downloadAllTemplates() {
-        consoleLog('Downloading all templates...');
-        for (const tmpl of this.templates) {
-            await this.#downloadTemplate(tmpl);
-            await sleep(500);
-        }
-    }
-
     async generateShareCode(key) {
         const entry = this.storageData?.templates?.[key];
         if (!entry) throw new Error('Template not found');
@@ -126,16 +118,6 @@ export class TemplateManager {
         const file   = new File([bytes], 'shared.png', { type: 'image/png' });
         const name   = displayName?.trim() || `Import ${coords[0]},${coords[1]}`;
         await this.createTemplate(file, name, coords);
-    }
-
-    async loadFromStorage() {
-        const stored = JSON.parse(GM_getValue('yawoTemplates', '{}')).templates;
-        if (!stored || Object.keys(stored).length === 0) return;
-        for (const [key, entry] of Object.entries(stored)) {
-            if (!stored.hasOwnProperty(key)) continue;
-            await this.#downloadTemplate(new Template({ displayName: entry.name, sortId: key.split(' ')?.[0], tiles: entry.tiles }));
-            await sleep(500);
-        }
     }
 
     async compositeTemplateTiles(tmpl) {
@@ -358,20 +340,6 @@ export class TemplateManager {
 
     async #ensureStorage() {
         if (!this.storageData) this.storageData = await this.#createEmptyStorage();
-    }
-
-    async #downloadTemplate(tmpl) {
-        tmpl.inferCoordsFromTiles();
-        const filename = `${tmpl.coords.join('-')}_${tmpl.displayName.replaceAll(' ', '-')}`;
-        const blob     = await this.compositeTemplateTiles(tmpl);
-        await GM.download({
-            url:     URL.createObjectURL(blob),
-            name:    filename + '.png',
-            saveAs:  'uniquify',
-            onload:  () => consoleLog(`Download of template '${filename}' complete!`),
-            onerror: (err, details) => consoleError(`Download of template '${filename}' failed because ${err}! Details: ${details}`),
-            ontimeout: () => consoleWarn(`Download of template '${filename}' has timed out!`)
-        });
     }
 
     async #saveToStorage() {

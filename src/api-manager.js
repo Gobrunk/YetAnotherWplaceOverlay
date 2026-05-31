@@ -3,14 +3,13 @@ import { formatNumber } from './utils.js';
 export class ApiManager {
     constructor(templateManager) {
         this.templateManager = templateManager;
-        this.robotsBlocked   = false;
         this.chargesTimerId  = '';
         this.lastClickCoords = [];
     }
 
     navigateToCoords(coords, zoom) {
         if (!coords?.length) return;
-        const msg = { source: 'yaw-overlay', action: 'navigate', coords };
+        const msg = { source: 'yaw-overlay', coords };
         if (zoom !== undefined) msg.zoom = zoom;
         window.postMessage(msg, window.location.origin);
     }
@@ -18,7 +17,7 @@ export class ApiManager {
     startListening(windowMain) {
         window.addEventListener('message', async event => {
             if (event.origin !== window.location.origin) return;
-            const { source, jsonData, endpoint, blobID, blobData, blink } = event.data;
+            const { source, jsonData, endpoint, blobID, blobData } = event.data;
             if (!event.data || source !== 'yaw-overlay') return;
             if (!endpoint) return;
 
@@ -98,14 +97,10 @@ export class ApiManager {
                     window.postMessage({
                         source:   'yaw-overlay',
                         blobID,
-                        blobData: processedBlob,
-                        blink
+                        blobData: processedBlob
                     }, window.location.origin);
                     break;
                 }
-                case 'robots':
-                    this.robotsBlocked = jsonData.userscript?.toString().toLowerCase() === 'false';
-                    break;
             }
         });
     }
