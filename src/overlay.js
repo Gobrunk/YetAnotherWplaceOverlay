@@ -245,9 +245,11 @@ export class Overlay {
             this.setError(`Can not drag! ${windowEl ? '' : windowSelector} ${windowEl || handleEl ? '' : 'and '}${handleEl ? '' : handleSelector} was not found!`);
             return;
         }
+        const CLICK_THRESHOLD = 5; // px tolerance to distinguish a click from a drag
         let startOffsetX, isDragging = false, animFrame = null;
         let prevX = 0, prevY = 0, targetX = 0, targetY = 0, startOffsetY = 0;
         let boundingRect = null;
+        let startClientX = 0, startClientY = 0, moved = false, downTarget = null;
 
         const tick = () => {
             if (isDragging) {
@@ -263,8 +265,12 @@ export class Overlay {
             }
         };
 
-        const startDrag = (clientX, clientY) => {
+        const startDrag = (clientX, clientY, target) => {
             isDragging    = true;
+            moved         = false;
+            downTarget    = target;
+            startClientX  = clientX;
+            startClientY  = clientY;
             boundingRect  = windowEl.getBoundingClientRect();
             startOffsetX  = clientX - boundingRect.left;
             startOffsetY  = clientY - boundingRect.top;
@@ -301,10 +307,20 @@ export class Overlay {
             document.removeEventListener('touchend',  stopDrag);
             document.removeEventListener('touchcancel', stopDrag);
             if (typeof onDragStop === 'function') onDragStop(prevX, prevY);
+            // A plain click (no movement) on the titlebar toggles minimize.
+            // Clicks originating from an interactive control (e.g. the ▼ button) are
+            // ignored to avoid a double-toggle with their own handler.
+            if (!moved && downTarget && !downTarget.closest('button, a, input, textarea, select')) {
+                const minBtn = handleEl.querySelector('[data-button-status="expanded"], [data-button-status="collapsed"]');
+                if (minBtn) this.toggleMinimize(minBtn);
+            }
         };
 
         const onMouseMove = e => {
-            if (isDragging && boundingRect) { targetX = e.clientX - startOffsetX; targetY = e.clientY - startOffsetY; }
+            if (isDragging && boundingRect) {
+                targetX = e.clientX - startOffsetX; targetY = e.clientY - startOffsetY;
+                if (Math.hypot(e.clientX - startClientX, e.clientY - startClientY) > CLICK_THRESHOLD) moved = true;
+            }
         };
 
         const onTouchMove = e => {
@@ -313,14 +329,15 @@ export class Overlay {
                 if (!touch) return;
                 targetX = touch.clientX - startOffsetX;
                 targetY = touch.clientY - startOffsetY;
+                if (Math.hypot(touch.clientX - startClientX, touch.clientY - startClientY) > CLICK_THRESHOLD) moved = true;
                 e.preventDefault();
             }
         };
 
-        handleEl.addEventListener('mousedown', e => { e.preventDefault(); startDrag(e.clientX, e.clientY); });
+        handleEl.addEventListener('mousedown', e => { e.preventDefault(); startDrag(e.clientX, e.clientY, e.target); });
         handleEl.addEventListener('touchstart', e => {
             const touch = e?.touches?.[0];
-            if (touch) { startDrag(touch.clientX, touch.clientY); e.preventDefault(); }
+            if (touch) { startDrag(touch.clientX, touch.clientY, e.target); e.preventDefault(); }
         }, { passive: false });
     }
 
