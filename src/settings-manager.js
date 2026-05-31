@@ -103,13 +103,16 @@ export class SettingsManager extends WindowSettings {
 
     // ── Private methods ───────────────────────────────────────
 
-    async #autoSave() {
+    async persist() {
         const serialized = JSON.stringify(this.settings);
-        if (serialized !== JSON.stringify(this.savedSettings) && Date.now() - this.lastSaveTimestamp > this.saveIntervalMs) {
-            await GM.setValue(this.storageKey, serialized);
-            this.savedSettings     = structuredClone(this.settings);
-            this.lastSaveTimestamp = Date.now();
-        }
+        if (serialized === JSON.stringify(this.savedSettings)) return;
+        await GM.setValue(this.storageKey, serialized);
+        this.savedSettings     = structuredClone(this.settings);
+        this.lastSaveTimestamp = Date.now();
+    }
+
+    async #autoSave() {
+        if (Date.now() - this.lastSaveTimestamp > this.saveIntervalMs) this.persist();
     }
 
 }

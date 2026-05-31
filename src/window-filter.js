@@ -422,11 +422,12 @@ export class WindowColorFilter extends Overlay {
         this.enableDragging('#yawo-color-dropdown.yawo-window', '#yawo-color-dropdown .yawo-titlebar', (x, y) => {
             if (this.settingsManager?.settings) {
                 this.settingsManager.settings.filterWindowPosition = { x, y };
+                this.settingsManager.persist();
             }
         });
         this.enableResizing(
             '#yawo-color-dropdown.yawo-window',
-            (w, h) => { if (this.settingsManager?.settings) this.settingsManager.settings.filterWindowSize = { w, h }; },
+            (w, h) => { if (this.settingsManager?.settings) { this.settingsManager.settings.filterWindowSize = { w, h }; this.settingsManager.persist(); } },
             this.settingsManager?.settings?.filterWindowSize
         );
     }

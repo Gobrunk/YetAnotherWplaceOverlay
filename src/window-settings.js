@@ -42,11 +42,11 @@ export class WindowSettings extends Overlay {
             }
         }
         this.enableDragging(`#${this.windowId}.yawo-window`, `#${this.windowId} .yawo-titlebar`, (x, y) => {
-            if (this.settings) this.settings.settingsWindowPosition = { x, y };
+            if (this.settings) { this.settings.settingsWindowPosition = { x, y }; this.persist?.(); }
         });
         this.enableResizing(
             `#${this.windowId}.yawo-window`,
-            (w, h) => { if (this.settings) this.settings.settingsWindowSize = { w, h }; },
+            (w, h) => { if (this.settings) { this.settings.settingsWindowSize = { w, h }; this.persist?.(); } },
             this.settings?.settingsWindowSize
         );
     }

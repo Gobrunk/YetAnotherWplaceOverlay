@@ -98,11 +98,11 @@ export class WindowMain extends Overlay {
             }
         }
         this.enableDragging(`#${this.windowId}.yawo-window`, `#${this.windowId} .yawo-titlebar`, (x, y) => {
-            if (this.settingsManager?.settings) this.settingsManager.settings.windowPosition = { x, y };
+            if (this.settingsManager?.settings) { this.settingsManager.settings.windowPosition = { x, y }; this.settingsManager.persist(); }
         });
         this.enableResizing(
             `#${this.windowId}.yawo-window`,
-            (w, h) => { if (this.settingsManager?.settings) this.settingsManager.settings.windowSize = { w, h }; },
+            (w, h) => { if (this.settingsManager?.settings) { this.settingsManager.settings.windowSize = { w, h }; this.settingsManager.persist(); } },
             this.settingsManager?.settings?.windowSize
         );
     }

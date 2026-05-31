@@ -26,8 +26,10 @@ export class WindowTemplateSelect extends Overlay {
                 const newH = content.scrollHeight + titlebar.offsetHeight + 2;
                 win.style.height = newH + 'px';
                 win.classList.add('yawo-window-resized');
-                if (this.settingsManager?.settings)
+                if (this.settingsManager?.settings) {
                     this.settingsManager.settings.templateWindowSize = { w: win.offsetWidth, h: newH };
+                    this.settingsManager.persist();
+                }
             }
         };
 
@@ -185,11 +187,12 @@ export class WindowTemplateSelect extends Overlay {
         this.enableDragging(`#${this.windowId}.yawo-window`, `#${this.windowId} .yawo-titlebar`, (x, y) => {
             if (this.settingsManager?.settings) {
                 this.settingsManager.settings.templateWindowPosition = { x, y };
+                this.settingsManager.persist();
             }
         });
         this.enableResizing(
             `#${this.windowId}.yawo-window`,
-            (w, h) => { if (this.settingsManager?.settings) this.settingsManager.settings.templateWindowSize = { w, h }; },
+            (w, h) => { if (this.settingsManager?.settings) { this.settingsManager.settings.templateWindowSize = { w, h }; this.settingsManager.persist(); } },
             this.settingsManager?.settings?.templateWindowSize
         );
     }
