@@ -245,6 +245,11 @@ export class TemplateManager {
                 region: [offsetX, offsetY, entry.tileBitmap.width, entry.tileBitmap.height]
             });
 
+            // Cache the freshly computed correct pixels so completion stats stay
+            // up to date as the user pans, without needing a manual refresh.
+            entry.template.pixelStats.correct ??= {};
+            entry.template.pixelStats.correct[coordKey] = correctMap;
+
             if (this.hiddenColors.size !== 0 || hasErased) {
                 ctx.globalAlpha = overlayOpacity;
                 ctx.drawImage(await createImageBitmap(new ImageData(new Uint8ClampedArray(outputPixels.buffer), entry.tileBitmap.width, entry.tileBitmap.height)), offsetX, offsetY);
@@ -252,6 +257,7 @@ export class TemplateManager {
             }
 
         }
+        this.windowMain.updateCompletion(this.getCompletionStats());
         return canvas.convertToBlob({ type: 'image/png' });
     }
 
@@ -298,6 +304,23 @@ export class TemplateManager {
             }
         }
         this.#saveCorrectToStorage();
+        this.windowMain.updateCompletion(this.getCompletionStats());
+    }
+
+    // Aggregate completion over the active overlay only: total non-transparent
+    // pixels vs. correctly painted ones. Returns null when no overlay is active.
+    getCompletionStats() {
+        const key = this.activeTemplateKey;
+        if (!key) return null;
+        let total = 0, correct = 0;
+        for (const tmpl of this.templates) {
+            if (`${tmpl.sortId} ${tmpl.authorId}` !== key) continue;
+            total += tmpl.pixelStats?.total ?? 0;
+            for (const tileCorr of Object.values(tmpl.pixelStats?.correct ?? {}))
+                for (const cnt of tileCorr.values()) correct += Number(cnt);
+        }
+        if (total === 0) return null;
+        return { total, correct, pct: correct / total * 100 };
     }
 
     getActiveDisplayName() { return this.#getActiveDisplayName(); }

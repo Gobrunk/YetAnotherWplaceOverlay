@@ -90,6 +90,12 @@ export function injectStyles() {
       .yawo-stat-label { font-size: 10px; color: rgba(255,255,255,.45); }
       .yawo-stat-value { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.9); font-variant-numeric: tabular-nums; }
 
+      /* ── Active overlay completion bar ── */
+      .yawo-completion { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+      .yawo-completion-track { flex: 1; height: 8px; background: rgba(255,255,255,.1); border-radius: 3px; overflow: hidden; }
+      .yawo-completion-bar { height: 100%; width: 0; border-radius: 3px; transition: width .2s; }
+      .yawo-completion-pct { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
       /* ── Separators ── */
       .yawo-window hr {
         border: none;

@@ -9,6 +9,20 @@ export class WindowMain extends Overlay {
 
     updateActiveOverlayName(name) {
         this.setElementContent('yawo-active-overlay', name ?? '—');
+        this.updateCompletion(this.apiManager?.templateManager?.getCompletionStats?.() ?? null);
+    }
+
+    updateCompletion(stats) {
+        const wrap = document.querySelector('#yawo-completion');
+        if (!wrap) return;
+        if (!stats) { wrap.style.display = 'none'; return; }
+        const { pct } = stats;
+        const color = pct >= 80 ? '#22c55e' : pct >= 40 ? '#facc15' : '#f87171';
+        wrap.style.display = 'flex';
+        const bar   = wrap.querySelector('#yawo-completion-bar');
+        const pctEl = wrap.querySelector('#yawo-completion-pct');
+        if (bar)   { bar.style.width = `${pct}%`; bar.style.background = color; }
+        if (pctEl) { pctEl.textContent = `${pct.toFixed(1)}%`; pctEl.style.color = color; }
     }
 
     toggle() {
@@ -43,6 +57,12 @@ export class WindowMain extends Overlay {
                     .addDiv({ class: 'yawo-stat-cell' })
                         .addSmall({ textContent: '🗂️ Active overlay', class: 'yawo-stat-label' }).up()
                         .addSpan({ id: 'yawo-active-overlay', class: 'yawo-stat-value', style: 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap;' }).up()
+                        .addDiv({ id: 'yawo-completion', class: 'yawo-completion', style: 'display:none;' })
+                            .addDiv({ class: 'yawo-completion-track' })
+                                .addDiv({ id: 'yawo-completion-bar', class: 'yawo-completion-bar' }).up()
+                            .up()
+                            .addSpan({ id: 'yawo-completion-pct', class: 'yawo-completion-pct' }).up()
+                        .up()
                     .up()
                 .up()
                 .addHr().up()
