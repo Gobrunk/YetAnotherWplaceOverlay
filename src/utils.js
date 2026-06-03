@@ -6,6 +6,15 @@ export function formatNumber(n) {
     return new Intl.NumberFormat().format(n);
 }
 
+// Format a completion ratio as a one-decimal percentage string.
+// Never reports 100% unless every pixel is correct (avoids 99.96 → "100.0").
+export function formatPct(correct, total) {
+    if (total <= 0) return '0.0';
+    if (correct >= total) return '100';
+    const pct = correct / total * 100;
+    return Math.min(pct, 99.9).toFixed(1);
+}
+
 export function consoleLog(...args) {
     (0, console.log)(...args);
 }
