@@ -1,5 +1,5 @@
 import { Overlay } from './overlay.js';
-import { formatNumber } from './utils.js';
+import { formatNumber, formatPct } from './utils.js';
 
 export class WindowColorFilter extends Overlay {
     constructor(ctx) {
@@ -281,7 +281,8 @@ export class WindowColorFilter extends Overlay {
             const total   = ieMap.get(color.id) ?? 0;
             if (total === 0) continue;
             const correct = neMap.get(color.id) ?? 0;
-            const pct     = total > 0 ? Math.round(correct / total * 100) : 0;
+            const pct      = total > 0 ? correct / total * 100 : 0;
+            const pctLabel = formatPct(correct, total);
             const [r, g, b] = color.rgb;
             const isHidden  = !!this.templateManager.hiddenColors.get(color.id);
 
@@ -343,7 +344,7 @@ export class WindowColorFilter extends Overlay {
 
             const statsEl = document.createElement('span');
             statsEl.style.cssText = `color:${barColor}; font-size:11px; white-space:nowrap; width:36px; flex-shrink:0; text-align:right; font-weight:600;`;
-            statsEl.textContent = `${pct}%`;
+            statsEl.textContent = `${pctLabel}%`;
 
             // Wrap bar + % together so Completion header aligns with both
             const statsWrap = document.createElement('div');
