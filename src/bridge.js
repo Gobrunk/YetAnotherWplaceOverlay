@@ -30,7 +30,7 @@ export function injectBridge(scriptName) {
 
         window.addEventListener('message', event => {
             if (event.origin !== window.location.origin) return;
-            const { source, blobID, blobData, endpoint, coords, zoom } = event.data;
+            const { source, blobID, blobData, endpoint, coords, zoom, select } = event.data;
 
             if (source === 'yaw-overlay' && coords) {
                 if (window.realMap) {
@@ -51,9 +51,31 @@ export function injectBridge(scriptName) {
                     }
 
                     if (globalX > 0 && globalY > 0) {
-                        const lng = (globalX / 2048000) * 360 - 180;
-                        const lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * globalY / 2048000))) * (180 / Math.PI);
+                        // Aim at the pixel center (+0.5) so a simulated click lands
+                        // unambiguously inside the pixel, not on a pixel boundary.
+                        const lng = ((globalX + 0.5) / 2048000) * 360 - 180;
+                        const lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * (globalY + 0.5) / 2048000))) * (180 / Math.PI);
                         window.realMap.jumpTo({ center: [lng, lat], zoom: zoom ?? 12 });
+
+                        if (select) {
+                            // Simulate a real canvas click to select the pixel. MapLibre
+                            // derives the click position from clientX/clientY relative to
+                            // the canvas rect, so project() gives us the right screen point.
+                            const map     = window.realMap;
+                            const canvas  = map.getCanvas();
+                            const point   = map.project([lng, lat]);
+                            const rect    = canvas.getBoundingClientRect();
+                            const clientX = rect.left + point.x;
+                            const clientY = rect.top  + point.y;
+                            const base    = { bubbles: true, cancelable: true, view: window, clientX, clientY, button: 0 };
+                            requestAnimationFrame(() => {
+                                canvas.dispatchEvent(new PointerEvent('pointerdown', { ...base, buttons: 1, pointerId: 1, isPrimary: true }));
+                                canvas.dispatchEvent(new MouseEvent('mousedown', { ...base, buttons: 1 }));
+                                canvas.dispatchEvent(new PointerEvent('pointerup', { ...base, buttons: 0, pointerId: 1, isPrimary: true }));
+                                canvas.dispatchEvent(new MouseEvent('mouseup', { ...base, buttons: 0 }));
+                                canvas.dispatchEvent(new MouseEvent('click', { ...base, buttons: 0 }));
+                            });
+                        }
                     } else {
                         console.warn(`%c${scriptName}%c: Unknown coordonate format :`, logStyle, '', coords);
                     }
