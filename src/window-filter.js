@@ -422,7 +422,7 @@ export class WindowColorFilter extends Overlay {
                 const ref    = this.apiManager?.lastClickCoords?.length === 4 ? this.apiManager.lastClickCoords : null;
                 const coords = this.templateManager.findNearestIncorrectPixel(color.id, ref);
                 if (coords) {
-                    this.apiManager?.navigateToCoords(coords, 20);
+                    this.apiManager?.navigateToCoords(coords, 20, true);
                 } else {
                     const toast = document.createElement('div');
                     toast.textContent = 'Nothing found — try ↻ to refresh stats';
