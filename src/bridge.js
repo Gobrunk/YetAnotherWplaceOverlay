@@ -55,20 +55,23 @@ export function injectBridge(scriptName) {
                         // unambiguously inside the pixel, not on a pixel boundary.
                         const lng = ((globalX + 0.5) / 2048000) * 360 - 180;
                         const lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * (globalY + 0.5) / 2048000))) * (180 / Math.PI);
-                        window.realMap.jumpTo({ center: [lng, lat], zoom: zoom ?? 12 });
+                        // flyTo animates zoom-out -> pan -> zoom-in (like wplace's native
+                        // navigation) instead of teleporting. essential:true keeps the
+                        // animation even with prefers-reduced-motion enabled.
+                        const map = window.realMap;
+                        map.flyTo({ center: [lng, lat], zoom: zoom ?? 12, essential: true });
 
                         if (select) {
-                            // Simulate a real canvas click to select the pixel. MapLibre
-                            // derives the click position from clientX/clientY relative to
-                            // the canvas rect, so project() gives us the right screen point.
-                            const map     = window.realMap;
-                            const canvas  = map.getCanvas();
-                            const point   = map.project([lng, lat]);
-                            const rect    = canvas.getBoundingClientRect();
-                            const clientX = rect.left + point.x;
-                            const clientY = rect.top  + point.y;
-                            const base    = { bubbles: true, cancelable: true, view: window, clientX, clientY, button: 0 };
-                            requestAnimationFrame(() => {
+                            // Simulate a real canvas click to select the pixel, but only
+                            // once the flight has ended: project() must read the camera's
+                            // final position to map [lng, lat] to the correct screen point.
+                            map.once('moveend', () => {
+                                const canvas  = map.getCanvas();
+                                const point   = map.project([lng, lat]);
+                                const rect    = canvas.getBoundingClientRect();
+                                const clientX = rect.left + point.x;
+                                const clientY = rect.top  + point.y;
+                                const base    = { bubbles: true, cancelable: true, view: window, clientX, clientY, button: 0 };
                                 canvas.dispatchEvent(new PointerEvent('pointerdown', { ...base, buttons: 1, pointerId: 1, isPrimary: true }));
                                 canvas.dispatchEvent(new MouseEvent('mousedown', { ...base, buttons: 1 }));
                                 canvas.dispatchEvent(new PointerEvent('pointerup', { ...base, buttons: 0, pointerId: 1, isPrimary: true }));
