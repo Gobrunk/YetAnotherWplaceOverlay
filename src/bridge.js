@@ -30,7 +30,7 @@ export function injectBridge(scriptName) {
 
         window.addEventListener('message', event => {
             if (event.origin !== window.location.origin) return;
-            const { source, blobID, blobData, endpoint, coords, zoom, select } = event.data;
+            const { source, blobID, blobData, endpoint, coords, zoom, select, speed } = event.data;
 
             if (source === 'yaw-overlay' && coords) {
                 if (window.realMap) {
@@ -59,7 +59,7 @@ export function injectBridge(scriptName) {
                         // navigation) instead of teleporting. essential:true keeps the
                         // animation even with prefers-reduced-motion enabled.
                         const map = window.realMap;
-                        map.flyTo({ center: [lng, lat], zoom: zoom ?? 12, essential: true });
+                        map.flyTo({ center: [lng, lat], zoom: zoom ?? 12, speed: speed ?? 1.2, essential: true });
 
                         if (select) {
                             // Simulate a real canvas click to select the pixel, but only

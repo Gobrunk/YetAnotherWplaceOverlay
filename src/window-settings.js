@@ -29,6 +29,7 @@ export class WindowSettings extends Overlay {
                 .addDiv({ class: 'yawo-col yawo-sections' }, () => {
                     this.buildTemplateSection();
                     this.buildOverlaySection();
+                    this.buildNavigationSection();
                 }).up()
             .up()
         .mount(this.mountTarget);
@@ -57,6 +58,10 @@ export class WindowSettings extends Overlay {
 
     buildOverlaySection() {
         this.#buildPlaceholderSection('Overlay');
+    }
+
+    buildNavigationSection() {
+        this.#buildPlaceholderSection('Navigation');
     }
 
     #buildPlaceholderSection(title) {
