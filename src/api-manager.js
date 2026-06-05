@@ -7,10 +7,12 @@ export class ApiManager {
         this.lastClickCoords = [];
     }
 
-    navigateToCoords(coords, zoom) {
+    navigateToCoords(coords, zoom, select = false, speed) {
         if (!coords?.length) return;
         const msg = { source: 'yaw-overlay', coords };
         if (zoom !== undefined) msg.zoom = zoom;
+        if (select) msg.select = true;
+        if (speed !== undefined) msg.speed = speed;
         window.postMessage(msg, window.location.origin);
     }
 

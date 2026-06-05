@@ -22,13 +22,17 @@ A detachable color window that gives you full visibility into the state of your 
 
 - **Search** — filter colors by name or hex value
 - **Sort** — order by color ID, name, total pixels, correct pixels, or completion percentage, ascending or descending
-- **Rolling filter** — toggle a color off to hide its pixels from the overlay
-- **Per-color stats** — see how many pixels of each color are correct vs. total, with a completion progress bar
-- **Go to** — jump directly to the nearest incorrect pixel of a given color
+- **Filter mode** — switch every color at once between *All visible*, *All hidden*, or *Selected* (show only the color currently picked in the Wplace palette), on top of the per-color eye toggles
+- **Per-color stats** — see how many pixels of each color are correct vs. total, with a completion progress bar and a one-decimal completion percentage (only ever 100% once every pixel is correct)
+- **Go to** — fly to the nearest incorrect pixel of a given color and auto-select it, ready to place
 
 ### Nearest incomplete pixel
 
-A global button to jump to the closest pixel anywhere in the template that still needs to be placed.
+A global button to jump to the closest pixel anywhere in the template that still needs to be placed. The camera smoothly zooms out, pans, and zooms back in instead of teleporting.
+
+### Navigation settings
+
+Tune how the overlay moves the camera from the **Navigation** section of the settings window. Independent sliders set the target zoom level and the animation speed for both *Go to nearest incorrect pixel* and *Go to overlay anchor pixel*.
 
 ### Pixel highlight
 

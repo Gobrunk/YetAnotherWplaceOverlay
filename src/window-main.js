@@ -1,5 +1,6 @@
 import { Overlay } from './overlay.js';
 import { WindowColorFilter } from './window-filter.js';
+import { formatPct } from './utils.js';
 
 export class WindowMain extends Overlay {
     constructor(name, version) {
@@ -16,13 +17,13 @@ export class WindowMain extends Overlay {
         const wrap = document.querySelector('#yawo-completion');
         if (!wrap) return;
         if (!stats) { wrap.style.display = 'none'; return; }
-        const { pct } = stats;
+        const { pct, correct, total } = stats;
         const color = pct >= 80 ? '#22c55e' : pct >= 40 ? '#facc15' : '#f87171';
         wrap.style.display = 'flex';
         const bar   = wrap.querySelector('#yawo-completion-bar');
         const pctEl = wrap.querySelector('#yawo-completion-pct');
         if (bar)   { bar.style.width = `${pct}%`; bar.style.background = color; }
-        if (pctEl) { pctEl.textContent = `${pct.toFixed(1)}%`; pctEl.style.color = color; }
+        if (pctEl) { pctEl.textContent = `${formatPct(correct, total)}%`; pctEl.style.color = color; }
     }
 
     toggle() {

@@ -268,11 +268,12 @@ export class TemplateManager {
     setEnabled(enabled) { this.isEnabled = enabled; }
 
     loadFilterState(settings) {
-        const hidden = settings?.hiddenColors;
-        if (Array.isArray(hidden))
-            this.hiddenColors = new Map(hidden.map(id => [id, true]));
-        if (typeof settings?.soloMode === 'boolean')
-            this._soloMode = settings.soloMode;
+        // Targeted (solo) mode relies on a live observer of the game palette that
+        // only runs while the filter window is open, so it can't be restored on
+        // reload — it would leave the overlay blank. We fall back to "All" instead.
+        // Manual color masks (none / individual eye toggles) still persist.
+        if (settings?.soloMode !== true && Array.isArray(settings?.hiddenColors))
+            this.hiddenColors = new Map(settings.hiddenColors.map(id => [id, true]));
         if (settings?.activeTemplateKey)
             this.activeTemplateKey = settings.activeTemplateKey;
     }

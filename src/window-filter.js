@@ -1,5 +1,5 @@
 import { Overlay } from './overlay.js';
-import { formatNumber } from './utils.js';
+import { formatNumber, formatPct } from './utils.js';
 
 export class WindowColorFilter extends Overlay {
     constructor(ctx) {
@@ -176,30 +176,34 @@ export class WindowColorFilter extends Overlay {
         const headerRow = document.createElement('div');
         headerRow.style.cssText = `display:flex; align-items:center; gap:8px; padding:3px 10px 5px; border-bottom:1px solid rgba(255,255,255,.07);`;
 
-        // Rolling filter button (header above eye icons) — cycles all → none → solo → all
+        // Filter mode selector — hovering/clicking the button opens a 3-mode menu.
         const filterModeConfig = {
-            all:  { icon: '✓', bg: 'rgba(74,222,128,.18)',  border: 'rgba(74,222,128,.4)',  color: 'rgba(74,222,128,.9)',  title: 'All visible — click for None' },
-            none: { icon: '✗', bg: 'rgba(248,113,113,.18)', border: 'rgba(248,113,113,.4)', color: 'rgba(248,113,113,.9)', title: 'All hidden — click for Solo' },
-            solo: { icon: '◎', bg: 'rgba(251,191,36,.18)',  border: 'rgba(251,191,36,.4)',  color: 'rgba(251,191,36,.9)',  title: 'Solo mode — click for All' },
+            all:  { icon: '✓', label: 'All visible', bg: 'rgba(74,222,128,.18)',  border: 'rgba(74,222,128,.4)',  color: 'rgba(74,222,128,.9)' },
+            none: { icon: '✗', label: 'All hidden',  bg: 'rgba(248,113,113,.18)', border: 'rgba(248,113,113,.4)', color: 'rgba(248,113,113,.9)' },
+            solo: { icon: '◎', label: 'Selected',    bg: 'rgba(251,191,36,.18)',  border: 'rgba(251,191,36,.4)',  color: 'rgba(251,191,36,.9)' },
         };
+
+        const filterWrap = document.createElement('div');
+        filterWrap.style.cssText = `position:relative; flex-shrink:0;`;
+
         const filterBtn = document.createElement('button');
-        filterBtn.style.cssText = `border-radius:4px; padding:1px 4px; font-size:11px; cursor:pointer; flex-shrink:0; transition:all .12s; border-width:1px; border-style:solid; font-weight:600;`;
+        filterBtn.style.cssText = `border-radius:4px; padding:1px 4px; font-size:11px; cursor:pointer; transition:all .12s; border-width:1px; border-style:solid; font-weight:600;`;
         const refreshFilterBtn = () => {
             const cfg = filterModeConfig[filterMode];
-            filterBtn.textContent = cfg.icon;
+            filterBtn.textContent       = cfg.icon;
             filterBtn.style.background   = cfg.bg;
             filterBtn.style.borderColor  = cfg.border;
             filterBtn.style.color        = cfg.color;
-            filterBtn.title              = cfg.title;
+            filterBtn.title              = `Filter: ${cfg.label}`;
         };
-        refreshFilterBtn();
-        filterBtn.onclick = () => {
-            filterMode = { all: 'none', none: 'solo', solo: 'all' }[filterMode];
-            if (filterMode === 'all') {
+
+        const setFilterMode = mode => {
+            filterMode = mode;
+            if (mode === 'all') {
                 stopSoloObs();
                 this.templateManager._soloMode = false;
                 this.templateManager.hiddenColors.clear();
-            } else if (filterMode === 'none') {
+            } else if (mode === 'none') {
                 stopSoloObs();
                 this.templateManager._soloMode = false;
                 for (const c of pal) { if (c.id > 0) this.templateManager.hiddenColors.set(c.id, true); }
@@ -211,6 +215,63 @@ export class WindowColorFilter extends Overlay {
             refreshFilterBtn();
             applyRowStates();
         };
+
+        // ── Mode menu ─────────────────────────────────────────
+        const menu = document.createElement('div');
+        menu.style.cssText = `position:absolute; top:100%; left:0; margin-top:3px; background:rgba(20,20,20,.97); border:1px solid rgba(255,255,255,.15); border-radius:6px; padding:3px; display:none; flex-direction:column; gap:2px; z-index:100000; box-shadow:0 4px 14px rgba(0,0,0,.5);`;
+
+        const menuItems = {};
+        for (const mode of ['all', 'none', 'solo']) {
+            const cfg  = filterModeConfig[mode];
+            const item = document.createElement('button');
+            item.style.cssText = `display:flex; align-items:center; gap:7px; padding:4px 10px 4px 7px; border:none; background:none; color:rgba(255,255,255,.85); font-size:11px; cursor:pointer; border-radius:4px; white-space:nowrap; text-align:left; width:100%; transition:background .12s;`;
+            const ic = document.createElement('span');
+            ic.textContent  = cfg.icon;
+            ic.style.cssText = `color:${cfg.color}; width:12px; text-align:center; flex-shrink:0;`;
+            const lbl = document.createElement('span');
+            lbl.textContent = cfg.label;
+            item.appendChild(ic);
+            item.appendChild(lbl);
+            item.onmouseenter = () => { if (!item.disabled) item.style.background = 'rgba(255,255,255,.1)'; };
+            item.onmouseleave = () => { item.style.background = ''; };
+            item.onclick = () => { if (item.disabled) return; setFilterMode(mode); hideMenu(); };
+            menu.appendChild(item);
+            menuItems[mode] = item;
+        }
+
+        // Greys out "Targeted" and shows a tooltip when no palette color is selected.
+        const refreshMenu = () => {
+            const soloDisabled = getSelectedGameColor() === null;
+            const solo = menuItems.solo;
+            solo.disabled      = soloDisabled;
+            solo.style.opacity = soloDisabled ? '0.4' : '1';
+            solo.style.cursor  = soloDisabled ? 'not-allowed' : 'pointer';
+            solo.title         = soloDisabled
+                ? 'Select a color in the palette to enable this mode'
+                : 'Show only the color selected in the palette';
+            for (const m of ['all', 'none', 'solo']) {
+                const active = m === filterMode;
+                menuItems[m].style.fontWeight = active ? '700' : '400';
+                menuItems[m].style.background = active ? 'rgba(255,255,255,.07)' : '';
+            }
+        };
+
+        // ── Open/close (hover + click, with a small grace delay) ──
+        let menuHideTimer = null;
+        const showMenu = () => { clearTimeout(menuHideTimer); refreshMenu(); menu.style.display = 'flex'; };
+        const hideMenu = () => { clearTimeout(menuHideTimer); menu.style.display = 'none'; };
+        const scheduleHide = () => { menuHideTimer = setTimeout(hideMenu, 160); };
+
+        filterBtn.onmouseenter = showMenu;
+        filterBtn.onmouseleave = scheduleHide;
+        menu.onmouseenter      = () => clearTimeout(menuHideTimer);
+        menu.onmouseleave      = scheduleHide;
+        filterBtn.onclick      = () => { if (menu.style.display === 'flex') hideMenu(); else showMenu(); };
+        filterBtn.ontouchend   = ev => { ev.preventDefault(); filterBtn.click(); };
+
+        refreshFilterBtn();
+        filterWrap.appendChild(filterBtn);
+        filterWrap.appendChild(menu);
 
         // Swatch spacer
         const swatchSpacer = document.createElement('div');
@@ -249,7 +310,7 @@ export class WindowColorFilter extends Overlay {
         const premiumSpacer = document.createElement('div');
         premiumSpacer.style.cssText = `width:14px; flex-shrink:0;`;
 
-        headerRow.appendChild(filterBtn);
+        headerRow.appendChild(filterWrap);
         headerRow.appendChild(swatchSpacer);
         headerRow.appendChild(premiumSpacer);
         headerRow.appendChild(nameHdr);
@@ -281,7 +342,8 @@ export class WindowColorFilter extends Overlay {
             const total   = ieMap.get(color.id) ?? 0;
             if (total === 0) continue;
             const correct = neMap.get(color.id) ?? 0;
-            const pct     = total > 0 ? Math.round(correct / total * 100) : 0;
+            const pct      = total > 0 ? correct / total * 100 : 0;
+            const pctLabel = formatPct(correct, total);
             const [r, g, b] = color.rgb;
             const isHidden  = !!this.templateManager.hiddenColors.get(color.id);
 
@@ -343,7 +405,7 @@ export class WindowColorFilter extends Overlay {
 
             const statsEl = document.createElement('span');
             statsEl.style.cssText = `color:${barColor}; font-size:11px; white-space:nowrap; width:36px; flex-shrink:0; text-align:right; font-weight:600;`;
-            statsEl.textContent = `${pct}%`;
+            statsEl.textContent = `${pctLabel}%`;
 
             // Wrap bar + % together so Completion header aligns with both
             const statsWrap = document.createElement('div');
@@ -360,7 +422,12 @@ export class WindowColorFilter extends Overlay {
                 const ref    = this.apiManager?.lastClickCoords?.length === 4 ? this.apiManager.lastClickCoords : null;
                 const coords = this.templateManager.findNearestIncorrectPixel(color.id, ref);
                 if (coords) {
-                    this.apiManager?.navigateToCoords(coords, 20);
+                    this.apiManager?.navigateToCoords(
+                        coords,
+                        this.settingsManager?.settings?.gotoZoom ?? 20,
+                        true,
+                        this.settingsManager?.settings?.gotoSpeed ?? 1.2,
+                    );
                 } else {
                     const toast = document.createElement('div');
                     toast.textContent = 'Nothing found — try ↻ to refresh stats';
