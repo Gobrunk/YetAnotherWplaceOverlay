@@ -6,6 +6,12 @@ export function formatNumber(n) {
     return new Intl.NumberFormat().format(n);
 }
 
+// Compact number formatting for tight UI (e.g. stat cells): 1234 -> "1.2k", 1_200_000 -> "1.2m".
+export function formatCompact(n) {
+    return new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 })
+        .format(n).toLowerCase();
+}
+
 // Format a completion ratio as a one-decimal percentage string.
 // Never reports 100% unless every pixel is correct (avoids 99.96 → "100.0").
 export function formatPct(correct, total) {

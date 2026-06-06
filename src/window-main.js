@@ -18,12 +18,15 @@ export class WindowMain extends Overlay {
         if (!wrap) return;
         if (!stats) { wrap.style.display = 'none'; return; }
         const { pct, correct, total } = stats;
-        const color = pct >= 80 ? '#22c55e' : pct >= 40 ? '#facc15' : '#f87171';
-        wrap.style.display = 'flex';
-        const bar   = wrap.querySelector('#yawo-completion-bar');
+        wrap.style.display = '';
+        const arc   = wrap.querySelector('#yawo-completion-arc');
         const pctEl = wrap.querySelector('#yawo-completion-pct');
-        if (bar)   { bar.style.width = `${pct}%`; bar.style.background = color; }
-        if (pctEl) { pctEl.textContent = `${formatPct(correct, total)}%`; pctEl.style.color = color; }
+        const CIRC  = 2 * Math.PI * 42;
+        if (arc) {
+            arc.style.strokeDasharray  = `${CIRC}`;
+            arc.style.strokeDashoffset = `${CIRC * (1 - Math.min(pct, 100) / 100)}`;
+        }
+        if (pctEl) pctEl.textContent = `${formatPct(correct, total)}%`;
     }
 
     toggle() {
@@ -40,29 +43,38 @@ export class WindowMain extends Overlay {
                 .addHeading(1, { textContent: this.name, style: 'font-size:11px; font-weight:600; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin:0;' }).up()
             .up()
             .addDiv({ class: 'yawo-content' })
-                .addDiv({ class: 'yawo-stat-grid' })
+                .addDiv({ class: 'yawo-stat-row' })
                     .addDiv({ class: 'yawo-stat-cell' })
-                        .addSmall({ textContent: '💧 Droplets', class: 'yawo-stat-label' }).up()
-                        .addSpan({ id: 'yawo-droplets', class: 'yawo-stat-value' }).up()
-                    .up()
-                    .addDiv({ class: 'yawo-stat-cell' })
-                        .addSmall({ textContent: '⚡ Charges', class: 'yawo-stat-label' }).up()
+                        .addSpan({ textContent: '⚡', class: 'yawo-stat-badge yawo-badge-charges' }).up()
                         .addCountdownTimer(Date.now(), 1000, { class: 'yawo-stat-value' }, (overlay, timerEl) => {
                             if (overlay.apiManager) overlay.apiManager.chargesTimerId = timerEl.id;
                         }).up()
+                        .addSmall({ textContent: 'Charges', class: 'yawo-stat-label' }).up()
                     .up()
                     .addDiv({ class: 'yawo-stat-cell' })
-                        .addSmall({ textContent: '📈 Next level', class: 'yawo-stat-label' }).up()
+                        .addSpan({ textContent: '💧', class: 'yawo-stat-badge yawo-badge-droplets' }).up()
+                        .addSpan({ id: 'yawo-droplets', class: 'yawo-stat-value' }).up()
+                        .addSmall({ textContent: 'Droplets', class: 'yawo-stat-label' }).up()
+                    .up()
+                    .addDiv({ class: 'yawo-stat-cell' })
+                        .addSpan({ textContent: '📈', class: 'yawo-stat-badge yawo-badge-level' }).up()
                         .addSpan({ id: 'yawo-next-level', class: 'yawo-stat-value' }).up()
+                        .addSmall({ textContent: 'Next level', class: 'yawo-stat-label' }).up()
                     .up()
-                    .addDiv({ class: 'yawo-stat-cell' })
-                        .addSmall({ textContent: '🗂️ Active overlay', class: 'yawo-stat-label' }).up()
-                        .addSpan({ id: 'yawo-active-overlay', class: 'yawo-stat-value', style: 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap;' }).up()
-                        .addDiv({ id: 'yawo-completion', class: 'yawo-completion', style: 'display:none;' })
-                            .addDiv({ class: 'yawo-completion-track' })
-                                .addDiv({ id: 'yawo-completion-bar', class: 'yawo-completion-bar' }).up()
-                            .up()
-                            .addSpan({ id: 'yawo-completion-pct', class: 'yawo-completion-pct' }).up()
+                .up()
+                .addDiv({ class: 'yawo-stat-block' })
+                    .addDiv({ class: 'yawo-stat-cell yawo-overlay-head' })
+                        .addSpan({ id: 'yawo-active-overlay', class: 'yawo-stat-value yawo-overlay-name', style: 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%;' }).up()
+                        .addSmall({ textContent: 'Active overlay', class: 'yawo-stat-label' }).up()
+                    .up()
+                    .addDiv({ id: 'yawo-completion', class: 'yawo-ring', style: 'display:none;' })
+                        .addDiv({ class: 'yawo-ring-svg', innerHTML: `
+                            <svg viewBox="0 0 100 100" aria-hidden="true">
+                              <circle class="yawo-ring-track" cx="50" cy="50" r="42"/>
+                              <circle id="yawo-completion-arc" class="yawo-ring-arc" cx="50" cy="50" r="42"/>
+                            </svg>` }).up()
+                        .addDiv({ class: 'yawo-ring-center' })
+                            .addSpan({ id: 'yawo-completion-pct', class: 'yawo-ring-pct' }).up()
                         .up()
                     .up()
                 .up()

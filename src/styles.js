@@ -1,5 +1,27 @@
 export function injectStyles() {
     GM_addStyle(`
+      /* ── Color palette ──
+         Single source of truth for the overlay's colors. Semantic accents are
+         exposed both as a ready-to-use color (--yawo-*) and as an "r,g,b" triplet
+         (--yawo-*-rgb) so callers can build their own alpha via rgba(var(...), a). */
+      :root {
+        --yawo-surface: #18181b;
+
+        --yawo-accent: rgb(80,160,255);
+        --yawo-accent-rgb: 80,160,255;
+        --yawo-accent-light: rgb(120,185,255);
+        --yawo-accent-light-rgb: 120,185,255;
+
+        --yawo-success: rgb(34,197,94);
+        --yawo-success-rgb: 34,197,94;
+
+        --yawo-danger: rgb(239,68,68);
+        --yawo-danger-rgb: 239,68,68;
+
+        --yawo-warning: rgb(250,204,21);
+        --yawo-warning-rgb: 250,204,21;
+      }
+
       /* ── Main window ── */
       .yawo-window {
         position: fixed;
@@ -7,7 +29,7 @@ export function injectStyles() {
         display: flex;
         flex-direction: column;
         width: 280px;
-        background: #18181b;
+        background: var(--yawo-surface);
         border: 1px solid rgba(255,255,255,.12);
         border-radius: 10px;
         box-shadow: 0 8px 32px rgba(0,0,0,.6);
@@ -83,18 +105,73 @@ export function injectStyles() {
       .yawo-action-btns { flex-wrap: nowrap !important; }
       .yawo-action-btns button { flex: 1; padding: 3px 4px !important; text-align: center; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-      /* ── Grille de statistiques ── */
-      .yawo-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; background: rgba(255,255,255,.04); border-radius: 6px; padding: 6px 8px; }
+      /* ── Statistiques : 2 blocs distincts ── */
+      .yawo-stat-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 4px 8px;
+        background: rgba(255,255,255,.04);
+        border-radius: 6px;
+        padding: 6px 8px;
+      }
+      .yawo-stat-block {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        background: rgba(255,255,255,.04);
+        border-radius: 6px;
+        padding: 8px;
+      }
       .yawo-stat-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow: hidden; }
-      .yawo-stat-full { grid-column: 1 / -1; }
-      .yawo-stat-label { font-size: 10px; color: rgba(255,255,255,.45); }
+      .yawo-overlay-head { align-items: center; text-align: center; width: 100%; gap: 1px; }
+      .yawo-stat-value.yawo-overlay-name { font-size: 14px; }
+      .yawo-stat-label { font-size: 9px; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .05em; }
       .yawo-stat-value { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.9); font-variant-numeric: tabular-nums; }
 
-      /* ── Active overlay completion bar ── */
-      .yawo-completion { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
-      .yawo-completion-track { flex: 1; height: 8px; background: rgba(255,255,255,.1); border-radius: 3px; overflow: hidden; }
-      .yawo-completion-bar { height: 100%; width: 0; border-radius: 3px; transition: width .2s; }
-      .yawo-completion-pct { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+      /* Stat row: centered cells with tinted icon badges */
+      .yawo-stat-row .yawo-stat-cell { align-items: center; text-align: center; gap: 1px; }
+      .yawo-stat-row .yawo-stat-value { font-size: 14px; }
+      .yawo-stat-badge {
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-size: 14px;
+        line-height: 1;
+        margin-bottom: 3px;
+        background: rgba(var(--yawo-badge-rgb),.15);
+        box-shadow: inset 0 0 0 1px rgba(var(--yawo-badge-rgb),.3);
+        transition: background .12s;
+      }
+      .yawo-stat-cell:hover .yawo-stat-badge { background: rgba(var(--yawo-badge-rgb),.28); }
+      .yawo-badge-charges  { --yawo-badge-rgb: var(--yawo-warning-rgb); }
+      .yawo-badge-droplets { --yawo-badge-rgb: var(--yawo-accent-rgb); }
+      .yawo-badge-level    { --yawo-badge-rgb: var(--yawo-success-rgb); }
+
+      /* ── Active overlay completion ring ── */
+      .yawo-ring { position: relative; width: 84px; height: 84px; margin: 6px auto 2px; }
+      .yawo-ring-svg, .yawo-ring-svg svg { width: 100%; height: 100%; display: block; }
+      .yawo-ring-svg svg { transform: scaleX(-1) rotate(-90deg); } /* start at top, fill counter-clockwise */
+      .yawo-ring-track { fill: none; stroke: rgba(255,255,255,.1); stroke-width: 7; }
+      .yawo-ring-arc {
+        fill: none;
+        stroke: var(--yawo-success);
+        stroke-width: 7;
+        stroke-linecap: round;
+        transition: stroke-dashoffset .3s ease;
+      }
+      .yawo-ring-center {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+      }
+      .yawo-ring-pct { font-size: 15px; font-weight: 700; color: rgba(255,255,255,.9); font-variant-numeric: tabular-nums; line-height: 1; }
 
       /* ── Separators ── */
       .yawo-window hr {
@@ -120,19 +197,19 @@ export function injectStyles() {
 
       /* ── Coordinate jump button ── */
       .yawo-jump-btn {
-        border: 1px solid rgba(80,160,255,.6) !important;
+        border: 1px solid rgba(var(--yawo-accent-rgb),.6) !important;
         border-radius: 50% !important;
         padding: 4px 6px !important;
-        color: rgba(120,185,255,.9) !important;
-        background: rgba(60,130,255,.12) !important;
+        color: rgba(var(--yawo-accent-light-rgb),.9) !important;
+        background: rgba(var(--yawo-accent-rgb),.12) !important;
         cursor: pointer !important;
         font-size: 11px !important;
         line-height: 1 !important;
         transition: background .12s, border-color .12s !important;
       }
       .yawo-jump-btn:hover {
-        background: rgba(60,130,255,.28) !important;
-        border-color: rgba(80,160,255,.9) !important;
+        background: rgba(var(--yawo-accent-rgb),.28) !important;
+        border-color: rgba(var(--yawo-accent-rgb),.9) !important;
       }
 
       /* ── Standard buttons (excl. chrome, swatches, circular) ── */
@@ -236,28 +313,28 @@ export function injectStyles() {
         background: rgba(255,255,255,.03);
       }
       .yawo-template-card--active {
-        border-color: rgba(100,160,255,.45);
-        background: rgba(100,160,255,.07);
+        border-color: rgba(var(--yawo-accent-rgb),.45);
+        background: rgba(var(--yawo-accent-rgb),.07);
       }
 
       /* "Active" green button */
       .yawo-btn-success {
-        border-color: rgba(34,197,94,.45) !important;
-        color: rgba(34,197,94,.9) !important;
-        background: rgba(34,197,94,.07) !important;
+        border-color: rgba(var(--yawo-success-rgb),.45) !important;
+        color: rgba(var(--yawo-success-rgb),.9) !important;
+        background: rgba(var(--yawo-success-rgb),.07) !important;
         cursor: default !important;
       }
 
       /* Danger button (delete) */
       .yawo-btn-danger {
-        border-color: rgba(239,68,68,.35) !important;
-        color: rgba(239,68,68,.75) !important;
+        border-color: rgba(var(--yawo-danger-rgb),.35) !important;
+        color: rgba(var(--yawo-danger-rgb),.75) !important;
         padding: 3px 7px !important;
       }
       .yawo-btn-danger:hover {
-        background: rgba(239,68,68,.1) !important;
-        border-color: rgba(239,68,68,.65) !important;
-        color: rgba(239,68,68,1) !important;
+        background: rgba(var(--yawo-danger-rgb),.1) !important;
+        border-color: rgba(var(--yawo-danger-rgb),.65) !important;
+        color: rgba(var(--yawo-danger-rgb),1) !important;
       }
       .yawo-btn-danger svg { display: block; }
 
@@ -275,15 +352,15 @@ export function injectStyles() {
 
       /* Pin button (navigate to anchor pixel) */
       .yawo-btn-pin {
-        background: rgba(60,130,255,.10) !important;
-        border-color: rgba(80,160,255,.45) !important;
-        color: rgba(120,185,255,.85) !important;
+        background: rgba(var(--yawo-accent-rgb),.10) !important;
+        border-color: rgba(var(--yawo-accent-rgb),.45) !important;
+        color: rgba(var(--yawo-accent-light-rgb),.85) !important;
         padding: 3px 7px !important;
       }
       .yawo-btn-pin:hover {
-        background: rgba(60,130,255,.24) !important;
-        border-color: rgba(80,160,255,.85) !important;
-        color: rgba(120,185,255,1) !important;
+        background: rgba(var(--yawo-accent-rgb),.24) !important;
+        border-color: rgba(var(--yawo-accent-rgb),.85) !important;
+        color: rgba(var(--yawo-accent-light-rgb),1) !important;
       }
       .yawo-btn-pin svg { display: block; }
 
@@ -294,7 +371,7 @@ export function injectStyles() {
         align-items: center;
         gap: 4px;
         padding: 4px;
-        background: #18181b;
+        background: var(--yawo-surface);
         border: 1px solid rgba(255,255,255,.18);
         border-radius: 6px;
         box-shadow: 0 4px 16px rgba(0,0,0,.55);
@@ -319,7 +396,7 @@ export function injectStyles() {
       /* Input de renommage inline */
       .yawo-rename-input {
         background: rgba(0,0,0,.4);
-        border: 1px solid rgba(100,160,255,.5);
+        border: 1px solid rgba(var(--yawo-accent-rgb),.5);
         border-radius: 4px;
         color: #fff;
         font-size: 11px;
