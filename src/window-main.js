@@ -2,6 +2,13 @@ import { Overlay } from './overlay.js';
 import { WindowColorFilter } from './window-filter.js';
 import { formatPct } from './utils.js';
 
+// Sync the enable/disable toggle's visual state with the templates' enabled flag.
+function applyToggleState(btn, enabled) {
+    btn.dataset.buttonStatus = enabled ? 'shown' : 'hidden';
+    btn.classList.toggle('yawo-toggle--on', enabled);
+    btn.title = enabled ? 'Disable templates' : 'Enable templates';
+}
+
 export class WindowMain extends Overlay {
     constructor(name, version) {
         super(name, version);
@@ -64,7 +71,19 @@ export class WindowMain extends Overlay {
                 .up()
                 .addDiv({ class: 'yawo-stat-block' })
                     .addDiv({ class: 'yawo-stat-cell yawo-overlay-head' })
-                        .addSpan({ id: 'yawo-active-overlay', class: 'yawo-stat-value yawo-overlay-name', style: 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%;' }).up()
+                        .addDiv({ class: 'yawo-overlay-name-row' })
+                            .addSpan({ class: 'yawo-toggle-spacer', 'aria-hidden': 'true' }).up()
+                            .addSpan({ id: 'yawo-active-overlay', class: 'yawo-stat-value yawo-overlay-name', style: 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; flex:1; text-align:center;' }).up()
+                            .addButton({ class: 'yawo-toggle', role: 'switch', title: 'Disable templates', 'aria-label': 'Toggle templates', 'data-button-status': 'shown' }, (overlay, btn) => {
+                                applyToggleState(btn, overlay.apiManager?.templateManager?.isEnabled ?? true);
+                                btn.onclick = () => {
+                                    const next = btn.dataset.buttonStatus !== 'shown';
+                                    overlay.apiManager?.templateManager?.setEnabled(next);
+                                    applyToggleState(btn, next);
+                                    overlay.setStatus(next ? 'Enabled templates!' : 'Disabled templates!');
+                                };
+                            }).up()
+                        .up()
                         .addSmall({ textContent: 'Active overlay', class: 'yawo-stat-label' }).up()
                     .up()
                     .addDiv({ id: 'yawo-completion', class: 'yawo-ring', style: 'display:none;' })
@@ -77,32 +96,14 @@ export class WindowMain extends Overlay {
                             .addSpan({ id: 'yawo-completion-pct', class: 'yawo-ring-pct' }).up()
                         .up()
                     .up()
-                .up()
-                .addHr().up()
-                .addDiv({ class: 'yawo-col yawo-wrap yawo-action-btns' })
-                    .addButton({ innerHTML: '🚫 Disable', 'data-button-status': 'shown' }, (overlay, btn) => {
-                        btn.onclick = () => {
-                            btn.disabled = true;
-                            if (btn.dataset.buttonStatus === 'shown') {
-                                overlay.apiManager?.templateManager?.setEnabled(false);
-                                btn.dataset.buttonStatus = 'hidden';
-                                btn.innerHTML = '✅ Enable';
-                                overlay.setStatus('Disabled templates!');
-                            } else {
-                                overlay.apiManager?.templateManager?.setEnabled(true);
-                                btn.dataset.buttonStatus = 'shown';
-                                btn.innerHTML = '🚫 Disable';
-                                overlay.setStatus('Enabled templates!');
-                            }
-                            btn.disabled = false;
-                        };
-                    }).up()
-                    .addButton({ innerHTML: '📋 Overlays' }, (overlay, btn) => {
-                        btn.onclick = () => overlay.apiManager?.templateManager?.windowTemplateSelect?.toggle();
-                    }).up()
-                    .addButton({ innerHTML: '🎨 Filter', 'data-yawo-filter': '1' }, (overlay, btn) => {
-                        btn.onclick = () => new WindowColorFilter(overlay).toggle();
-                    }).up()
+                    .addDiv({ class: 'yawo-overlay-actions' })
+                        .addButton({ class: 'yawo-action-btn', innerHTML: '📋 Overlays' }, (overlay, btn) => {
+                            btn.onclick = () => overlay.apiManager?.templateManager?.windowTemplateSelect?.toggle();
+                        }).up()
+                        .addButton({ class: 'yawo-action-btn', innerHTML: '🎨 Filters', 'data-yawo-filter': '1' }, (overlay, btn) => {
+                            btn.onclick = () => new WindowColorFilter(overlay).toggle();
+                        }).up()
+                    .up()
                 .up()
                 .addDiv({ class: 'yawo-col' })
                     .addTextarea({ id: 'yawo-status', placeholder: `Status: Sleeping...\nVersion: ${this.version}`, readOnly: true, class: 'yawo-status-area' }).up()
