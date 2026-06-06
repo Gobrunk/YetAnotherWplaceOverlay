@@ -47,7 +47,10 @@ export class WindowMain extends Overlay {
                     btn.onclick    = () => overlay.toggleMinimize(btn);
                     btn.ontouchend = () => btn.click();
                 }).up()
-                .addHeading(1, { textContent: this.name, style: 'font-size:11px; font-weight:600; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin:0;' }).up()
+                .addDiv({ class: 'yawo-title' })
+                    .addHeading(1, { textContent: this.name, class: 'yawo-title-text' }).up()
+                    .addSpan({ textContent: `v${this.version}`, class: 'yawo-title-version' }).up()
+                .up()
             .up()
             .addDiv({ class: 'yawo-content' })
                 .addDiv({ class: 'yawo-stat-row' })
@@ -105,19 +108,14 @@ export class WindowMain extends Overlay {
                         }).up()
                     .up()
                 .up()
-                .addDiv({ class: 'yawo-col' })
-                    .addTextarea({ id: 'yawo-status', placeholder: `Status: Sleeping...\nVersion: ${this.version}`, readOnly: true, class: 'yawo-status-area' }).up()
-                .up()
-                .addDiv({ class: 'yawo-col yawo-wrap', style: 'margin-bottom: 0; flex-direction: column;' })
-                    .addDiv({ class: 'yawo-wrap' })
-                        .addButton({ class: 'yawo-chrome-btn', innerHTML: '⚙️', title: 'Settings' }, (overlay, btn) => {
-                            btn.onclick = () => overlay.settingsManager.toggle();
-                        }).up()
-                        .addButton({ class: 'yawo-chrome-btn', innerHTML: '🎨', title: 'Template Color Converter' }, (overlay, btn) => {
-                            btn.onclick = () => window.open('https://pepoafonso.github.io/color_converter_wplace/', '_blank', 'noopener noreferrer');
-                        }).up()
-                    .up()
-                .up()
+            .up()
+            .addDiv({ class: 'yawo-footer' })
+                .addButton({ class: 'yawo-chrome-btn', innerHTML: '⚙️', title: 'Settings' }, (overlay, btn) => {
+                    btn.onclick = () => overlay.settingsManager.toggle();
+                }).up()
+                .addButton({ class: 'yawo-chrome-btn', innerHTML: '🌈', title: 'Template Color Converter' }, (overlay, btn) => {
+                    btn.onclick = () => window.open('https://pepoafonso.github.io/color_converter_wplace/', '_blank', 'noopener noreferrer');
+                }).up()
             .up()
         .mount(document.body);
         this.updateActiveOverlayName(this.apiManager?.templateManager?.getActiveDisplayName());

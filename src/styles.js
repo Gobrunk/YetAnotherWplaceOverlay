@@ -117,6 +117,20 @@ export function injectStyles() {
         text-overflow: ellipsis;
       }
 
+      /* ── Bottom footer (Settings / Color Converter) ──
+         Fixed bar mirroring the title bar: tinted background, hairline on top,
+         discreet icon-only chrome buttons aligned to the right. */
+      .yawo-footer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2px;
+        padding: 4px 8px;
+        flex-shrink: 0;
+        background: rgba(255,255,255,.03);
+        border-top: 1px solid rgba(255,255,255,.08);
+      }
+
       /* ── Statistiques : 2 blocs distincts ── */
       .yawo-stat-row {
         display: grid;
@@ -311,8 +325,18 @@ export function injectStyles() {
       .yawo-coord-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
       .yawo-coord-input { -moz-appearance: textfield; }
 
-      /* Zone de statut / textarea */
-      .yawo-status-area { width: 100%; min-height: 3.5em; resize: vertical; font-family: inherit; font-size: inherit; box-sizing: border-box; }
+      /* ── Title bar branding ── */
+      .yawo-title { display: flex; align-items: baseline; gap: 6px; flex: 1; min-width: 0; }
+      .yawo-title-text {
+        font-size: 11px; font-weight: 600; letter-spacing: .02em;
+        color: rgba(255,255,255,.9);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        min-width: 0; flex: 0 1 auto; margin: 0;
+      }
+      .yawo-title-version {
+        font-size: 9px; font-weight: 500; color: rgba(255,255,255,.35);
+        flex-shrink: 0; font-variant-numeric: tabular-nums;
+      }
 
       /* ── Titres ── */
       .yawo-window h1 { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.9); margin: 0; }

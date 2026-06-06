@@ -183,6 +183,7 @@ export class Overlay {
         const windowEl  = btn.closest('.yawo-window');
         const titlebar  = btn.closest('.yawo-titlebar');
         const contentEl = windowEl.querySelector('.yawo-content');
+        const footerEl  = windowEl.querySelector('.yawo-footer');
         const heading   = contentEl?.querySelector('h1');
         if (windowEl.parentElement) windowEl.parentElement.append(windowEl);
         if ('expanded' === btn.dataset.buttonStatus) {
@@ -201,16 +202,19 @@ export class Overlay {
                 btn.style.textDecoration = '';
                 contentEl.removeEventListener('transitionend', handler);
             });
+            if (footerEl) footerEl.style.display = 'none';
             const label = heading?.textContent ?? titlebar.querySelector('h1')?.textContent ?? '';
             if (heading) {
                 const clone = heading.cloneNode(true);
+                clone.classList.add('yawo-minimized-heading');
                 btn.nextElementSibling.appendChild(clone);
             }
             btn.textContent = '▶';
             btn.dataset.buttonStatus = 'collapsed';
             btn.ariaLabel = `Unminimize window "${label}"`;
         } else {
-            const clonedHeading = btn.nextElementSibling?.querySelector('h1');
+            if (footerEl) footerEl.style.display = '';
+            const clonedHeading = btn.nextElementSibling?.querySelector('.yawo-minimized-heading');
             const label         = clonedHeading?.textContent ?? titlebar.querySelector('h1')?.textContent ?? '';
             clonedHeading?.remove();
             const savedResizeH = windowEl.dataset.savedResizeH;
