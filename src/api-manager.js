@@ -1,4 +1,4 @@
-import { formatNumber } from './utils.js';
+import { formatNumber, formatCompact } from './utils.js';
 
 export class ApiManager {
     constructor(templateManager) {
@@ -45,7 +45,7 @@ export class ApiManager {
                         }
                     }
                     windowMain.setElementContent('yawo-droplets',   `<b>${formatNumber(jsonData.droplets)}</b>`);
-                    windowMain.setElementContent('yawo-next-level',  `<b>${formatNumber(pixelsToNextLevel)}</b> pixel${pixelsToNextLevel === 1 ? '' : 's'}`);
+                    windowMain.setElementContent('yawo-next-level',  `<b>${formatCompact(pixelsToNextLevel)}</b>`);
                     break;
                 }
                 case 'pixel': {
