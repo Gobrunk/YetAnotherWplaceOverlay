@@ -396,6 +396,75 @@ export function injectStyles() {
         background: rgba(var(--yawo-accent-rgb),.07);
       }
 
+      /* ── Settings cards ──
+         Each settings section is a subtle card (echoing the main window's stat
+         blocks) with a tinted icon badge + uppercase title in its header. */
+      .yawo-settings-sections { gap: 8px; }
+      .yawo-settings-card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        background: rgba(255,255,255,.04);
+        border: 1px solid rgba(255,255,255,.07);
+        border-radius: 8px;
+        padding: 8px 10px;
+      }
+      .yawo-card-header { display: flex; align-items: center; gap: 8px; }
+      .yawo-card-badge {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-size: 13px;
+        line-height: 1;
+        background: rgba(var(--yawo-badge-rgb),.15);
+        box-shadow: inset 0 0 0 1px rgba(var(--yawo-badge-rgb),.3);
+      }
+      .yawo-card-title {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,.8);
+      }
+      .yawo-card-body { display: flex; flex-direction: column; gap: 6px; }
+      .yawo-badge-template { --yawo-badge-rgb: var(--yawo-accent-rgb); }
+      .yawo-badge-overlay  { --yawo-badge-rgb: var(--yawo-success-rgb); }
+      .yawo-badge-nav      { --yawo-badge-rgb: var(--yawo-warning-rgb); }
+
+      /* ── Segmented control (e.g. Transparent tiles mode) ──
+         Joined buttons; the active segment is tinted accent via a class
+         (no inline styles). !important primes over the generic button rule. */
+      .yawo-segmented {
+        display: flex;
+        width: 100%;
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .yawo-segmented .yawo-seg-btn {
+        flex: 1;
+        min-width: 0;
+        border: none !important;
+        border-radius: 0 !important;
+        border-right: 1px solid rgba(255,255,255,.1) !important;
+        background: rgba(255,255,255,.04) !important;
+        padding: 4px 6px !important;
+        font-size: 11px !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .yawo-segmented .yawo-seg-btn:last-child { border-right: none !important; }
+      .yawo-segmented .yawo-seg-btn:hover { background: rgba(255,255,255,.09) !important; }
+      .yawo-seg-btn--active {
+        background: rgba(var(--yawo-accent-rgb),.18) !important;
+        color: rgba(var(--yawo-accent-light-rgb),.95) !important;
+      }
+
       /* "Active" green button */
       .yawo-btn-success {
         border-color: rgba(var(--yawo-success-rgb),.45) !important;

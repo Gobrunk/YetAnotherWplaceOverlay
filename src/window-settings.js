@@ -18,8 +18,8 @@ export class WindowSettings extends Overlay {
                 onClose: () => document.querySelector(`#${this.windowId}`)?.remove(),
             })
             .addDiv({ class: 'yawo-content' })
-                .addParagraph({ textContent: 'Settings take 5 seconds to save.' }).up()
-                .addDiv({ class: 'yawo-col yawo-sections' }, () => {
+                .addSmall({ textContent: 'Settings take 5 seconds to save.', class: 'yawo-form-label' }).up()
+                .addDiv({ class: 'yawo-col yawo-settings-sections' }, () => {
                     this.buildTemplateSection();
                     this.buildOverlaySection();
                     this.buildNavigationSection();
@@ -59,10 +59,14 @@ export class WindowSettings extends Overlay {
     }
 
     #buildPlaceholderSection(title) {
-        this.addDiv({ class: 'yawo-col' })
-            .addHeading(2, { textContent: title }).up()
-            .addHr().up()
-            .addParagraph({ innerHTML: `An error occured loading the ${title} category. <code>SettingsManager</code> failed to override the ${title} function inside <code>WindowSettings</code>.` }).up()
+        this.addDiv({ class: 'yawo-settings-card' })
+            .addDiv({ class: 'yawo-card-header' })
+                .addSpan({ textContent: '⚠️', class: 'yawo-card-badge yawo-badge-nav' }).up()
+                .addHeading(2, { textContent: title, class: 'yawo-card-title' }).up()
+            .up()
+            .addDiv({ class: 'yawo-card-body' })
+                .addParagraph({ innerHTML: `An error occured loading the ${title} category. <code>SettingsManager</code> failed to override the ${title} function inside <code>WindowSettings</code>.` }).up()
+            .up()
         .up();
     }
 }
