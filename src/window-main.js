@@ -42,16 +42,7 @@ export class WindowMain extends Overlay {
             return;
         }
         this.addDiv({ id: this.windowId, class: 'yawo-window yawo-compact', style: 'top: 10px; left: unset; right: 75px;' })
-            .addTitleBar()
-                .addButton({ class: 'yawo-chrome-btn', textContent: '▼', 'aria-label': 'Minimize window "Yet Another Wplace Overlay"', 'data-button-status': 'expanded' }, (overlay, btn) => {
-                    btn.onclick    = () => overlay.toggleMinimize(btn);
-                    btn.ontouchend = () => btn.click();
-                }).up()
-                .addDiv({ class: 'yawo-title' })
-                    .addHeading(1, { textContent: this.name, class: 'yawo-title-text' }).up()
-                    .addSpan({ textContent: `v${this.version}`, class: 'yawo-title-version' }).up()
-                .up()
-            .up()
+            .addWindowHeader({ title: this.name })
             .addDiv({ class: 'yawo-content' })
                 .addDiv({ class: 'yawo-stat-row' })
                     .addDiv({ class: 'yawo-stat-cell' })
@@ -109,14 +100,13 @@ export class WindowMain extends Overlay {
                     .up()
                 .up()
             .up()
-            .addDiv({ class: 'yawo-footer' })
-                .addButton({ class: 'yawo-chrome-btn', innerHTML: '⚙️', title: 'Settings' }, (overlay, btn) => {
-                    btn.onclick = () => overlay.settingsManager.toggle();
-                }).up()
-                .addButton({ class: 'yawo-chrome-btn', innerHTML: '🌈', title: 'Template Color Converter' }, (overlay, btn) => {
-                    btn.onclick = () => window.open('https://pepoafonso.github.io/color_converter_wplace/', '_blank', 'noopener noreferrer');
-                }).up()
-            .up()
+            .addWindowFooter({
+                version: this.version,
+                buttons: [
+                    { html: '⚙️', title: 'Settings', onClick: () => this.settingsManager.toggle() },
+                    { html: '🌈', title: 'Template Color Converter', onClick: () => window.open('https://pepoafonso.github.io/color_converter_wplace/', '_blank', 'noopener noreferrer') },
+                ],
+            })
         .mount(document.body);
         this.updateActiveOverlayName(this.apiManager?.templateManager?.getActiveDisplayName());
         const savedPos = this.settingsManager?.settings?.windowPosition;

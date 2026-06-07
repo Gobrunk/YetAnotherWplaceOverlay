@@ -117,19 +117,30 @@ export function injectStyles() {
         text-overflow: ellipsis;
       }
 
-      /* ── Bottom footer (Settings / Color Converter) ──
-         Fixed bar mirroring the title bar: tinted background, hairline on top,
-         discreet icon-only chrome buttons aligned to the right. */
+      /* ── Bottom footer ──
+         Fixed bar mirroring the title bar: tinted background, hairline on top.
+         Version label on the left, discreet icon-only chrome actions on the right. */
       .yawo-footer {
+        position: relative;
         display: flex;
         justify-content: center;
         align-items: center;
         gap: 2px;
         padding: 4px 8px;
+        min-height: 28px;
         flex-shrink: 0;
         background: rgba(255,255,255,.03);
         border-top: 1px solid rgba(255,255,255,.08);
       }
+      .yawo-footer-version {
+        position: absolute;
+        left: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 9px; font-weight: 500; color: rgba(255,255,255,.35);
+        font-variant-numeric: tabular-nums;
+      }
+      .yawo-footer-actions { display: flex; align-items: center; gap: 2px; }
 
       /* ── Statistiques : 2 blocs distincts ── */
       .yawo-stat-row {
@@ -275,7 +286,7 @@ export function injectStyles() {
       }
 
       /* ── Standard buttons (excl. chrome, swatches, circular) ── */
-      .yawo-window button:not(.yawo-eye-btn):not(.yawo-chrome-btn):not(.yawo-info-btn):not(.yawo-jump-btn) {
+      .yawo-window button:not(.yawo-eye-btn):not(.yawo-chrome-btn):not(.yawo-info-btn):not(.yawo-jump-btn):not(.yawo-swatch-toggle):not(.yawo-goto-btn) {
         background: rgba(255,255,255,.07);
         border: 1px solid rgba(255,255,255,.14);
         color: rgba(255,255,255,.78);
@@ -286,7 +297,7 @@ export function injectStyles() {
         cursor: pointer;
         transition: background .12s, border-color .12s;
       }
-      .yawo-window button:not(.yawo-eye-btn):not(.yawo-chrome-btn):not(.yawo-info-btn):not(.yawo-jump-btn):hover {
+      .yawo-window button:not(.yawo-eye-btn):not(.yawo-chrome-btn):not(.yawo-info-btn):not(.yawo-jump-btn):not(.yawo-swatch-toggle):not(.yawo-goto-btn):hover {
         background: rgba(255,255,255,.14);
         border-color: rgba(255,255,255,.28);
       }
@@ -332,10 +343,6 @@ export function injectStyles() {
         color: rgba(255,255,255,.9);
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         min-width: 0; flex: 0 1 auto; margin: 0;
-      }
-      .yawo-title-version {
-        font-size: 9px; font-weight: 500; color: rgba(255,255,255,.35);
-        flex-shrink: 0; font-variant-numeric: tabular-nums;
       }
 
       /* ── Titres ── */
@@ -604,6 +611,157 @@ export function injectStyles() {
       .yawo-window:hover .yawo-resize-handle { opacity: 1; }
       .yawo-resize-handle.yawo-resizing      { opacity: 1; }
       .yawo-window:has([data-button-status="collapsed"]) .yawo-resize-handle { display: none; }
+
+      /* ── Color filter window ──
+         Grid columns per row: swatch · name · bar · % · goto. */
+      .yawo-filter-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px 2px;
+      }
+      .yawo-filter-toolbar input[type="text"] { flex: 1; min-width: 0; box-sizing: border-box; }
+
+      .yawo-filter-mode-btn {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: background .12s, border-color .12s, color .12s;
+      }
+
+      .yawo-filter-list {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        padding: 6px 8px;
+        overflow-y: auto;
+      }
+      /* Each color is a subtle card (echoing the main window's stat blocks) laid
+         out as a grid: swatch · name · bar · % · goto. */
+      .yawo-filter-row {
+        display: grid;
+        /* name + bar both flexible so the name keeps room on narrow windows;
+           bar has a min so the count stays readable. */
+        grid-template-columns: 18px minmax(0, 1.3fr) minmax(80px, 2fr) 38px 22px;
+        align-items: center;
+        justify-items: stretch; /* wplace's base CSS disables item stretch; restore it */
+        gap: 3px;
+        padding: 4px 8px;
+        background: rgba(255,255,255,.045);
+        border: 1px solid rgba(255,255,255,.07);
+        border-radius: 8px;
+        transition: opacity .15s;
+      }
+      .yawo-filter-row--hidden { opacity: .4; }
+
+      /* Swatch doubles as the show/hide toggle.
+         Dimensions are also forced inline in JS because wplace's base button
+         styles (min-width/padding) would otherwise deform it into a rectangle. */
+      .yawo-swatch-toggle {
+        position: relative;
+        width: 18px;
+        height: 18px;
+        min-width: 18px;
+        box-sizing: border-box;
+        aspect-ratio: 1;
+        padding: 0;
+        border-radius: 4px;
+        border: 1px solid rgba(255,255,255,.2);
+        cursor: pointer;
+        transition: transform .1s, box-shadow .12s, opacity .15s, filter .15s;
+      }
+      .yawo-swatch-toggle:hover {
+        transform: scale(1.12);
+        box-shadow: 0 0 0 2px rgba(255,255,255,.18);
+      }
+      .yawo-swatch-toggle--hidden { opacity: .4; filter: grayscale(.55); }
+      .yawo-swatch-toggle--hidden::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 3px;
+        background: linear-gradient(135deg, transparent 43%, rgba(255,255,255,.75) 46%,
+                                    rgba(255,255,255,.75) 54%, transparent 57%);
+      }
+      /* Gold star in the corner marks premium colors. */
+      .yawo-swatch--premium::before {
+        content: '★';
+        position: absolute;
+        top: -6px;
+        right: -4px;
+        font-size: 10px;
+        line-height: 1;
+        color: rgba(var(--yawo-warning-rgb),.98);
+        text-shadow: 0 0 2px #000, 0 0 1px #000;
+        pointer-events: none;
+      }
+
+      .yawo-color-name {
+        width: 100%;     /* fill the cell so ellipsis clips (wplace disables item stretch) */
+        min-width: 0;
+        color: rgba(255,255,255,.85);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .yawo-bar {
+        position: relative;
+        width: 100%;          /* fill the grid cell explicitly (don't rely on item stretch) */
+        min-width: 0;
+        height: 14px;
+        border-radius: 999px; /* pill, to match the soft palette of the rest of the UI */
+        background: rgba(255,255,255,.09);
+        overflow: hidden;
+      }
+      /* Muted fill (low opacity) so the bar blends with the soft greys/tints. */
+      .yawo-bar-fill { height: 100%; border-radius: 999px; opacity: .7; transition: width .25s ease; }
+      .yawo-bar-label {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+        font-weight: 600;
+        color: #fff;
+        /* Dark outline keeps the count readable on light fills (white, yellow…). */
+        text-shadow: 0 0 2px #000, 0 0 2px #000, 0 1px 1px #000;
+        pointer-events: none;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+      .yawo-bar-pct {
+        width: 100%;     /* fill the fixed cell (wplace disables item stretch) */
+        font-size: 11px;
+        font-weight: 600;
+        text-align: right; /* hug the cell's right edge so the % sits tight against the goto button */
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* "Go to nearest pixel" — 🎯 emoji glyph.
+         Box and font-size are forced inline in JS so wplace's base button CSS can't bloat it. */
+      .yawo-goto-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+        transition: transform .1s;
+      }
+      .yawo-goto-btn:hover { transform: scale(1.12); }
 
       /* ── Scrollbars ── */
       .yawo-window ::-webkit-scrollbar       { width: 4px; height: 4px; }
