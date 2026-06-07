@@ -1,3 +1,5 @@
+import { buildTitlebar, buildFooter } from './window-chrome.js';
+
 export class Overlay {
     #rootElement   = null;
     #currentParent = null;
@@ -132,6 +134,18 @@ export class Overlay {
 
     addTitleBar(attrs = {}, cb = () => {}) {
         cb(this, this.#createElement('div', { class: 'yawo-titlebar' }, attrs));
+        return this;
+    }
+
+    // Append a shared title bar / footer to the current parent. Self-contained, so we
+    // don't push onto the parent stack — chaining continues at the window level.
+    addWindowHeader(opts = {}) {
+        this.#currentParent.appendChild(buildTitlebar({ ...opts, onMinimize: btn => this.toggleMinimize(btn) }));
+        return this;
+    }
+
+    addWindowFooter(opts = {}) {
+        this.#currentParent.appendChild(buildFooter(opts));
         return this;
     }
 

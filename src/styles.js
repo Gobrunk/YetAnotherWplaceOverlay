@@ -117,19 +117,30 @@ export function injectStyles() {
         text-overflow: ellipsis;
       }
 
-      /* ── Bottom footer (Settings / Color Converter) ──
-         Fixed bar mirroring the title bar: tinted background, hairline on top,
-         discreet icon-only chrome buttons aligned to the right. */
+      /* ── Bottom footer ──
+         Fixed bar mirroring the title bar: tinted background, hairline on top.
+         Version label on the left, discreet icon-only chrome actions on the right. */
       .yawo-footer {
+        position: relative;
         display: flex;
         justify-content: center;
         align-items: center;
         gap: 2px;
         padding: 4px 8px;
+        min-height: 28px;
         flex-shrink: 0;
         background: rgba(255,255,255,.03);
         border-top: 1px solid rgba(255,255,255,.08);
       }
+      .yawo-footer-version {
+        position: absolute;
+        left: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 9px; font-weight: 500; color: rgba(255,255,255,.35);
+        font-variant-numeric: tabular-nums;
+      }
+      .yawo-footer-actions { display: flex; align-items: center; gap: 2px; }
 
       /* ── Statistiques : 2 blocs distincts ── */
       .yawo-stat-row {
@@ -332,10 +343,6 @@ export function injectStyles() {
         color: rgba(255,255,255,.9);
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         min-width: 0; flex: 0 1 auto; margin: 0;
-      }
-      .yawo-title-version {
-        font-size: 9px; font-weight: 500; color: rgba(255,255,255,.35);
-        flex-shrink: 0; font-variant-numeric: tabular-nums;
       }
 
       /* ── Titres ── */

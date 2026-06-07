@@ -34,17 +34,10 @@ export class WindowTemplateSelect extends Overlay {
         };
 
         this.addDiv({ id: this.windowId, class: 'yawo-window', style: 'top: 10px; left: 10px; width: 300px;' })
-            .addTitleBar()
-                .addButton({ class: 'yawo-chrome-btn', textContent: '▼', 'aria-label': 'Minimize', 'data-button-status': 'expanded' }, (overlay, btn) => {
-                    btn.onclick    = () => overlay.toggleMinimize(btn);
-                    btn.ontouchend = () => btn.click();
-                }).up()
-                .addHeading(1, { textContent: 'Overlays', style: 'font-size:11px; font-weight:600; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin:0;' }).up()
-                .addButton({ class: 'yawo-chrome-btn', textContent: '✕', title: 'Close' }, (overlay, btn) => {
-                    btn.onclick    = () => { this.#cleanPopovers(); document.querySelector(`#${this.windowId}`)?.remove(); };
-                    btn.ontouchend = () => btn.click();
-                }).up()
-            .up()
+            .addWindowHeader({
+                title: 'Overlays',
+                onClose: () => { this.#cleanPopovers(); document.querySelector(`#${this.windowId}`)?.remove(); },
+            })
             .addDiv({ class: 'yawo-content' })
                 .addDiv({ id: this.listContainerId, class: 'yawo-col' }).up()
                 .addHr().up()
@@ -173,6 +166,7 @@ export class WindowTemplateSelect extends Overlay {
                     }).up()
                 .up()
             .up()
+            .addWindowFooter({ version: this.version })
         .mount(document.body);
 
         const win = document.querySelector(`#${this.windowId}`);

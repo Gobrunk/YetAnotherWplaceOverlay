@@ -1,4 +1,5 @@
 import { Overlay } from './overlay.js';
+import { buildTitlebar, buildFooter } from './window-chrome.js';
 import { formatNumber, formatPct } from './utils.js';
 
 export class WindowColorFilter extends Overlay {
@@ -118,39 +119,18 @@ export class WindowColorFilter extends Overlay {
         wrap.style.cssText = `width:380px; z-index:9999;`;
         wrap._cleanup = stopSoloObs;
 
-        // ── Titlebar (simplified) ─────────────────────────────
-        const titlebar = document.createElement('div');
-        titlebar.className = 'yawo-titlebar';
-
-        const minimizeBtn = document.createElement('button');
-        minimizeBtn.className = 'yawo-chrome-btn';
-        minimizeBtn.textContent = '▼';
-        minimizeBtn.dataset.buttonStatus = 'expanded';
-        minimizeBtn.setAttribute('aria-label', 'Minimize window "Color Filter"');
-        minimizeBtn.onclick    = () => this.toggleMinimize(minimizeBtn);
-        minimizeBtn.ontouchend = () => minimizeBtn.click();
-
+        // ── Titlebar ──────────────────────────────────────────
         const shownCount = sortedPal.filter(p => p.id > 0 && (ieMap.get(p.id) ?? 0) > 0).length;
-        const titleEl = document.createElement('div');
-        titleEl.textContent = `Colors (${shownCount})`;
-
-        const refreshBtn = document.createElement('button');
-        refreshBtn.textContent = '↻';
-        refreshBtn.title = 'Refresh stats';
-        refreshBtn.style.cssText = `background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); color:rgba(255,255,255,.7); border-radius:5px; padding:3px 6px; font-size:11px; cursor:pointer; flex-shrink:0;`;
-        refreshBtn.onclick = () => { wrap.remove(); this.templateManager.refreshCorrectStats().then(() => this.toggle()); };
-
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'yawo-chrome-btn';
-        closeBtn.textContent = '✖';
-        closeBtn.setAttribute('aria-label', 'Close window "Color Filter"');
-        closeBtn.onclick    = () => { stopSoloObs(); wrap.remove(); };
-        closeBtn.ontouchend = () => closeBtn.click();
-
-        titlebar.appendChild(minimizeBtn);
-        titlebar.appendChild(titleEl);
-        titlebar.appendChild(refreshBtn);
-        titlebar.appendChild(closeBtn);
+        const titlebar = buildTitlebar({
+            title: `Colors (${shownCount})`,
+            minimizeLabel: 'Minimize window "Color Filter"',
+            onMinimize: btn => this.toggleMinimize(btn),
+            buttons: [
+                { glyph: '↻', title: 'Refresh stats', onClick: () => { wrap.remove(); this.templateManager.refreshCorrectStats().then(() => this.toggle()); } },
+            ],
+            onClose: () => { stopSoloObs(); wrap.remove(); },
+            closeLabel: 'Close window "Color Filter"',
+        });
         wrap.appendChild(titlebar);
 
         // ── Content ───────────────────────────────────────────
@@ -477,6 +457,7 @@ export class WindowColorFilter extends Overlay {
         applyFilter();
         content.appendChild(list);
         wrap.appendChild(content);
+        wrap.appendChild(buildFooter({ version: this.version }));
         document.body.appendChild(wrap);
 
         // ── Position: restores saved position or places below anchor ──
