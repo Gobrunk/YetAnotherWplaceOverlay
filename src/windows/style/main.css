@@ -1,0 +1,137 @@
+/* ── Main window ── */
+
+/* ── Completion ring ── */
+.yawo-ring { position: relative; width: 130px; height: 130px; margin: 8px auto 4px; }
+.yawo-ring-svg, .yawo-ring-svg svg { width: 100%; height: 100%; display: block; }
+.yawo-ring-svg svg { transform: scaleX(-1) rotate(-90deg); } /* start at top, fill counter-clockwise */
+.yawo-ring-track { fill: none; stroke: rgba(255,255,255,.08); stroke-width: 6; }
+.yawo-ring-arc {
+  fill: none;
+  stroke: var(--yawo-success);
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset .35s ease;
+}
+.yawo-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.yawo-ring-value { display: flex; align-items: baseline; }
+.yawo-ring-num {
+  font-family: var(--yawo-font-mono);
+  font-size: 30px; font-weight: 700; color: #fff;
+  font-variant-numeric: tabular-nums; line-height: 1;
+}
+.yawo-ring-sign { font-family: var(--yawo-font-mono); font-size: 16px; font-weight: 700; color: var(--yawo-success); margin-left: 2px; }
+.yawo-ring-label {
+  margin-top: 4px;
+  font-size: 9px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .22em;
+  color: rgba(255,255,255,.35);
+}
+
+/* ── Active overlay name + pixel fraction ── */
+.yawo-overlay-title-row {
+  display: flex; align-items: baseline; justify-content: center;
+  flex-wrap: wrap; gap: 8px;
+  padding: 2px 0 2px;
+}
+.yawo-overlay-name {
+  font-size: 15px; font-weight: 700; color: #fff;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  min-width: 0; max-width: 100%;
+}
+.yawo-overlay-frac { font-size: 11px; color: rgba(255,255,255,.4); }
+
+/* ── Stat row ── */
+.yawo-stat-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+  padding: 6px 0;
+  border-top: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.yawo-stat-cell {
+  display: flex; flex-direction: column;
+  align-items: center; text-align: center;
+  gap: 4px; min-width: 0; overflow: hidden;
+}
+.yawo-stat-badge {
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  color: rgb(var(--yawo-badge-rgb));
+  font-size: 15px;
+}
+.yawo-badge-charges  { --yawo-badge-rgb: var(--yawo-warning-rgb); }
+.yawo-badge-droplets { --yawo-badge-rgb: var(--yawo-blue-rgb); }
+.yawo-badge-level    { --yawo-badge-rgb: var(--yawo-success-rgb); }
+.yawo-stat-value { font-size: 15px; font-weight: 700; color: #fff; }
+.yawo-stat-label {
+  font-size: 9px; color: rgba(255,255,255,.35);
+  text-transform: uppercase; letter-spacing: .07em; font-weight: 600;
+}
+
+/* ── Enable/disable templates pill ── */
+.yawo-active-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.07);
+  transition: background .15s, border-color .15s;
+}
+.yawo-active-row--on {
+  background: rgba(var(--yawo-success-rgb),.08);
+  border-color: rgba(var(--yawo-success-rgb),.2);
+}
+.yawo-active-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,.25);
+  transition: background .15s, box-shadow .15s;
+}
+.yawo-active-row--on .yawo-active-dot {
+  background: var(--yawo-success);
+  box-shadow: 0 0 0 3px rgba(var(--yawo-success-rgb),.2);
+}
+.yawo-active-label { flex: 1; font-size: 13px; font-weight: 600; color: rgba(255,255,255,.9); }
+
+/* Pill switch with a white knob; the track tints green when enabled. */
+.yawo-toggle {
+  position: relative;
+  flex-shrink: 0;
+  width: 40px; height: 22px;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  background: rgba(255,255,255,.1) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.yawo-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.6);
+  transition: transform .15s, background .15s;
+}
+.yawo-toggle:hover { background: rgba(255,255,255,.14) !important; }
+.yawo-toggle--on {
+  background: var(--yawo-success) !important;
+  border-color: rgba(var(--yawo-success-rgb),.6) !important;
+}
+.yawo-toggle--on:hover { background: rgba(var(--yawo-success-rgb),.85) !important; }
+.yawo-toggle--on::after { transform: translateX(18px); background: #fff; }
+
+/* ── Action buttons (Overlays / Filters) ── */
+.yawo-overlay-actions { display: flex; gap: 8px; width: 100%; }
+.yawo-action-btn { flex: 1; min-width: 0; padding: 10px 8px !important; }
+.yawo-action-btn .yawo-icon { color: var(--yawo-accent); width: 16px; height: 16px; }
+.yawo-action-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

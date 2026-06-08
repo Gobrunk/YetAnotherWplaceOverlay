@@ -1,0 +1,188 @@
+/* ── Color filter window ── */
+
+.yawo-filter-content { gap: 10px; }
+
+/* ── Toolbar: search · sort · filter mode ── */
+.yawo-filter-toolbar { display: flex; align-items: center; gap: 8px; }
+
+.yawo-search-box {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+}
+.yawo-search-box .yawo-icon { color: rgba(255,255,255,.35); flex-shrink: 0; }
+.yawo-search-box input[type="text"] {
+  flex: 1; min-width: 0;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+.yawo-search-box input[type="text"]:focus { outline: none; }
+
+.yawo-menu-wrap { position: relative; flex-shrink: 0; }
+
+.yawo-filter-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  color: rgba(255,255,255,.8);
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  transition: background .12s, border-color .12s;
+}
+.yawo-filter-mode-btn:hover { background: rgba(255,255,255,.09); }
+.yawo-filter-mode-btn .yawo-icon { color: rgba(255,255,255,.55); }
+.yawo-mode-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── Dropdown menus (filter mode / sort) ── */
+.yawo-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 6px;
+  min-width: 100%;
+  background: var(--yawo-elevated);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  padding: 5px;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 100000;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+}
+.yawo-menu--right { left: auto; right: 0; }
+.yawo-menu--open { display: flex; }
+.yawo-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 8px;
+  border: none;
+  background: none;
+  color: rgba(255,255,255,.85);
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 8px;
+  white-space: nowrap;
+  text-align: left;
+  width: 100%;
+  transition: background .12s;
+}
+.yawo-menu-item:hover { background: rgba(255,255,255,.08); }
+.yawo-menu-item--active { background: rgba(255,255,255,.06); font-weight: 700; }
+.yawo-menu-item--disabled { opacity: .4; cursor: not-allowed; }
+.yawo-menu-item--disabled:hover { background: none; }
+.yawo-menu-icon { width: 14px; text-align: center; flex-shrink: 0; opacity: .8; }
+
+/* ── Color list ── */
+.yawo-filter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+}
+/* Each color is a grid row: swatch · name · bar · % · goto. */
+.yawo-filter-row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1.2fr) minmax(80px, 2fr) 40px 24px;
+  align-items: center;
+  justify-items: stretch; /* wplace's base CSS disables item stretch; restore it */
+  gap: 8px;
+  padding: 7px 4px;
+  transition: opacity .15s;
+}
+.yawo-filter-row--hidden { opacity: .4; }
+
+/* Swatch doubles as the show/hide toggle. Dimensions also forced inline in JS. */
+.yawo-swatch-toggle {
+  position: relative;
+  width: 18px; height: 18px; min-width: 18px;
+  box-sizing: border-box;
+  aspect-ratio: 1;
+  padding: 0;
+  border-radius: 5px;
+  border: 1px solid rgba(255,255,255,.2);
+  cursor: pointer;
+  transition: transform .1s, box-shadow .12s, opacity .15s, filter .15s;
+}
+.yawo-swatch-toggle:hover { transform: scale(1.12); box-shadow: 0 0 0 2px rgba(255,255,255,.18); }
+.yawo-swatch-toggle--hidden { opacity: .4; filter: grayscale(.55); }
+.yawo-swatch-toggle--hidden::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  background: linear-gradient(135deg, transparent 43%, rgba(255,255,255,.75) 46%,
+                              rgba(255,255,255,.75) 54%, transparent 57%);
+}
+/* Gold star marks premium colors. */
+.yawo-swatch--premium::before {
+  content: '★';
+  position: absolute;
+  top: -6px; right: -4px;
+  font-size: 10px; line-height: 1;
+  color: rgba(var(--yawo-warning-rgb),.98);
+  text-shadow: 0 0 2px #000, 0 0 1px #000;
+  pointer-events: none;
+}
+
+.yawo-color-name {
+  width: 100%;     /* fill the cell so ellipsis clips (wplace disables item stretch) */
+  min-width: 0;
+  font-size: 12px;
+  color: rgba(255,255,255,.88);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.yawo-bar {
+  position: relative;
+  width: 100%;     /* fill the grid cell explicitly */
+  min-width: 0;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.07);
+  overflow: hidden;
+}
+.yawo-bar-fill { height: 100%; border-radius: 999px; opacity: .8; transition: width .25s ease; }
+.yawo-bar-label {
+  position: absolute;
+  inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 600;
+  color: #fff;
+  text-shadow: 0 0 2px #000, 0 0 2px #000, 0 1px 1px #000;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.yawo-bar-pct {
+  width: 100%;
+  font-size: 11px; font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* "Go to nearest pixel" — crosshair icon. Box forced inline in JS. */
+.yawo-goto-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  color: rgba(255,255,255,.45);
+  transition: transform .1s, color .12s;
+}
+.yawo-goto-btn:hover { transform: scale(1.12); color: var(--yawo-accent); }

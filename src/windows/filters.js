@@ -1,6 +1,6 @@
-import { Overlay } from './overlay.js';
-import { buildTitlebar, buildFooter } from './window-chrome.js';
-import { formatNumber, formatPct } from './utils.js';
+import { Overlay } from '../overlay.js';
+import { buildTitlebar, buildFooter, icon } from './common.js';
+import { formatNumber, formatPct } from '../utils.js';
 
 export class WindowColorFilter extends Overlay {
     constructor(ctx) {
@@ -69,6 +69,13 @@ export class WindowColorFilter extends Overlay {
             : this.templateManager.hiddenColors.size === 0 ? 'all' : 'none';
         let sortState = 'id'; // 'id' | 'name-asc' | 'name-desc' | 'pct-desc' | 'pct-asc'
 
+        const updateVisibleCount = () => {
+            const note = wrap?.querySelector('.yawo-footer-note');
+            if (!note) return;
+            const visible = rowData.filter(d => !this.templateManager.hiddenColors.get(d.color.id)).length;
+            note.textContent = `${visible} visible`;
+        };
+
         const applyRowStates = () => {
             document.querySelectorAll('#yawo-color-dropdown [data-color-id]').forEach(row => {
                 const rid     = parseInt(row.dataset.colorId, 10);
@@ -81,6 +88,7 @@ export class WindowColorFilter extends Overlay {
                 }
                 row.classList.toggle('yawo-filter-row--hidden', !shown);
             });
+            updateVisibleCount();
         };
 
         const applySolo = colorId => {
@@ -122,11 +130,12 @@ export class WindowColorFilter extends Overlay {
         // ── Titlebar ──────────────────────────────────────────
         const shownCount = sortedPal.filter(p => p.id > 0 && (ieMap.get(p.id) ?? 0) > 0).length;
         const titlebar = buildTitlebar({
-            title: `Colors (${shownCount})`,
+            title: 'Colors',
+            badge: `${shownCount}`,
             minimizeLabel: 'Minimize window "Color Filter"',
             onMinimize: btn => this.toggleMinimize(btn),
             buttons: [
-                { glyph: '↻', title: 'Refresh stats', onClick: () => { wrap.remove(); this.templateManager.refreshCorrectStats().then(() => this.toggle()); } },
+                { icon: 'refresh', title: 'Refresh stats', onClick: () => { wrap.remove(); this.templateManager.refreshCorrectStats().then(() => this.toggle()); } },
             ],
             onClose: () => { stopSoloObs(); wrap.remove(); },
             closeLabel: 'Close window "Color Filter"',
@@ -135,38 +144,39 @@ export class WindowColorFilter extends Overlay {
 
         // ── Content ───────────────────────────────────────────
         const content = document.createElement('div');
-        content.className = 'yawo-content';
-        content.style.cssText = `padding:4px 0; gap:0;`;
+        content.className = 'yawo-content yawo-filter-content';
 
-        // ── Toolbar: search + filter mode ─────────────────────
+        // ── Toolbar: search + sort + filter mode ──────────────
         const searchWrap = document.createElement('div');
         searchWrap.className = 'yawo-filter-toolbar';
+
+        const searchBox = document.createElement('div');
+        searchBox.className = 'yawo-search-box';
+        searchBox.innerHTML = icon('search', 14);
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
-        searchInput.placeholder = '🔍 Search colors…';
+        searchInput.placeholder = 'Search colors…';
         searchInput.oninput = () => applyFilter();
-        searchWrap.appendChild(searchInput);
+        searchBox.appendChild(searchInput);
+        searchWrap.appendChild(searchBox);
         content.appendChild(searchWrap);
 
         // Filter mode selector — hovering/clicking the button opens a 3-mode menu.
         const filterModeConfig = {
-            all:  { icon: '✓', label: 'All visible', bg: 'rgba(74,222,128,.18)',  border: 'rgba(74,222,128,.4)',  color: 'rgba(74,222,128,.9)' },
-            none: { icon: '✗', label: 'All hidden',  bg: 'rgba(248,113,113,.18)', border: 'rgba(248,113,113,.4)', color: 'rgba(248,113,113,.9)' },
-            solo: { icon: '◎', label: 'Selected',    bg: 'rgba(251,191,36,.18)',  border: 'rgba(251,191,36,.4)',  color: 'rgba(251,191,36,.9)' },
+            all:  { icon: '✓', label: 'All visible', color: 'var(--yawo-success)' },
+            none: { icon: '✗', label: 'All hidden',  color: 'var(--yawo-danger)' },
+            solo: { icon: '◎', label: 'Selected',    color: 'var(--yawo-warning)' },
         };
 
         const filterWrap = document.createElement('div');
-        filterWrap.style.cssText = `position:relative; flex-shrink:0;`;
+        filterWrap.className = 'yawo-menu-wrap';
 
         const filterBtn = document.createElement('button');
         filterBtn.className = 'yawo-filter-mode-btn';
         const refreshFilterBtn = () => {
             const cfg = filterModeConfig[filterMode];
-            filterBtn.textContent       = `${cfg.icon} ${cfg.label} ▾`;
-            filterBtn.style.background   = cfg.bg;
-            filterBtn.style.borderColor  = cfg.border;
-            filterBtn.style.color        = cfg.color;
-            filterBtn.title              = `Filter: ${cfg.label}`;
+            filterBtn.innerHTML = `<span class="yawo-mode-dot" style="background:${cfg.color}"></span><span>${cfg.label}</span>`;
+            filterBtn.title     = `Filter: ${cfg.label}`;
         };
 
         const setFilterMode = mode => {
@@ -190,22 +200,21 @@ export class WindowColorFilter extends Overlay {
 
         // ── Mode menu ─────────────────────────────────────────
         const menu = document.createElement('div');
-        menu.style.cssText = `position:absolute; top:100%; left:0; margin-top:3px; background:rgba(20,20,20,.97); border:1px solid rgba(255,255,255,.15); border-radius:6px; padding:3px; display:none; flex-direction:column; gap:2px; z-index:100000; box-shadow:0 4px 14px rgba(0,0,0,.5);`;
+        menu.className = 'yawo-menu';
 
         const menuItems = {};
         for (const mode of ['all', 'none', 'solo']) {
             const cfg  = filterModeConfig[mode];
             const item = document.createElement('button');
-            item.style.cssText = `display:flex; align-items:center; gap:7px; padding:4px 10px 4px 7px; border:none; background:none; color:rgba(255,255,255,.85); font-size:11px; cursor:pointer; border-radius:4px; white-space:nowrap; text-align:left; width:100%; transition:background .12s;`;
+            item.className = 'yawo-menu-item';
             const ic = document.createElement('span');
-            ic.textContent  = cfg.icon;
-            ic.style.cssText = `color:${cfg.color}; width:12px; text-align:center; flex-shrink:0;`;
+            ic.className   = 'yawo-menu-icon';
+            ic.textContent = cfg.icon;
+            ic.style.color = cfg.color;
             const lbl = document.createElement('span');
             lbl.textContent = cfg.label;
             item.appendChild(ic);
             item.appendChild(lbl);
-            item.onmouseenter = () => { if (!item.disabled) item.style.background = 'rgba(255,255,255,.1)'; };
-            item.onmouseleave = () => { item.style.background = ''; };
             item.onclick = () => { if (item.disabled) return; setFilterMode(mode); hideMenu(); };
             menu.appendChild(item);
             menuItems[mode] = item;
@@ -216,37 +225,32 @@ export class WindowColorFilter extends Overlay {
             const soloDisabled = getSelectedGameColor() === null;
             const solo = menuItems.solo;
             solo.disabled      = soloDisabled;
-            solo.style.opacity = soloDisabled ? '0.4' : '1';
-            solo.style.cursor  = soloDisabled ? 'not-allowed' : 'pointer';
+            solo.classList.toggle('yawo-menu-item--disabled', soloDisabled);
             solo.title         = soloDisabled
                 ? 'Select a color in the palette to enable this mode'
                 : 'Show only the color selected in the palette';
-            for (const m of ['all', 'none', 'solo']) {
-                const active = m === filterMode;
-                menuItems[m].style.fontWeight = active ? '700' : '400';
-                menuItems[m].style.background = active ? 'rgba(255,255,255,.07)' : '';
-            }
+            for (const m of ['all', 'none', 'solo'])
+                menuItems[m].classList.toggle('yawo-menu-item--active', m === filterMode);
         };
 
         // ── Open/close (hover + click, with a small grace delay) ──
         let menuHideTimer = null;
-        const showMenu = () => { clearTimeout(menuHideTimer); refreshMenu(); menu.style.display = 'flex'; };
-        const hideMenu = () => { clearTimeout(menuHideTimer); menu.style.display = 'none'; };
+        const showMenu = () => { clearTimeout(menuHideTimer); refreshMenu(); menu.classList.add('yawo-menu--open'); };
+        const hideMenu = () => { clearTimeout(menuHideTimer); menu.classList.remove('yawo-menu--open'); };
         const scheduleHide = () => { menuHideTimer = setTimeout(hideMenu, 160); };
 
         filterBtn.onmouseenter = showMenu;
         filterBtn.onmouseleave = scheduleHide;
         menu.onmouseenter      = () => clearTimeout(menuHideTimer);
         menu.onmouseleave      = scheduleHide;
-        filterBtn.onclick      = () => { if (menu.style.display === 'flex') hideMenu(); else showMenu(); };
+        filterBtn.onclick      = () => { if (menu.classList.contains('yawo-menu--open')) hideMenu(); else showMenu(); };
         filterBtn.ontouchend   = ev => { ev.preventDefault(); filterBtn.click(); };
 
         refreshFilterBtn();
         filterWrap.appendChild(filterBtn);
         filterWrap.appendChild(menu);
-        searchWrap.appendChild(filterWrap); // filter button lives on the search row
 
-        // ── Sort control (lives on the search row, next to the filter) ──
+        // ── Sort control ──────────────────────────────────────
         const sortConfig = {
             'id':        { icon: '⇅', label: 'Default' },
             'name-asc':  { icon: '↑', label: 'Name (A–Z)' },
@@ -256,42 +260,38 @@ export class WindowColorFilter extends Overlay {
         };
 
         const sortWrap = document.createElement('div');
-        sortWrap.style.cssText = `position:relative; flex-shrink:0;`;
+        sortWrap.className = 'yawo-menu-wrap';
 
         const sortBtn = document.createElement('button');
         sortBtn.className = 'yawo-filter-mode-btn';
         const refreshSortBtn = () => {
             const cfg = sortConfig[sortState];
-            // Default keeps a generic "Sort" label; an active sort shows what it is.
-            sortBtn.textContent = sortState === 'id' ? '⇅ Sort ▾' : `${cfg.icon} ${cfg.label} ▾`;
-            sortBtn.title       = `Sort: ${cfg.label}`;
+            sortBtn.innerHTML = sortState === 'id'
+                ? `${icon('sort', 13)}<span>Sort</span>`
+                : `${icon('sort', 13)}<span>${cfg.label}</span>`;
+            sortBtn.title = `Sort: ${cfg.label}`;
         };
 
         const sortMenu = document.createElement('div');
-        sortMenu.style.cssText = `position:absolute; top:100%; right:0; margin-top:3px; background:rgba(20,20,20,.97); border:1px solid rgba(255,255,255,.15); border-radius:6px; padding:3px; display:none; flex-direction:column; gap:2px; z-index:100000; box-shadow:0 4px 14px rgba(0,0,0,.5);`;
+        sortMenu.className = 'yawo-menu yawo-menu--right';
 
         const sortMenuItems = {};
         const refreshSortMenu = () => {
-            for (const s of Object.keys(sortMenuItems)) {
-                const active = s === sortState;
-                sortMenuItems[s].style.fontWeight = active ? '700' : '400';
-                sortMenuItems[s].style.background = active ? 'rgba(255,255,255,.07)' : '';
-            }
+            for (const s of Object.keys(sortMenuItems))
+                sortMenuItems[s].classList.toggle('yawo-menu-item--active', s === sortState);
         };
 
         for (const state of ['id', 'name-asc', 'name-desc', 'pct-desc', 'pct-asc']) {
             const cfg  = sortConfig[state];
             const item = document.createElement('button');
-            item.style.cssText = `display:flex; align-items:center; gap:7px; padding:4px 10px 4px 7px; border:none; background:none; color:rgba(255,255,255,.85); font-size:11px; cursor:pointer; border-radius:4px; white-space:nowrap; text-align:left; width:100%; transition:background .12s;`;
+            item.className = 'yawo-menu-item';
             const ic = document.createElement('span');
-            ic.textContent  = cfg.icon;
-            ic.style.cssText = `width:12px; text-align:center; flex-shrink:0; opacity:.7;`;
+            ic.className   = 'yawo-menu-icon';
+            ic.textContent = cfg.icon;
             const lbl = document.createElement('span');
             lbl.textContent = cfg.label;
             item.appendChild(ic);
             item.appendChild(lbl);
-            item.onmouseenter = () => { item.style.background = 'rgba(255,255,255,.1)'; };
-            item.onmouseleave = () => { item.style.background = state === sortState ? 'rgba(255,255,255,.07)' : ''; };
             item.onclick = () => { sortState = state; applyFilter(); hideSortMenu(); };
             sortMenu.appendChild(item);
             sortMenuItems[state] = item;
@@ -299,23 +299,26 @@ export class WindowColorFilter extends Overlay {
 
         // ── Open/close (hover + click, with a small grace delay) ──
         let sortHideTimer = null;
-        const showSortMenu = () => { clearTimeout(sortHideTimer); refreshSortMenu(); sortMenu.style.display = 'flex'; };
-        const hideSortMenu = () => { clearTimeout(sortHideTimer); sortMenu.style.display = 'none'; };
+        const showSortMenu = () => { clearTimeout(sortHideTimer); refreshSortMenu(); sortMenu.classList.add('yawo-menu--open'); };
+        const hideSortMenu = () => { clearTimeout(sortHideTimer); sortMenu.classList.remove('yawo-menu--open'); };
         const scheduleSortHide = () => { sortHideTimer = setTimeout(hideSortMenu, 160); };
 
         sortBtn.onmouseenter = showSortMenu;
         sortBtn.onmouseleave = scheduleSortHide;
         sortMenu.onmouseenter = () => clearTimeout(sortHideTimer);
         sortMenu.onmouseleave = scheduleSortHide;
-        sortBtn.onclick      = () => { if (sortMenu.style.display === 'flex') hideSortMenu(); else showSortMenu(); };
+        sortBtn.onclick      = () => { if (sortMenu.classList.contains('yawo-menu--open')) hideSortMenu(); else showSortMenu(); };
         sortBtn.ontouchend   = ev => { ev.preventDefault(); sortBtn.click(); };
 
         refreshSortBtn();
         sortWrap.appendChild(sortBtn);
         sortWrap.appendChild(sortMenu);
-        searchWrap.insertBefore(sortWrap, filterWrap); // sort sits between search and filter
 
-        // ── Liste scrollable ──────────────────────────────────
+        // Toolbar order: search · sort · filter mode
+        searchWrap.appendChild(sortWrap);
+        searchWrap.appendChild(filterWrap);
+
+        // ── Scrollable list ───────────────────────────────────
         const list = document.createElement('div');
         list.className = 'yawo-filter-list';
 
@@ -366,6 +369,7 @@ export class WindowColorFilter extends Overlay {
                     swatch.title = `Hide ${color.name} from the overlay`;
                     row.classList.remove('yawo-filter-row--hidden');
                 }
+                updateVisibleCount();
             };
 
             // Name (grid col 2)
@@ -382,14 +386,14 @@ export class WindowColorFilter extends Overlay {
             bar.className = 'yawo-bar-fill';
             bar.style.cssText = `background:${barColor}; width:${pct}%;`;
             const barLabel = document.createElement('span');
-            barLabel.className = 'yawo-bar-label';
+            barLabel.className = 'yawo-bar-label yawo-mono';
             barLabel.textContent = `${formatNumber(correct)} / ${formatNumber(total)}`;
             barWrap.appendChild(bar);
             barWrap.appendChild(barLabel);
 
             // Percentage (grid col 4)
             const statsEl = document.createElement('span');
-            statsEl.className = 'yawo-bar-pct';
+            statsEl.className = 'yawo-bar-pct yawo-mono';
             statsEl.style.color = barColor;
             statsEl.textContent = `${pctLabel}%`;
 
@@ -397,10 +401,9 @@ export class WindowColorFilter extends Overlay {
             const gotoBtn = document.createElement('button');
             gotoBtn.className = 'yawo-goto-btn';
             gotoBtn.title = `Go to nearest incorrect ${color.name} pixel`;
-            gotoBtn.textContent = '🎯';
-            // Neutralize wplace's base button sizing (min-width/padding) and size the
-            // emoji via font-size — all forced inline so wplace's base CSS can't win.
-            for (const [k, v] of [['min-width', '0'], ['width', '22px'], ['height', '22px'], ['padding', '0'], ['box-sizing', 'border-box'], ['font-size', '17px'], ['line-height', '1']])
+            gotoBtn.innerHTML = icon('crosshair', 16);
+            // Neutralize wplace's base button sizing (min-width/padding), all forced inline.
+            for (const [k, v] of [['min-width', '0'], ['width', '24px'], ['height', '24px'], ['padding', '0'], ['box-sizing', 'border-box']])
                 gotoBtn.style.setProperty(k, v);
             gotoBtn.onclick = ev => {
                 ev.stopPropagation();
@@ -416,7 +419,7 @@ export class WindowColorFilter extends Overlay {
                 } else {
                     const toast = document.createElement('div');
                     toast.textContent = 'Nothing found — try ↻ to refresh stats';
-                    toast.style.cssText = `position:fixed; background:rgba(0,0,0,.85); color:#fff; font-size:11px; padding:4px 8px; border-radius:4px; pointer-events:none; z-index:99999; white-space:nowrap; opacity:1; transition:opacity .4s;`;
+                    toast.style.cssText = `position:fixed; background:rgba(0,0,0,.85); color:#fff; font-size:11px; padding:4px 8px; border-radius:6px; pointer-events:none; z-index:99999; white-space:nowrap; opacity:1; transition:opacity .4s;`;
                     const rect = gotoBtn.getBoundingClientRect();
                     toast.style.top  = `${rect.bottom + 4}px`;
                     toast.style.left = `${rect.left}px`;
@@ -457,8 +460,9 @@ export class WindowColorFilter extends Overlay {
         applyFilter();
         content.appendChild(list);
         wrap.appendChild(content);
-        wrap.appendChild(buildFooter({ version: this.version }));
+        wrap.appendChild(buildFooter({ version: this.version, note: '' }));
         document.body.appendChild(wrap);
+        updateVisibleCount();
 
         // ── Position: restores saved position or places below anchor ──
         const savedPos = this.settingsManager?.settings?.filterWindowPosition;

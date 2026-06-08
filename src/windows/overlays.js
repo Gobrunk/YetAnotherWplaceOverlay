@@ -1,4 +1,5 @@
-import { Overlay } from './overlay.js';
+import { Overlay } from '../overlay.js';
+import { icon } from './common.js';
 
 export class WindowTemplateSelect extends Overlay {
     #ctx            = null;
@@ -33,16 +34,15 @@ export class WindowTemplateSelect extends Overlay {
             }
         };
 
-        this.addDiv({ id: this.windowId, class: 'yawo-window', style: 'top: 10px; left: 10px; width: 300px;' })
+        this.addDiv({ id: this.windowId, class: 'yawo-window', style: 'top: 10px; left: 10px; width: 320px;' })
             .addWindowHeader({
                 title: 'Overlays',
                 onClose: () => { this.#cleanPopovers(); document.querySelector(`#${this.windowId}`)?.remove(); },
             })
             .addDiv({ class: 'yawo-content' })
                 .addDiv({ id: this.listContainerId, class: 'yawo-col' }).up()
-                .addHr().up()
                 .addDiv({ class: 'yawo-tab-bar' })
-                    .addButton({ id: 'yawo-tab-add', class: 'yawo-tab-btn', innerHTML: '➕&thinsp;Add an overlay' }, (overlay, btn) => {
+                    .addButton({ id: 'yawo-tab-add', class: 'yawo-tab-btn', innerHTML: `${icon('plus')}<span>Add an overlay</span>` }, (overlay, btn) => {
                         btn.onclick = () => {
                             const win      = document.querySelector(`#${this.windowId}`);
                             const addPanel = win.querySelector('#yawo-add-panel');
@@ -57,7 +57,7 @@ export class WindowTemplateSelect extends Overlay {
                             growToFit();
                         };
                     }).up()
-                    .addButton({ id: 'yawo-tab-import', class: 'yawo-tab-btn', innerHTML: '📥&thinsp;Import' }, (overlay, btn) => {
+                    .addButton({ id: 'yawo-tab-import', class: 'yawo-tab-btn', innerHTML: `${icon('download')}<span>Import</span>` }, (overlay, btn) => {
                         btn.onclick = () => {
                             const win      = document.querySelector(`#${this.windowId}`);
                             const addPanel = win.querySelector('#yawo-add-panel');
@@ -77,7 +77,7 @@ export class WindowTemplateSelect extends Overlay {
                     .addDiv({ class: 'yawo-coords-block' })
                         .addDiv({ class: 'yawo-coords-header' })
                             .addSmall({ textContent: 'Position', class: 'yawo-form-label' }).up()
-                            .addButton({ class: 'yawo-chrome-btn yawo-jump-btn', innerHTML: '<svg viewBox="0 0 4 6"><path d="M.5,3.4A2,2 0 1 1 3.5,3.4L2,6"/><circle cx="2" cy="2" r=".7" fill="#fff"/></svg>', title: 'Copy last click coords' }, (overlay, btn) => {
+                            .addButton({ class: 'yawo-use-current', innerHTML: `${icon('mapPin')}<span>Use current</span>`, title: 'Copy last click coords' }, (overlay, btn) => {
                                 btn.onclick = () => {
                                     const coords = this.#ctx?.apiManager?.lastClickCoords;
                                     if (coords?.[0]) {
@@ -108,7 +108,6 @@ export class WindowTemplateSelect extends Overlay {
                             }).up()
                         .up()
                     .up()
-                    .addHr().up()
                     .addSmall({ textContent: 'Image', class: 'yawo-form-label' }).up()
                     .addFileInput({ class: 'yawo-file-upload', textContent: 'Choose a file…', accept: 'image/png, image/jpeg, image/webp, image/bmp, image/gif' }, (overlay, _wrapper, inputEl, buttonEl) => {
                         buttonEl.style.cssText += 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
@@ -122,7 +121,7 @@ export class WindowTemplateSelect extends Overlay {
                     })
                     .addSmall({ textContent: 'Name', class: 'yawo-form-label' }).up()
                     .addInput({ type: 'text', id: 'yawo-ts-name', class: 'yawo-rename-input', placeholder: 'Name (optional)', maxlength: 25 }).up()
-                    .addButton({ innerHTML: '🖼️&thinsp;Add', class: 'yawo-btn-create' }, (overlay, btn) => {
+                    .addButton({ innerHTML: `${icon('image')}<span>Add overlay</span>`, class: 'yawo-btn-create' }, (overlay, btn) => {
                         btn.onclick = () => {
                             const fileInput = document.querySelector(`#${this.windowId} input.yawo-file-upload[type="file"]`);
                             const nameInp   = document.querySelector('#yawo-ts-name');
@@ -152,7 +151,7 @@ export class WindowTemplateSelect extends Overlay {
                     .addTextarea({ id: 'yawo-ts-import-code', class: 'yawo-import-textarea', placeholder: 'Paste YAWO:v1:... code here', rows: 3, style: 'width:100%; resize:vertical; box-sizing:border-box;' }).up()
                     .addSmall({ textContent: 'Name', class: 'yawo-form-label' }).up()
                     .addInput({ type: 'text', id: 'yawo-ts-import-name', class: 'yawo-rename-input', placeholder: 'Name (optional)', maxlength: 25 }).up()
-                    .addButton({ innerHTML: '📥&thinsp;Import', class: 'yawo-btn-create' }, (overlay, btn) => {
+                    .addButton({ innerHTML: `${icon('download')}<span>Import</span>`, class: 'yawo-btn-create' }, (overlay, btn) => {
                         btn.onclick = async () => {
                             const code = document.querySelector('#yawo-ts-import-code')?.value?.trim();
                             const name = document.querySelector('#yawo-ts-import-name')?.value?.trim();
@@ -166,7 +165,7 @@ export class WindowTemplateSelect extends Overlay {
                     }).up()
                 .up()
             .up()
-            .addWindowFooter({ version: this.version })
+            .addWindowFooter({ version: this.version, note: '' })
         .mount(document.body);
 
         const win = document.querySelector(`#${this.windowId}`);
@@ -197,9 +196,16 @@ export class WindowTemplateSelect extends Overlay {
         if (!container) return;
         container.innerHTML = '';
         this.#buildTemplateList(container);
+        this.#updateCount();
     }
 
     // ── Private methods ───────────────────────────────────────
+
+    #updateCount() {
+        const count = this.#ctx?.apiManager?.templateManager?.templates?.length ?? 0;
+        const note  = document.querySelector(`#${this.windowId} .yawo-footer-note`);
+        if (note) note.textContent = `${count} overlay${count === 1 ? '' : 's'}`;
+    }
 
     #cleanPopovers() {
         document.querySelectorAll('.yawo-more-popover').forEach(p => p.remove());
@@ -226,12 +232,17 @@ export class WindowTemplateSelect extends Overlay {
             info.className = 'yawo-template-info';
 
             const name = document.createElement('span');
-            name.className = 'yawo-text-light';
-            name.style.fontWeight = '600';
-            name.textContent = (isActive ? '✓ ' : '') + tmpl.displayName;
+            name.className = 'yawo-text-light yawo-template-name';
+            if (isActive) {
+                const tick = document.createElement('span');
+                tick.className = 'yawo-template-tick';
+                tick.innerHTML = icon('check', 13);
+                name.appendChild(tick);
+            }
+            name.append(document.createTextNode(tmpl.displayName));
 
             const coords = document.createElement('small');
-            coords.className = 'yawo-stat-label';
+            coords.className = 'yawo-template-coords yawo-mono';
             if (tmpl.coords) {
                 coords.textContent = `T:${tmpl.coords[0]},${tmpl.coords[1]}  P:${tmpl.coords[2]},${tmpl.coords[3]}`;
             }
@@ -239,18 +250,18 @@ export class WindowTemplateSelect extends Overlay {
             info.append(name, coords);
 
             const btnRow = document.createElement('div');
-            btnRow.style.cssText = 'display:flex; gap:4px; flex-shrink:0;';
+            btnRow.className = 'yawo-template-actions';
 
             const activateBtn = document.createElement('button');
             activateBtn.textContent = isActive ? 'Active' : 'Activate';
             activateBtn.disabled    = isActive;
-            if (isActive) activateBtn.className = 'yawo-btn-success';
+            activateBtn.className    = isActive ? 'yawo-btn-success' : 'yawo-btn-activate';
             activateBtn.onclick = () => tm.setActiveTemplate(key);
 
             const renameBtn = document.createElement('button');
             renameBtn.className = 'yawo-btn-rename';
             renameBtn.title     = 'Rename';
-            renameBtn.innerHTML = '<svg viewBox="0 0 14 14" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 1.5l3 3-8 8H1.5v-3l8-8z"/><path d="M8 3l3 3"/></svg>';
+            renameBtn.innerHTML = icon('pencil', 13);
             renameBtn.onclick   = () => {
                 const input = document.createElement('input');
                 input.type      = 'text';
@@ -275,7 +286,7 @@ export class WindowTemplateSelect extends Overlay {
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'yawo-btn-danger';
             deleteBtn.title     = 'Delete';
-            deleteBtn.innerHTML = '<svg viewBox="0 0 14 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4h12M5 4V2h4v2M3 4l1 10h6l1-10M6 7v4M8 7v4"/></svg>';
+            deleteBtn.innerHTML = icon('trash', 13);
             deleteBtn.onclick   = () => {
                 if (confirm(`Delete "${tmpl.displayName}"?`)) tm.deleteTemplate(key);
             };
@@ -284,7 +295,7 @@ export class WindowTemplateSelect extends Overlay {
             pinBtn.className = 'yawo-btn-pin';
             pinBtn.title     = 'Go to anchor pixel';
             pinBtn.disabled  = !tmpl.coords;
-            pinBtn.innerHTML = '<svg viewBox="0 0 14 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 1a4 4 0 0 1 4 4c0 3-4 9-4 9S3 8 3 5a4 4 0 0 1 4-4z"/><circle cx="7" cy="5" r="1.4" fill="currentColor" stroke="none"/></svg>';
+            pinBtn.innerHTML = icon('mapPin', 13);
             pinBtn.onclick   = () => this.#ctx?.apiManager?.navigateToCoords(
                 tmpl.coords,
                 this.settingsManager?.settings?.overlayZoom ?? 12,
@@ -295,13 +306,13 @@ export class WindowTemplateSelect extends Overlay {
             const shareBtn = document.createElement('button');
             shareBtn.className = 'yawo-btn-share';
             shareBtn.title     = 'Copy share code';
-            shareBtn.innerHTML = '<svg viewBox="0 0 14 14" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="2.5" r="1.5"/><circle cx="10.5" cy="11.5" r="1.5"/><circle cx="3.5" cy="7" r="1.5"/><line x1="5" y1="7" x2="9" y2="3.2"/><line x1="5" y1="7" x2="9" y2="10.8"/></svg>';
+            shareBtn.innerHTML = icon('share', 13);
             shareBtn.onclick   = async () => {
                 try {
                     const code = await tm.generateShareCode(key);
                     await navigator.clipboard.writeText(code);
                     const prev = shareBtn.innerHTML;
-                    shareBtn.textContent = '✓';
+                    shareBtn.innerHTML = icon('check', 13);
                     setTimeout(() => { shareBtn.innerHTML = prev; }, 2000);
                 } catch (e) {
                     this.#ctx?.setError('Share failed: ' + e.message);
@@ -315,7 +326,8 @@ export class WindowTemplateSelect extends Overlay {
 
             let hideTimer;
             const moreBtn = document.createElement('button');
-            moreBtn.textContent = '›';
+            moreBtn.className   = 'yawo-btn-more';
+            moreBtn.innerHTML   = icon('chevronRight', 16);
             moreBtn.title       = 'More options';
             moreBtn.addEventListener('mouseenter', () => {
                 clearTimeout(hideTimer);

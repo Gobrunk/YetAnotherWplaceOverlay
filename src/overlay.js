@@ -1,4 +1,4 @@
-import { buildTitlebar, buildFooter } from './window-chrome.js';
+import { buildTitlebar, buildFooter } from './windows/common.js';
 
 export class Overlay {
     #rootElement   = null;
@@ -223,7 +223,7 @@ export class Overlay {
                 clone.classList.add('yawo-minimized-heading');
                 btn.nextElementSibling.appendChild(clone);
             }
-            btn.textContent = '▶';
+            // The chevron glyph is an SVG; CSS rotates it based on buttonStatus.
             btn.dataset.buttonStatus = 'collapsed';
             btn.ariaLabel = `Unminimize window "${label}"`;
         } else {
@@ -250,7 +250,7 @@ export class Overlay {
                 btn.style.textDecoration = '';
                 contentEl.removeEventListener('transitionend', handler);
             });
-            btn.textContent = '▼';
+            // The chevron glyph is an SVG; CSS rotates it based on buttonStatus.
             btn.dataset.buttonStatus = 'expanded';
             btn.ariaLabel = `Minimize window "${label}"`;
         }
