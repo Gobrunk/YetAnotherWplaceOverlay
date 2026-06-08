@@ -1,0 +1,309 @@
+/* ── Design tokens ──
+   Single source of truth for the overlay's colors. Semantic accents are
+   exposed both as a ready-to-use color (--yawo-*) and as an "r,g,b" triplet
+   (--yawo-*-rgb) so callers can build their own alpha via rgba(var(...), a). */
+:root {
+  --yawo-surface: #15171b;
+  --yawo-elevated: #1c1f25;
+
+  /* Primary accent — emerald green (#46a878) */
+  --yawo-accent: rgb(70,168,120);
+  --yawo-accent-rgb: 70,168,120;
+  --yawo-accent-light: rgb(101,201,151);
+  --yawo-accent-light-rgb: 101,201,151;
+
+  /* Success shares the green family (bars, ring, "active" states) */
+  --yawo-success: rgb(70,168,120);
+  --yawo-success-rgb: 70,168,120;
+
+  --yawo-danger: rgb(248,113,113);
+  --yawo-danger-rgb: 248,113,113;
+
+  --yawo-warning: rgb(251,191,36);
+  --yawo-warning-rgb: 251,191,36;
+
+  /* Secondary blue — droplets stat, "Overlay" settings badge */
+  --yawo-blue: rgb(96,165,250);
+  --yawo-blue-rgb: 96,165,250;
+
+  --yawo-font-display: 'Space Grotesk', 'Archivo', system-ui, sans-serif;
+  --yawo-font-mono: 'Roboto Mono', ui-monospace, monospace;
+}
+
+/* ── Window shell ── */
+.yawo-window {
+  position: fixed;
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  background: var(--yawo-surface);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 18px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.55);
+  font-family: var(--yawo-font-display);
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255,255,255,.75);
+  user-select: none;
+  -webkit-user-select: none;
+  overflow: hidden;
+}
+
+/* Numbers, coordinates and timers use the tabular monospace face. */
+.yawo-mono { font-family: var(--yawo-font-mono); font-variant-numeric: tabular-nums; }
+
+/* ── Title bar ── */
+.yawo-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  cursor: grab;
+  flex-shrink: 0;
+  min-height: 30px;
+}
+.yawo-dragging .yawo-titlebar { cursor: grabbing; }
+
+.yawo-title { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.yawo-title-text {
+  font-size: 15px; font-weight: 700; letter-spacing: .01em;
+  color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 0; flex: 0 1 auto; margin: 0;
+}
+.yawo-status-dot {
+  flex-shrink: 0;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--yawo-accent);
+  box-shadow: 0 0 0 3px rgba(var(--yawo-accent-rgb),.18);
+}
+.yawo-title-badge {
+  flex-shrink: 0;
+  padding: 1px 9px;
+  border-radius: 999px;
+  font-family: var(--yawo-font-mono);
+  font-size: 11px; font-weight: 600;
+  color: var(--yawo-accent);
+  background: rgba(var(--yawo-accent-rgb),.14);
+  border: 1px solid rgba(var(--yawo-accent-rgb),.3);
+}
+
+/* ── Content area ── */
+.yawo-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 14px 14px;
+  overflow-y: auto;
+  max-height: 80vh;
+  flex: 1 1 auto;
+  min-height: 0;
+  transition: height .2s ease;
+}
+.yawo-window-resized .yawo-content { max-height: none; }
+.yawo-window-resized .yawo-filter-list { flex: 1 0 auto; max-height: none; overflow-y: auto; }
+
+/* ── Groups and rows ── */
+.yawo-col    { display: flex; flex-direction: column; gap: 6px; }
+.yawo-row    { display: flex; flex-direction: row; align-items: center; gap: 8px; }
+.yawo-wrap   { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px; }
+.yawo-hidden { display: none !important; }
+
+/* ── Footer ── */
+.yawo-footer {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  min-height: 24px;
+  flex-shrink: 0;
+}
+.yawo-footer-version {
+  font-family: var(--yawo-font-mono);
+  font-size: 10px; font-weight: 500; color: rgba(255,255,255,.3);
+  font-variant-numeric: tabular-nums;
+}
+.yawo-footer-actions { display: flex; align-items: center; gap: 6px; }
+.yawo-footer-note { font-size: 10px; color: rgba(255,255,255,.3); text-align: right; line-height: 1.1; }
+.yawo-footer-note--ok { color: var(--yawo-accent); display: inline-flex; align-items: center; gap: 4px; }
+
+/* ── Separators ── */
+.yawo-window hr { border: none; border-top: 1px solid rgba(255,255,255,.07); margin: 2px 0; }
+
+/* ── Icons ── */
+.yawo-icon { display: block; flex-shrink: 0; }
+.yawo-minimize-btn .yawo-icon { transition: transform .18s ease; }
+.yawo-minimize-btn[data-button-status="collapsed"] .yawo-icon { transform: rotate(-90deg); }
+
+/* ── Chrome buttons (minimize, close, footer actions…) ── */
+.yawo-chrome-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  flex-shrink: 0;
+  font-size: 16px;
+  color: rgba(255,255,255,.45);
+  border-radius: 8px;
+  transition: color .12s, background .12s;
+}
+.yawo-chrome-btn:hover { color: rgba(255,255,255,.9); background: rgba(255,255,255,.07); }
+
+/* ── Standard buttons → pill (excl. chrome, swatches, circular helpers) ── */
+.yawo-window button:not(.yawo-chrome-btn):not(.yawo-info-btn):not(.yawo-jump-btn):not(.yawo-swatch-toggle):not(.yawo-goto-btn):not(.yawo-seg-btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.82);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.yawo-window button:not(.yawo-chrome-btn):not(.yawo-info-btn):not(.yawo-jump-btn):not(.yawo-swatch-toggle):not(.yawo-goto-btn):not(.yawo-seg-btn):hover {
+  background: rgba(255,255,255,.1);
+  border-color: rgba(255,255,255,.2);
+}
+
+/* ── Inputs & selects ── */
+.yawo-window input[type="text"],
+.yawo-window input[type="number"],
+.yawo-window textarea,
+.yawo-window select {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 12px;
+  color: rgba(255,255,255,.9);
+  padding: 8px 12px;
+  font-size: 12px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.yawo-window textarea { border-radius: 12px; }
+.yawo-window input:focus,
+.yawo-window textarea:focus,
+.yawo-window select:focus {
+  outline: none;
+  border-color: rgba(var(--yawo-accent-rgb),.5);
+  background: rgba(255,255,255,.08);
+}
+
+/* Coordinate input (no spinners) */
+.yawo-coord-input {
+  font-family: var(--yawo-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.yawo-coord-input::-webkit-inner-spin-button,
+.yawo-coord-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.yawo-coord-input { -moz-appearance: textfield; }
+
+/* ── Headings & text ── */
+.yawo-window h1 { font-size: 15px; font-weight: 700; color: #fff; margin: 0; }
+.yawo-window h2 { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.75); margin: 0; }
+.yawo-window p, .yawo-window label, .yawo-window small { color: rgba(255,255,255,.55); margin: 0; }
+.yawo-text-light { color: rgba(255,255,255,.92); }
+.yawo-countdown  { font-family: var(--yawo-font-mono); font-variant-numeric: tabular-nums; }
+.yawo-form-label {
+  font-size: 10px;
+  color: rgba(255,255,255,.4);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-weight: 600;
+}
+
+/* ── Circular info button ── */
+.yawo-info-btn {
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  width: 1.1em; height: 1.1em;
+  font-size: 0.7em;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0; padding: 0;
+  color: rgba(255,255,255,.5);
+  transition: background .12s, border-color .12s;
+}
+.yawo-info-btn:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
+
+/* ── Hidden file input ──
+   The proxy file input carries the `yawo-file-upload` class itself and is
+   driven by a sibling button, so keep it out of the layout entirely. */
+.yawo-window input[type="file"] {
+  position: absolute;
+  width: 0; height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Range slider — green fill driven by --yawo-fill (see bindRange) ── */
+.yawo-window input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 5px;
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+  padding: 0;
+  border: none !important;
+  background: linear-gradient(to right,
+              var(--yawo-accent) 0 var(--yawo-fill, 50%),
+              rgba(255,255,255,.12) var(--yawo-fill, 50%) 100%) !important;
+}
+.yawo-window input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.4);
+  cursor: pointer;
+}
+.yawo-window input[type="range"]::-moz-range-thumb {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.4);
+  cursor: pointer;
+  border: none;
+}
+
+/* ── Resize handle ── */
+.yawo-resize-handle {
+  position: absolute;
+  bottom: 5px; right: 5px;
+  width: 12px; height: 12px;
+  cursor: nwse-resize;
+  z-index: 1;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,.35) 1.5px, transparent 1.5px),
+    radial-gradient(circle, rgba(255,255,255,.35) 1.5px, transparent 1.5px),
+    radial-gradient(circle, rgba(255,255,255,.35) 1.5px, transparent 1.5px);
+  background-size: 5px 5px;
+  background-position: 1px 9px, 5px 5px, 9px 1px;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.yawo-window:hover .yawo-resize-handle { opacity: 1; }
+.yawo-resize-handle.yawo-resizing      { opacity: 1; }
+.yawo-window:has([data-button-status="collapsed"]) .yawo-resize-handle { display: none; }
+
+/* ── Scrollbars ── */
+.yawo-window ::-webkit-scrollbar       { width: 5px; height: 5px; }
+.yawo-window ::-webkit-scrollbar-track { background: transparent; }
+.yawo-window ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 999px; }
+.yawo-window ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.3); }

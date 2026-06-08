@@ -1,0 +1,175 @@
+/* ── Overlays window ── */
+
+/* ── Overlay cards ── */
+.yawo-template-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.07);
+  background: rgba(255,255,255,.03);
+  overflow: hidden;
+}
+.yawo-template-card--active {
+  border-color: rgba(var(--yawo-accent-rgb),.35);
+  background: rgba(var(--yawo-accent-rgb),.07);
+}
+/* Green accent bar on the active card's left edge. */
+.yawo-template-card--active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--yawo-accent);
+}
+
+.yawo-template-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.yawo-template-name {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 13px; font-weight: 700; color: #fff;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+}
+.yawo-template-tick { display: inline-flex; color: var(--yawo-accent); flex-shrink: 0; }
+.yawo-template-coords { font-size: 10px; color: rgba(255,255,255,.4); }
+
+.yawo-template-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+/* Compact pill buttons inside cards */
+.yawo-btn-activate, .yawo-btn-success {
+  padding: 5px 14px !important;
+  font-size: 11px !important;
+}
+.yawo-btn-success {
+  border-color: rgba(var(--yawo-accent-rgb),.5) !important;
+  color: var(--yawo-accent) !important;
+  background: rgba(var(--yawo-accent-rgb),.12) !important;
+  cursor: default !important;
+}
+.yawo-btn-more {
+  width: 28px; height: 28px;
+  padding: 0 !important;
+  color: rgba(255,255,255,.4) !important;
+  background: transparent !important;
+  border: none !important;
+}
+.yawo-btn-more:hover { color: rgba(255,255,255,.85) !important; background: rgba(255,255,255,.06) !important; }
+
+/* ── More-options popover (body-anchored, position:fixed) ── */
+.yawo-more-popover {
+  position: fixed;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  background: var(--yawo-elevated);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.55);
+  z-index: 10000;
+}
+.yawo-more-popover button,
+.yawo-btn-pin, .yawo-btn-share, .yawo-btn-rename, .yawo-btn-danger {
+  width: 30px; height: 30px;
+  padding: 0 !important;
+  border-radius: 9px !important;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  color: rgba(255,255,255,.7) !important;
+  cursor: pointer;
+}
+.yawo-btn-pin:hover {
+  background: rgba(var(--yawo-accent-rgb),.18) !important;
+  border-color: rgba(var(--yawo-accent-rgb),.55) !important;
+  color: var(--yawo-accent-light) !important;
+}
+.yawo-btn-share:hover, .yawo-btn-rename:hover {
+  background: rgba(255,255,255,.12) !important;
+  color: #fff !important;
+}
+.yawo-btn-danger:hover {
+  background: rgba(var(--yawo-danger-rgb),.14) !important;
+  border-color: rgba(var(--yawo-danger-rgb),.6) !important;
+  color: var(--yawo-danger) !important;
+}
+.yawo-btn-pin:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Inline rename input */
+.yawo-rename-input {
+  background: rgba(0,0,0,.35);
+  border: 1px solid rgba(var(--yawo-accent-rgb),.5);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  width: 100%;
+  outline: none;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* ── Add / Import tab bar ── */
+.yawo-tab-bar { display: flex; gap: 8px; }
+.yawo-tab-btn {
+  flex: 1;
+  padding: 9px 12px !important;
+  border-style: dashed !important;
+  color: rgba(255,255,255,.55) !important;
+}
+.yawo-tab-btn .yawo-icon { width: 15px; height: 15px; }
+.yawo-tab-btn--active {
+  border-style: solid !important;
+  color: #fff !important;
+  background: rgba(255,255,255,.08) !important;
+  border-color: rgba(255,255,255,.2) !important;
+}
+.yawo-tab-add .yawo-icon, .yawo-tab-btn--active .yawo-icon { color: var(--yawo-accent); }
+
+/* ── Add / Import panels ── */
+.yawo-tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  background: rgba(255,255,255,.02);
+  border: 1px dashed rgba(255,255,255,.12);
+  border-radius: 14px;
+}
+.yawo-coords-block { display: flex; flex-direction: column; gap: 8px; }
+.yawo-coords-header { display: flex; align-items: center; justify-content: space-between; }
+.yawo-use-current {
+  padding: 5px 12px !important;
+  font-size: 11px !important;
+  color: var(--yawo-accent) !important;
+  background: rgba(var(--yawo-accent-rgb),.1) !important;
+  border-color: rgba(var(--yawo-accent-rgb),.3) !important;
+}
+.yawo-use-current .yawo-icon { width: 13px; height: 13px; }
+.yawo-use-current:hover { background: rgba(var(--yawo-accent-rgb),.18) !important; }
+
+.yawo-coords-grid {
+  display: grid;
+  grid-template-columns: 44px 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+.yawo-coords-grid .yawo-form-label { text-align: left; }
+.yawo-coords-grid .yawo-coord-input { width: 100%; box-sizing: border-box; text-align: left; }
+
+.yawo-import-textarea { font-family: var(--yawo-font-mono); font-size: 11px; }
+
+/* Full-width primary action (Add overlay / Import) */
+.yawo-btn-create {
+  width: 100% !important;
+  padding: 11px 14px !important;
+  font-size: 13px !important;
+  color: #0b1f14 !important;
+  background: var(--yawo-accent) !important;
+  border-color: transparent !important;
+}
+.yawo-btn-create .yawo-icon { width: 16px; height: 16px; }
+.yawo-btn-create:hover { background: var(--yawo-accent-light) !important; border-color: transparent !important; }

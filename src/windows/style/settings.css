@@ -1,0 +1,72 @@
+/* ── Settings window ── */
+
+.yawo-settings-sub {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 11px; color: rgba(255,255,255,.45);
+}
+.yawo-settings-sub-icon { display: inline-flex; color: var(--yawo-blue); flex-shrink: 0; }
+
+.yawo-sections { gap: 12px; }
+
+/* ── Section card ── */
+.yawo-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.06);
+}
+.yawo-section-head { display: flex; align-items: center; gap: 10px; }
+.yawo-section-badge {
+  width: 30px; height: 30px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 9px;
+  color: rgb(var(--yawo-badge-rgb));
+  background: rgba(var(--yawo-badge-rgb),.14);
+}
+.yawo-badge--green { --yawo-badge-rgb: var(--yawo-success-rgb); }
+.yawo-badge--blue  { --yawo-badge-rgb: var(--yawo-blue-rgb); }
+.yawo-badge--amber { --yawo-badge-rgb: var(--yawo-warning-rgb); }
+.yawo-section-title {
+  font-size: 12px; font-weight: 700; color: #fff;
+  text-transform: uppercase; letter-spacing: .1em;
+}
+.yawo-section-desc { font-size: 10px; color: var(--yawo-blue); }
+
+/* ── Segmented control (transparent tiles) ── */
+.yawo-seg {
+  display: flex;
+  padding: 3px;
+  gap: 3px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.25);
+  border: 1px solid rgba(255,255,255,.07);
+}
+.yawo-seg-btn {
+  flex: 1;
+  padding: 7px 6px;
+  border: none;
+  background: none;
+  border-radius: 999px;
+  color: rgba(255,255,255,.55);
+  font-size: 11px; font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .12s, color .12s;
+}
+.yawo-seg-btn:hover { color: rgba(255,255,255,.85); }
+.yawo-seg-btn--active {
+  background: var(--yawo-accent);
+  color: #0b1f14;
+}
+
+/* ── Slider rows ── */
+.yawo-slider-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.yawo-slider-label { font-size: 12px; color: rgba(255,255,255,.8); }
+.yawo-slider-value { font-size: 13px; font-weight: 700; color: #fff; }
+
+/* Footer "Saved" indicator */
+.yawo-footer-note--ok { font-size: 11px; font-weight: 600; }

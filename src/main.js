@@ -1,10 +1,10 @@
 import { TemplateManager }      from './template-manager.js';
 import { ApiManager }           from './api-manager.js';
 import { SettingsManager }      from './settings-manager.js';
-import { WindowMain }           from './window-main.js';
-import { WindowTemplateSelect } from './window-template-select.js';
+import { WindowMain }           from './windows/main.js';
+import { WindowTemplateSelect } from './windows/overlays.js';
 import { injectBridge }         from './bridge.js';
-import { injectStyles }         from './styles.js';
+import { injectStyles }         from './windows/styles.js';
 import { consoleLog }           from './utils.js';
 
 const SCRIPT_NAME    = GM_info.script.name.toString();

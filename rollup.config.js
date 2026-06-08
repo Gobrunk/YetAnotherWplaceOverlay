@@ -3,7 +3,7 @@ import terser from '@rollup/plugin-terser';
 const BANNER = `// ==UserScript==
 // @name            Yet Another Wplace Overlay
 // @name:en         Yet Another Wplace Overlay
-// @version         1.15.0
+// @version         1.16.0
 // @description     A userscript to enhance the user experience on Wplace.live. This includes, but is not limited to: uploading images to display locally on a canvas, adding a button to move the Wplace color palette menu, and other QoL features.
 // @description:en  A userscript to enhance the user experience on Wplace.live. This includes, but is not limited to: uploading images to display locally on a canvas, adding a button to move the Wplace color palette menu, and other QoL features.
 // @author          Gobrunk
@@ -32,6 +32,16 @@ const addBanner = {
     },
 };
 
+// Lets `.css` files be imported as plain strings, so stylesheets can live as
+// standalone files (front/style/*.css) yet still ship inside the userscript.
+const cssAsString = {
+    name: 'css-as-string',
+    transform(code, id) {
+        if (!id.endsWith('.css')) return null;
+        return { code: `export default ${JSON.stringify(code)};`, map: { mappings: '' } };
+    },
+};
+
 export default {
     input: 'src/main.js',
     output: {
@@ -39,5 +49,5 @@ export default {
         format: 'iife',
         generatedCode: { arrowFunctions: true, constBindings: true },
     },
-    plugins: [terser(), addBanner],
+    plugins: [cssAsString, terser(), addBanner],
 };

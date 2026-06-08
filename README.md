@@ -86,28 +86,37 @@ npm run build
 npm run watch
 ```
 
-The build bundles `src/main.js` and all its imports into `tampermonkey.js` via Rollup (IIFE format), prepending the Tampermonkey `@userscript` header automatically.
+The build bundles `src/main.js` and all its imports into `tampermonkey.js` via Rollup (IIFE format), prepending the Tampermonkey `@userscript` header automatically. Stylesheets live as standalone `.css` files under `src/windows/style/` and are imported as strings (a small Rollup plugin) so they ship inside the single userscript.
 
 ### Project structure
 
+The presentation layer (window markup + styles) lives under `src/windows/`, separate from the logic/engine modules in `src/`.
+
 ```
 src/
+  windows/                   # Presentation layer — window markup + styles
+    common.js                # Shared title bar / footer builders + SVG icon set
+    main.js                  # Main dashboard window
+    overlays.js              # Overlay management window (add, rename, activate, remove)
+    filters.js               # Color filter window (search, sort, stats, navigation)
+    settings.js              # Settings window + its section builders
+    styles.js                # Imports the stylesheets + injects fonts
+    style/
+      common.css             # Tokens, window shell, title bar, footer, buttons, inputs, sliders
+      main.css               # Completion ring, stat row, toggle, action buttons
+      overlays.css           # Overlay cards, tabs, add/import panels
+      filters.css            # Color rows, swatches, bars, toolbar menus
+      settings.css           # Section cards, icon badges, segmented control
   main.js                    # Entry point — wires up all managers and bootstraps the UI
-  overlay.js                 # Base class: fluent DOM builder + window utilities (drag, minimize)
-  window-main.js             # Main dashboard window
-  window-template-select.js  # Overlay management window (add, rename, activate, remove)
-  window-settings.js         # Settings window
-  window-filter.js           # Color filter window (search, sort, stats, navigation)
+  overlay.js                 # Base class: fluent DOM builder + window utilities (drag, resize, minimize)
   template.js                # Template data model
   template-manager.js        # Template logic: render, diff, import/export
   api-manager.js             # Intercepts Wplace API calls (droplets, charges, tile data)
-  settings-manager.js        # Settings persistence (GM storage)
+  settings-manager.js        # Settings state + persistence (GM storage)
   palette.js                 # Wplace color palette data
-  styles.js                  # CSS injection
   bridge.js                  # Page-to-script communication bridge
-  confetti.js                # Confetti animation
   utils.js                   # Shared utilities
-rollup.config.js             # Build config
+rollup.config.js             # Build config (bundle + css-as-string + banner)
 tampermonkey.js              # Build output (do not edit manually)
 ```
 

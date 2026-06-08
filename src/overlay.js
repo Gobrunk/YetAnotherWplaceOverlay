@@ -1,3 +1,5 @@
+import { buildTitlebar, buildFooter } from './windows/common.js';
+
 export class Overlay {
     #rootElement   = null;
     #currentParent = null;
@@ -135,6 +137,18 @@ export class Overlay {
         return this;
     }
 
+    // Append a shared title bar / footer to the current parent. Self-contained, so we
+    // don't push onto the parent stack — chaining continues at the window level.
+    addWindowHeader(opts = {}) {
+        this.#currentParent.appendChild(buildTitlebar({ ...opts, onMinimize: btn => this.toggleMinimize(btn) }));
+        return this;
+    }
+
+    addWindowFooter(opts = {}) {
+        this.#currentParent.appendChild(buildFooter(opts));
+        return this;
+    }
+
     addCountdownTimer(endTimestamp = Date.now(), intervalMs = 500, attrs = {}, cb = () => {}) {
         const id = attrs.id || 'yawo-countdown-' + crypto.randomUUID().slice(0, 8);
         const timeEl = this.#createElement('time', { class: 'yawo-countdown' }, attrs);
@@ -183,6 +197,7 @@ export class Overlay {
         const windowEl  = btn.closest('.yawo-window');
         const titlebar  = btn.closest('.yawo-titlebar');
         const contentEl = windowEl.querySelector('.yawo-content');
+        const footerEl  = windowEl.querySelector('.yawo-footer');
         const heading   = contentEl?.querySelector('h1');
         if (windowEl.parentElement) windowEl.parentElement.append(windowEl);
         if ('expanded' === btn.dataset.buttonStatus) {
@@ -201,16 +216,19 @@ export class Overlay {
                 btn.style.textDecoration = '';
                 contentEl.removeEventListener('transitionend', handler);
             });
+            if (footerEl) footerEl.style.display = 'none';
             const label = heading?.textContent ?? titlebar.querySelector('h1')?.textContent ?? '';
             if (heading) {
                 const clone = heading.cloneNode(true);
+                clone.classList.add('yawo-minimized-heading');
                 btn.nextElementSibling.appendChild(clone);
             }
-            btn.textContent = '▶';
+            // The chevron glyph is an SVG; CSS rotates it based on buttonStatus.
             btn.dataset.buttonStatus = 'collapsed';
             btn.ariaLabel = `Unminimize window "${label}"`;
         } else {
-            const clonedHeading = btn.nextElementSibling?.querySelector('h1');
+            if (footerEl) footerEl.style.display = '';
+            const clonedHeading = btn.nextElementSibling?.querySelector('.yawo-minimized-heading');
             const label         = clonedHeading?.textContent ?? titlebar.querySelector('h1')?.textContent ?? '';
             clonedHeading?.remove();
             const savedResizeH = windowEl.dataset.savedResizeH;
@@ -232,7 +250,7 @@ export class Overlay {
                 btn.style.textDecoration = '';
                 contentEl.removeEventListener('transitionend', handler);
             });
-            btn.textContent = '▼';
+            // The chevron glyph is an SVG; CSS rotates it based on buttonStatus.
             btn.dataset.buttonStatus = 'expanded';
             btn.ariaLabel = `Minimize window "${label}"`;
         }
