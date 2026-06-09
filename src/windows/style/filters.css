@@ -95,7 +95,7 @@
 /* Each color is a grid row: swatch · name · bar · % · goto. */
 .yawo-filter-row {
   display: grid;
-  grid-template-columns: 18px minmax(0, 1.2fr) minmax(80px, 2fr) 40px 24px;
+  grid-template-columns: 18px minmax(0, 1.2fr) minmax(80px, 2fr) minmax(40px, max-content) 24px;
   align-items: center;
   justify-items: stretch; /* wplace's base CSS disables item stretch; restore it */
   gap: 8px;
@@ -118,6 +118,8 @@
 }
 .yawo-swatch-toggle:hover { transform: scale(1.12); box-shadow: 0 0 0 2px rgba(255,255,255,.18); }
 .yawo-swatch-toggle--hidden { opacity: .4; filter: grayscale(.55); }
+/* Gold contour marks a fully-placed (100 %) color. */
+.yawo-swatch-toggle--done { border-color: var(--yawo-gold); box-shadow: 0 0 0 1px rgba(233,197,88,.5); }
 .yawo-swatch-toggle--hidden::after {
   content: '';
   position: absolute;
@@ -155,6 +157,7 @@
   overflow: hidden;
 }
 .yawo-bar-fill { height: 100%; border-radius: 999px; opacity: .8; transition: width .25s ease; }
+.yawo-bar-fill--done { background: var(--yawo-gold-gradient); opacity: 1; }
 .yawo-bar-label {
   position: absolute;
   inset: 0;
@@ -168,9 +171,10 @@
 .yawo-bar-pct {
   width: 100%;
   font-size: 11px; font-weight: 700;
-  text-align: right;
+  display: flex; align-items: center; justify-content: flex-end; gap: 6px;
   white-space: nowrap;
 }
+.yawo-bar-pct--done { color: var(--yawo-gold); }
 
 /* "Go to nearest pixel" — crosshair icon. Box forced inline in JS. */
 .yawo-goto-btn {

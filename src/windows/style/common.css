@@ -22,6 +22,14 @@
   --yawo-warning: rgb(251,191,36);
   --yawo-warning-rgb: 251,191,36;
 
+  /* Progress-bar orange (40–80 % fill & percentage) */
+  --yawo-progress-warn: #df8c43;
+
+  /* Gold — a color completed at 100 % (swatch border, bar, "DONE" pill, percentage).
+     The gradient brightens toward the center. */
+  --yawo-gold: #e9c558;
+  --yawo-gold-gradient: linear-gradient(90deg, #b9822c 0%, #f2d878 50%, #b9822c 100%);
+
   /* Secondary blue — droplets stat, "Overlay" settings badge */
   --yawo-blue: rgb(96,165,250);
   --yawo-blue-rgb: 96,165,250;

@@ -331,6 +331,7 @@ export class WindowColorFilter extends Overlay {
             const correct = neMap.get(color.id) ?? 0;
             const pct      = total > 0 ? correct / total * 100 : 0;
             const pctLabel = formatPct(correct, total);
+            const complete = total > 0 && correct >= total;
             const [r, g, b] = color.rgb;
             const isHidden  = !!this.templateManager.hiddenColors.get(color.id);
 
@@ -344,6 +345,7 @@ export class WindowColorFilter extends Overlay {
             swatch.className = 'yawo-swatch-toggle';
             if (color.premium) swatch.classList.add('yawo-swatch--premium');
             if (isHidden) swatch.classList.add('yawo-swatch-toggle--hidden');
+            if (complete) swatch.classList.add('yawo-swatch-toggle--done');
             // Force the box inline: wplace's base button CSS (min-width/padding) wins
             // over our class and would otherwise stretch the swatch into a rectangle.
             for (const [k, v] of [['width', '18px'], ['height', '18px'], ['min-width', '18px'], ['padding', '0'], ['box-sizing', 'border-box']])
@@ -377,25 +379,33 @@ export class WindowColorFilter extends Overlay {
             nameEl.className = 'yawo-color-name';
             nameEl.textContent = color.name;
 
-            const barColor = pct >= 80 ? 'var(--yawo-success)' : pct >= 40 ? 'var(--yawo-warning)' : 'var(--yawo-danger)';
+            const barColor = pct >= 80 ? 'var(--yawo-success)' : pct >= 40 ? 'var(--yawo-progress-warn)' : 'var(--yawo-danger)';
 
             // Progress bar with counts centered inside (grid col 3)
             const barWrap = document.createElement('div');
             barWrap.className = 'yawo-bar';
             const bar = document.createElement('div');
             bar.className = 'yawo-bar-fill';
-            bar.style.cssText = `background:${barColor}; width:${pct}%;`;
+            bar.style.width = `${pct}%`;
+            if (complete) bar.classList.add('yawo-bar-fill--done'); // gold gradient via CSS
+            else bar.style.background = barColor;
             const barLabel = document.createElement('span');
             barLabel.className = 'yawo-bar-label yawo-mono';
             barLabel.textContent = `${formatNumber(correct)} / ${formatNumber(total)}`;
             barWrap.appendChild(bar);
             barWrap.appendChild(barLabel);
 
-            // Percentage (grid col 4)
+            // Percentage (grid col 4); gold text when the color is fully placed
             const statsEl = document.createElement('span');
             statsEl.className = 'yawo-bar-pct yawo-mono';
-            statsEl.style.color = barColor;
-            statsEl.textContent = `${pctLabel}%`;
+            if (complete) {
+                statsEl.classList.add('yawo-bar-pct--done'); // gold text via CSS
+            } else {
+                statsEl.style.color = barColor;
+            }
+            const pctText = document.createElement('span');
+            pctText.textContent = `${pctLabel}%`;
+            statsEl.appendChild(pctText);
 
             // Goto nearest incorrect pixel (grid col 5)
             const gotoBtn = document.createElement('button');
