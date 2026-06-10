@@ -27,6 +27,7 @@ export class WindowSettings extends Overlay {
                     this.buildTemplateSection();
                     this.buildOverlaySection();
                     this.buildNavigationSection();
+                    this.buildWindowsSection();
                 }).up()
             .up()
             .addWindowFooter({
@@ -34,16 +35,8 @@ export class WindowSettings extends Overlay {
                 buttons: [{ html: `<span class="yawo-footer-note--ok">${icon('check', 12)} Saved</span>`, title: 'Settings save automatically' }],
             })
         .mount(this.mountTarget);
-        const savedPos = this.settings?.settingsWindowPosition;
-        if (savedPos?.x !== undefined && savedPos?.y !== undefined) {
-            const winEl = document.querySelector(`#${this.windowId}`);
-            if (winEl) {
-                winEl.style.transform = `translate(${savedPos.x}px, ${savedPos.y}px)`;
-                winEl.style.left = '0px';
-                winEl.style.top  = '0px';
-            }
-        }
-        this.enableDragging(`#${this.windowId}.yawo-window`, `#${this.windowId} .yawo-titlebar`, (x, y) => {
+        this.applyWindowPosition(document.querySelector(`#${this.windowId}`), this.settings?.settingsWindowPosition);
+        this.enableDragging(`#${this.windowId}.yawo-window`, `#${this.windowId} .yawo-titlebar, #${this.windowId} .yawo-footer`, (x, y) => {
             if (this.settings) { this.settings.settingsWindowPosition = { x, y }; this.persist?.(); }
         });
         this.enableResizing(
@@ -171,5 +164,37 @@ export class WindowSettings extends Overlay {
             }
         }
         section.up();
+    }
+
+    buildWindowsSection() {
+        this.#beginSection('Windows', 'grid', 'yawo-badge--blue')
+            .addSmall({ textContent: 'Bring every window back to its default spot.', class: 'yawo-section-desc' }).up()
+            .addButton({ class: 'yawo-reset-btn', innerHTML: `${icon('compass', 14)} Reset window positions` }, (ov, btn) => {
+                btn.title = 'Reset all window positions';
+                btn.onclick = () => this.resetWindowPositions();
+            }).up()
+        .up();
+    }
+
+    // Forget every saved window position and snap any open window back to its
+    // mount-time default — an escape hatch if a window ends up out of reach.
+    resetWindowPositions() {
+        for (const k of ['windowPosition', 'filterWindowPosition',
+                         'templateWindowPosition', 'settingsWindowPosition']) {
+            delete this.settings?.[k];
+        }
+        this.persist?.();
+        const defaults = {
+            'yawo-window-main':            { top: '10px', left: 'unset', right: '75px' },
+            'yawo-color-dropdown':         { top: '10px', left: '10px',  right: ''     },
+            'yawo-window-template-select': { top: '10px', left: '10px',  right: ''     },
+            'yawo-window-settings':        { top: '10px', left: '10px',  right: ''     },
+        };
+        for (const [id, pos] of Object.entries(defaults)) {
+            const el = document.querySelector('#' + id);
+            if (!el) continue;
+            el.style.transform = '';
+            Object.assign(el.style, pos);
+        }
     }
 }

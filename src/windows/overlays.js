@@ -168,16 +168,10 @@ export class WindowTemplateSelect extends Overlay {
             .addWindowFooter({ version: this.version, note: '' })
         .mount(document.body);
 
-        const win = document.querySelector(`#${this.windowId}`);
-        const savedPos = this.settingsManager?.settings?.templateWindowPosition;
-        if (savedPos?.x !== undefined && savedPos?.y !== undefined) {
-            win.style.transform = `translate(${savedPos.x}px, ${savedPos.y}px)`;
-            win.style.left = '0px';
-            win.style.top  = '0px';
-        }
+        this.applyWindowPosition(document.querySelector(`#${this.windowId}`), this.settingsManager?.settings?.templateWindowPosition);
 
         this.refresh();
-        this.enableDragging(`#${this.windowId}.yawo-window`, `#${this.windowId} .yawo-titlebar`, (x, y) => {
+        this.enableDragging(`#${this.windowId}.yawo-window`, `#${this.windowId} .yawo-titlebar, #${this.windowId} .yawo-footer`, (x, y) => {
             if (this.settingsManager?.settings) {
                 this.settingsManager.settings.templateWindowPosition = { x, y };
                 this.settingsManager.persist();

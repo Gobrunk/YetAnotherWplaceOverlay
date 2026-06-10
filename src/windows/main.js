@@ -129,17 +129,8 @@ export class WindowMain extends Overlay {
             })
         .mount(document.body);
         this.updateActiveOverlayName(this.apiManager?.templateManager?.getActiveDisplayName());
-        const savedPos = this.settingsManager?.settings?.windowPosition;
-        if (savedPos?.x !== undefined && savedPos?.y !== undefined) {
-            const winEl = document.querySelector(`#${this.windowId}`);
-            if (winEl) {
-                winEl.style.transform = `translate(${savedPos.x}px, ${savedPos.y}px)`;
-                winEl.style.left  = '0px';
-                winEl.style.top   = '0px';
-                winEl.style.right = '';
-            }
-        }
-        this.enableDragging(`#${this.windowId}.yawo-window`, `#${this.windowId} .yawo-titlebar`, (x, y) => {
+        this.applyWindowPosition(document.querySelector(`#${this.windowId}`), this.settingsManager?.settings?.windowPosition);
+        this.enableDragging(`#${this.windowId}.yawo-window`, `#${this.windowId} .yawo-titlebar, #${this.windowId} .yawo-footer`, (x, y) => {
             if (this.settingsManager?.settings) { this.settingsManager.settings.windowPosition = { x, y }; this.settingsManager.persist(); }
         });
         this.enableResizing(

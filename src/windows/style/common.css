@@ -129,7 +129,12 @@
   padding: 10px 14px;
   min-height: 24px;
   flex-shrink: 0;
+  cursor: grab; /* footer doubles as a drag handle */
 }
+/* Interactive footer contents keep their own cursor. */
+.yawo-footer-note, .yawo-footer-version { cursor: default; }
+.yawo-footer .yawo-chrome-btn { cursor: pointer; }
+.yawo-footer.yawo-dragging, .yawo-titlebar.yawo-dragging { cursor: grabbing; }
 .yawo-footer-version {
   font-family: var(--yawo-font-mono);
   font-size: 10px; font-weight: 500; color: rgba(255,255,255,.3);

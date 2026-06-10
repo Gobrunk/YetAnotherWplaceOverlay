@@ -256,11 +256,38 @@ export class Overlay {
         }
     }
 
+    // Clamp a window offset so a graspable strip of the titlebar always stays
+    // within the viewport — prevents a window from being dragged fully off-screen
+    // (and becoming impossible to grab again).
+    clampToViewport(winEl, x, y) {
+        const rect   = winEl.getBoundingClientRect();
+        const MARGIN = 40; // px of window that must remain visible
+        const minX = MARGIN - rect.width;          // keep a sliver of the left edge
+        const maxX = window.innerWidth  - MARGIN;
+        const minY = 0;                            // titlebar never goes above the top
+        const maxY = window.innerHeight - MARGIN;
+        return {
+            x: Math.min(Math.max(x, minX), maxX),
+            y: Math.min(Math.max(y, minY), maxY),
+        };
+    }
+
+    // Restore a saved {x, y} window position, clamped into the viewport.
+    applyWindowPosition(winEl, savedPos) {
+        if (!winEl || savedPos?.x === undefined || savedPos?.y === undefined) return false;
+        const { x, y } = this.clampToViewport(winEl, savedPos.x, savedPos.y);
+        winEl.style.transform = `translate(${x}px, ${y}px)`;
+        winEl.style.left  = '0px';
+        winEl.style.top   = '0px';
+        winEl.style.right = '';
+        return true;
+    }
+
     enableDragging(windowSelector, handleSelector, onDragStop = null) {
         const windowEl = document.querySelector(windowSelector);
-        const handleEl = document.querySelector(handleSelector);
-        if (!windowEl || !handleEl) {
-            this.setError(`Can not drag! ${windowEl ? '' : windowSelector} ${windowEl || handleEl ? '' : 'and '}${handleEl ? '' : handleSelector} was not found!`);
+        const handleEls = [...document.querySelectorAll(handleSelector)];
+        if (!windowEl || handleEls.length === 0) {
+            this.setError(`Can not drag! ${windowEl ? '' : windowSelector} ${windowEl || handleEls.length ? '' : 'and '}${handleEls.length ? '' : handleSelector} was not found!`);
             return;
         }
         const CLICK_THRESHOLD = 5; // px tolerance to distinguish a click from a drag
@@ -268,6 +295,7 @@ export class Overlay {
         let prevX = 0, prevY = 0, targetX = 0, targetY = 0, startOffsetY = 0;
         let boundingRect = null;
         let startClientX = 0, startClientY = 0, moved = false, downTarget = null;
+        let activeHandle = null;
 
         const tick = () => {
             if (isDragging) {
@@ -283,10 +311,11 @@ export class Overlay {
             }
         };
 
-        const startDrag = (clientX, clientY, target) => {
+        const startDrag = (clientX, clientY, target, handleEl) => {
             isDragging    = true;
             moved         = false;
             downTarget    = target;
+            activeHandle  = handleEl;
             startClientX  = clientX;
             startClientY  = clientY;
             boundingRect  = windowEl.getBoundingClientRect();
@@ -318,20 +347,31 @@ export class Overlay {
             isDragging = false;
             if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
             document.body.style.userSelect = '';
-            handleEl.classList.remove('yawo-dragging');
+            activeHandle?.classList.remove('yawo-dragging');
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('touchmove', onTouchMove);
             document.removeEventListener('mouseup',   stopDrag);
             document.removeEventListener('touchend',  stopDrag);
             document.removeEventListener('touchcancel', stopDrag);
+            // Keep the window graspable: clamp the final offset back into the viewport
+            // so the saved position can never be fully off-screen.
+            const c = this.clampToViewport(windowEl, prevX, prevY);
+            if (c.x !== prevX || c.y !== prevY) {
+                prevX = c.x; prevY = c.y;
+                windowEl.style.transform = `translate(${prevX}px, ${prevY}px)`;
+                windowEl.style.left  = '0px';
+                windowEl.style.top   = '0px';
+                windowEl.style.right = '';
+            }
             if (typeof onDragStop === 'function') onDragStop(prevX, prevY);
-            // A plain click (no movement) on the titlebar toggles minimize.
-            // Clicks originating from an interactive control (e.g. the ▼ button) are
-            // ignored to avoid a double-toggle with their own handler.
-            if (!moved && downTarget && !downTarget.closest('button, a, input, textarea, select')) {
-                const minBtn = handleEl.querySelector('[data-button-status="expanded"], [data-button-status="collapsed"]');
+            // A plain click (no movement) on the titlebar toggles minimize. Only the
+            // titlebar drives minimize; clicks from the footer handle or from an
+            // interactive control are ignored to avoid a double-toggle.
+            if (!moved && downTarget?.closest('.yawo-titlebar') && !downTarget.closest('button, a, input, textarea, select')) {
+                const minBtn = downTarget.closest('.yawo-titlebar').querySelector('[data-button-status="expanded"], [data-button-status="collapsed"]');
                 if (minBtn) this.toggleMinimize(minBtn);
             }
+            activeHandle = null;
         };
 
         const onMouseMove = e => {
@@ -352,11 +392,22 @@ export class Overlay {
             }
         };
 
-        handleEl.addEventListener('mousedown', e => { e.preventDefault(); startDrag(e.clientX, e.clientY, e.target); });
-        handleEl.addEventListener('touchstart', e => {
-            const touch = e?.touches?.[0];
-            if (touch) { startDrag(touch.clientX, touch.clientY, e.target); e.preventDefault(); }
-        }, { passive: false });
+        // A mousedown on an interactive control (button/link/field) must let that
+        // control handle its own click — don't start a drag or swallow the event.
+        const isInteractive = target => target?.closest?.('button, a, input, textarea, select');
+
+        for (const handleEl of handleEls) {
+            handleEl.addEventListener('mousedown', e => {
+                if (isInteractive(e.target)) return;
+                e.preventDefault();
+                startDrag(e.clientX, e.clientY, e.target, handleEl);
+            });
+            handleEl.addEventListener('touchstart', e => {
+                if (isInteractive(e.target)) return;
+                const touch = e?.touches?.[0];
+                if (touch) { startDrag(touch.clientX, touch.clientY, e.target, handleEl); e.preventDefault(); }
+            }, { passive: false });
+        }
     }
 
     enableResizing(windowSelector, onResizeStop = null, savedSize = null) {

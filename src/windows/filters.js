@@ -475,19 +475,14 @@ export class WindowColorFilter extends Overlay {
         updateVisibleCount();
 
         // ── Position: restores saved position or places below anchor ──
-        const savedPos = this.settingsManager?.settings?.filterWindowPosition;
-        if (savedPos?.x !== undefined && savedPos?.y !== undefined) {
-            wrap.style.transform = `translate(${savedPos.x}px, ${savedPos.y}px)`;
-            wrap.style.left = '0px';
-            wrap.style.top  = '0px';
-        } else {
+        if (!this.applyWindowPosition(wrap, this.settingsManager?.settings?.filterWindowPosition)) {
             const rect = anchor.getBoundingClientRect();
             wrap.style.top  = (rect.bottom + 4) + 'px';
             wrap.style.left = rect.left + 'px';
         }
 
         // ── Dragging ──────────────────────────────────────────
-        this.enableDragging('#yawo-color-dropdown.yawo-window', '#yawo-color-dropdown .yawo-titlebar', (x, y) => {
+        this.enableDragging('#yawo-color-dropdown.yawo-window', '#yawo-color-dropdown .yawo-titlebar, #yawo-color-dropdown .yawo-footer', (x, y) => {
             if (this.settingsManager?.settings) {
                 this.settingsManager.settings.filterWindowPosition = { x, y };
                 this.settingsManager.persist();
