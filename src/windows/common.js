@@ -8,6 +8,8 @@
 const ICON_PATHS = {
     chevronDown:  '<polyline points="6 9 12 15 18 9"/>',
     chevronRight: '<polyline points="9 6 15 12 9 18"/>',
+    minimize2:    '<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/>',
+    maximize2:    '<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>',
     close:        '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
     refresh:      '<path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/>',
     bolt:         '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
@@ -72,10 +74,11 @@ function wireButton(btn, handler) {
  *   onMinimize    {(btn) => void}         minimize toggle handler (button always shown)
  *   minimizeLabel {string}                aria-label for the minimize button
  *   buttons       {Array<{glyph,icon,title,onClick,className}>}  extra chrome buttons
+ *   onCompact     {(btn) => void}         compact toggle handler (button always shown; no-op if omitted)
  *   onClose       {() => void}            if set, renders a close button
  *   closeLabel    {string}                aria-label for the close button
  */
-export function buildTitlebar({ title = '', statusDot = false, badge, onMinimize, minimizeLabel, buttons = [], onClose, closeLabel } = {}) {
+export function buildTitlebar({ title = '', statusDot = false, badge, onMinimize, minimizeLabel, buttons = [], onCompact, onClose, closeLabel } = {}) {
     const titlebar = document.createElement('div');
     titlebar.className = 'yawo-titlebar';
 
@@ -115,6 +118,18 @@ export function buildTitlebar({ title = '', statusDot = false, badge, onMinimize
         wireButton(btn, onClick);
         titlebar.appendChild(btn);
     }
+
+    // Compact toggle — always rendered for chrome consistency across windows.
+    // Wired only where a handler is provided (currently the main window); a no-op
+    // placeholder elsewhere.
+    const compactBtn = document.createElement('button');
+    compactBtn.className = 'yawo-chrome-btn yawo-compact-btn';
+    compactBtn.innerHTML = icon('minimize2');
+    compactBtn.dataset.compactStatus = 'normal';
+    compactBtn.title = 'Compact view';
+    compactBtn.setAttribute('aria-label', `Toggle compact view for window "${title}"`);
+    wireButton(compactBtn, () => onCompact?.(compactBtn));
+    titlebar.appendChild(compactBtn);
 
     if (onClose) {
         const closeBtn = document.createElement('button');

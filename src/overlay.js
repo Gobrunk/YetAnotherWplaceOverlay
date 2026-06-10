@@ -140,7 +140,7 @@ export class Overlay {
     // Append a shared title bar / footer to the current parent. Self-contained, so we
     // don't push onto the parent stack — chaining continues at the window level.
     addWindowHeader(opts = {}) {
-        this.#currentParent.appendChild(buildTitlebar({ ...opts, onMinimize: btn => this.toggleMinimize(btn) }));
+        this.#currentParent.appendChild(buildTitlebar({ ...opts, onMinimize: btn => this.toggleMinimize(btn), onCompact: btn => this.toggleCompact(btn) }));
         return this;
     }
 
@@ -189,6 +189,11 @@ export class Overlay {
     }
 
     // ── Window: minimize / drag ───────────────────────────────
+
+    // Compact-view toggle. No-op by default; windows that support a compact
+    // layout (e.g. the main window) override this. The chrome button is always
+    // rendered for consistency, so the base case must safely do nothing.
+    toggleCompact(_btn) {}
 
     toggleMinimize(btn) {
         if (btn.disabled) return;
