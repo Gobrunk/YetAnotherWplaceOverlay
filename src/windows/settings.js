@@ -36,6 +36,13 @@ export class WindowSettings extends Overlay {
             })
         .mount(this.mountTarget);
         this.applyWindowPosition(document.querySelector(`#${this.windowId}`), this.settings?.settingsWindowPosition);
+
+        // Restore the persisted compact layout on mount.
+        if (this.settings?.settingsCompact) {
+            const win = document.querySelector(`#${this.windowId}`);
+            this.#applyCompact(win, win?.querySelector('.yawo-compact-btn'), true);
+        }
+
         this.enableDragging(`#${this.windowId}.yawo-window`, `#${this.windowId} .yawo-titlebar, #${this.windowId} .yawo-footer`, (x, y) => {
             if (this.settings) { this.settings.settingsWindowPosition = { x, y }; this.persist?.(); }
         });
@@ -44,6 +51,29 @@ export class WindowSettings extends Overlay {
             (w, h) => { if (this.settings) { this.settings.settingsWindowSize = { w, h }; this.persist?.(); } },
             this.settings?.settingsWindowSize
         );
+    }
+
+    // Toggle the compact layout on the settings window, persisting the choice.
+    // Like the filter/overlays windows (and unlike main), we keep the current
+    // height: the sections scroll, so clearing it would let them expand the window.
+    toggleCompact(btn) {
+        const win = document.querySelector(`#${this.windowId}`);
+        if (!win) return;
+        const next = !win.classList.contains('yawo-compact');
+        this.#applyCompact(win, btn, next);
+        if (this.settings) { this.settings.settingsCompact = next; this.persist?.(); }
+        this.setStatus(next ? 'Compact view enabled!' : 'Compact view disabled!');
+    }
+
+    // Sync the window's compact class and the chrome button's icon/state.
+    #applyCompact(win, btn, compact) {
+        if (!win) return;
+        win.classList.toggle('yawo-compact', compact);
+        if (btn) {
+            btn.dataset.compactStatus = compact ? 'compact' : 'normal';
+            btn.innerHTML = icon(compact ? 'maximize2' : 'minimize2');
+            btn.title = compact ? 'Normal view' : 'Compact view';
+        }
     }
 
     // ── Section: a titled card with an icon badge ─────────────
