@@ -134,6 +134,7 @@ export class WindowColorFilter extends Overlay {
             badge: `${shownCount}`,
             minimizeLabel: 'Minimize window "Color Filter"',
             onMinimize: btn => this.toggleMinimize(btn),
+            onCompact: btn => this.toggleCompact(btn),
             buttons: [
                 { icon: 'refresh', title: 'Refresh stats', onClick: () => { wrap.remove(); this.templateManager.refreshCorrectStats().then(() => this.toggle()); } },
             ],
@@ -331,6 +332,7 @@ export class WindowColorFilter extends Overlay {
             const correct = neMap.get(color.id) ?? 0;
             const pct      = total > 0 ? correct / total * 100 : 0;
             const pctLabel = formatPct(correct, total);
+            const complete = total > 0 && correct >= total;
             const [r, g, b] = color.rgb;
             const isHidden  = !!this.templateManager.hiddenColors.get(color.id);
 
@@ -344,6 +346,7 @@ export class WindowColorFilter extends Overlay {
             swatch.className = 'yawo-swatch-toggle';
             if (color.premium) swatch.classList.add('yawo-swatch--premium');
             if (isHidden) swatch.classList.add('yawo-swatch-toggle--hidden');
+            if (complete) swatch.classList.add('yawo-swatch-toggle--done');
             // Force the box inline: wplace's base button CSS (min-width/padding) wins
             // over our class and would otherwise stretch the swatch into a rectangle.
             for (const [k, v] of [['width', '18px'], ['height', '18px'], ['min-width', '18px'], ['padding', '0'], ['box-sizing', 'border-box']])
@@ -372,32 +375,50 @@ export class WindowColorFilter extends Overlay {
                 updateVisibleCount();
             };
 
-            // Name (grid col 2)
+            // Name + count (grid col 2). The count is hidden in normal mode (the count
+            // lives inside the bar there); in compact mode the block flattens
+            // (display:contents) so name and count become their own grid columns.
+            const nameBlock = document.createElement('div');
+            nameBlock.className = 'yawo-name-block';
             const nameEl = document.createElement('span');
             nameEl.className = 'yawo-color-name';
             nameEl.textContent = color.name;
+            const countEl = document.createElement('span');
+            countEl.className = 'yawo-color-count yawo-mono';
+            countEl.textContent = `${formatNumber(correct)} / ${formatNumber(total)}`;
+            nameBlock.appendChild(nameEl);
+            nameBlock.appendChild(countEl);
 
-            const barColor = pct >= 80 ? 'var(--yawo-success)' : pct >= 40 ? 'var(--yawo-warning)' : 'var(--yawo-danger)';
+            const barColor = pct >= 80 ? 'var(--yawo-success)' : pct >= 40 ? 'var(--yawo-progress-warn)' : 'var(--yawo-danger)';
 
             // Progress bar with counts centered inside (grid col 3)
             const barWrap = document.createElement('div');
             barWrap.className = 'yawo-bar';
             const bar = document.createElement('div');
             bar.className = 'yawo-bar-fill';
-            bar.style.cssText = `background:${barColor}; width:${pct}%;`;
+            bar.style.width = `${pct}%`;
+            if (complete) bar.classList.add('yawo-bar-fill--done'); // gold gradient via CSS
+            else bar.style.background = barColor;
             const barLabel = document.createElement('span');
             barLabel.className = 'yawo-bar-label yawo-mono';
             barLabel.textContent = `${formatNumber(correct)} / ${formatNumber(total)}`;
             barWrap.appendChild(bar);
             barWrap.appendChild(barLabel);
 
-            // Percentage (grid col 4)
+            // Percentage (grid col 4); gold text when the color is fully placed
             const statsEl = document.createElement('span');
             statsEl.className = 'yawo-bar-pct yawo-mono';
-            statsEl.style.color = barColor;
-            statsEl.textContent = `${pctLabel}%`;
+            if (complete) {
+                statsEl.classList.add('yawo-bar-pct--done'); // gold text via CSS
+            } else {
+                statsEl.style.color = barColor;
+            }
+            const pctText = document.createElement('span');
+            pctText.textContent = `${pctLabel}%`;
+            statsEl.appendChild(pctText);
 
-            // Goto nearest incorrect pixel (grid col 5)
+            // Goto nearest incorrect pixel (grid col 5). In compact mode the button
+            // stays in the row but is revealed only on row hover (see filters.css).
             const gotoBtn = document.createElement('button');
             gotoBtn.className = 'yawo-goto-btn';
             gotoBtn.title = `Go to nearest incorrect ${color.name} pixel`;
@@ -429,7 +450,7 @@ export class WindowColorFilter extends Overlay {
             };
 
             row.appendChild(swatch);
-            row.appendChild(nameEl);
+            row.appendChild(nameBlock);
             row.appendChild(barWrap);
             row.appendChild(statsEl);
             row.appendChild(gotoBtn);
@@ -464,20 +485,20 @@ export class WindowColorFilter extends Overlay {
         document.body.appendChild(wrap);
         updateVisibleCount();
 
+        // Restore the persisted compact layout on mount.
+        if (this.settingsManager?.settings?.filterCompact) {
+            this.#applyCompact(wrap, wrap.querySelector('.yawo-compact-btn'), true);
+        }
+
         // ── Position: restores saved position or places below anchor ──
-        const savedPos = this.settingsManager?.settings?.filterWindowPosition;
-        if (savedPos?.x !== undefined && savedPos?.y !== undefined) {
-            wrap.style.transform = `translate(${savedPos.x}px, ${savedPos.y}px)`;
-            wrap.style.left = '0px';
-            wrap.style.top  = '0px';
-        } else {
+        if (!this.applyWindowPosition(wrap, this.settingsManager?.settings?.filterWindowPosition)) {
             const rect = anchor.getBoundingClientRect();
             wrap.style.top  = (rect.bottom + 4) + 'px';
             wrap.style.left = rect.left + 'px';
         }
 
         // ── Dragging ──────────────────────────────────────────
-        this.enableDragging('#yawo-color-dropdown.yawo-window', '#yawo-color-dropdown .yawo-titlebar', (x, y) => {
+        this.enableDragging('#yawo-color-dropdown.yawo-window', '#yawo-color-dropdown .yawo-titlebar, #yawo-color-dropdown .yawo-footer', (x, y) => {
             if (this.settingsManager?.settings) {
                 this.settingsManager.settings.filterWindowPosition = { x, y };
                 this.settingsManager.persist();
@@ -488,6 +509,33 @@ export class WindowColorFilter extends Overlay {
             (w, h) => { if (this.settingsManager?.settings) { this.settingsManager.settings.filterWindowSize = { w, h }; this.settingsManager.persist(); } },
             this.settingsManager?.settings?.filterWindowSize
         );
+    }
+
+    // Toggle the compact layout on the filter window, persisting the choice.
+    toggleCompact(btn) {
+        const win = document.querySelector('#yawo-color-dropdown');
+        if (!win) return;
+        const next = !win.classList.contains('yawo-compact');
+        this.#applyCompact(win, btn, next);
+        if (this.settingsManager?.settings) {
+            this.settingsManager.settings.filterCompact = next;
+            this.settingsManager.persist();
+        }
+        this.setStatus(next ? 'Compact view enabled!' : 'Compact view disabled!');
+    }
+
+    // Sync the window's compact class and the chrome button's icon/state.
+    // Unlike the main window, we keep the current height: the color list scrolls
+    // (overflow:auto), so clearing it would let the list expand to every color and
+    // blow the window up to full height.
+    #applyCompact(win, btn, compact) {
+        if (!win) return;
+        win.classList.toggle('yawo-compact', compact);
+        if (btn) {
+            btn.dataset.compactStatus = compact ? 'compact' : 'normal';
+            btn.innerHTML = icon(compact ? 'maximize2' : 'minimize2');
+            btn.title = compact ? 'Normal view' : 'Compact view';
+        }
     }
 
 }

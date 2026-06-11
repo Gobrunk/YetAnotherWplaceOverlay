@@ -56,25 +56,47 @@ export class WindowMain extends Overlay {
         this.addDiv({ id: this.windowId, class: 'yawo-window yawo-window-main', style: 'top: 10px; left: unset; right: 75px;' })
             .addWindowHeader({ title: this.name, statusDot: true })
             .addDiv({ class: 'yawo-content' })
-                // ── Completion ring ──
-                .addDiv({ id: 'yawo-completion', class: 'yawo-ring', style: 'display:none;' })
-                    .addDiv({ class: 'yawo-ring-svg', innerHTML: `
-                        <svg viewBox="0 0 100 100" aria-hidden="true">
-                          <circle class="yawo-ring-track" cx="50" cy="50" r="42"/>
-                          <circle id="yawo-completion-arc" class="yawo-ring-arc" cx="50" cy="50" r="42"/>
-                        </svg>` }).up()
-                    .addDiv({ class: 'yawo-ring-center' })
-                        .addDiv({ class: 'yawo-ring-value' })
-                            .addSpan({ id: 'yawo-completion-num', class: 'yawo-ring-num' }).up()
-                            .addSpan({ textContent: '%', class: 'yawo-ring-sign' }).up()
+                // ── Hero: completion ring + overlay info (name/fraction + active pill).
+                //    .yawo-hero / .yawo-overlay-info are display:contents in normal
+                //    mode (so children stack as before, ordering restored via CSS),
+                //    and become a side-by-side flex row in compact mode. ──
+                .addDiv({ class: 'yawo-hero' })
+                    // ── Completion ring ──
+                    .addDiv({ id: 'yawo-completion', class: 'yawo-ring', style: 'display:none;' })
+                        .addDiv({ class: 'yawo-ring-svg', innerHTML: `
+                            <svg viewBox="0 0 100 100" aria-hidden="true">
+                              <circle class="yawo-ring-track" cx="50" cy="50" r="42"/>
+                              <circle id="yawo-completion-arc" class="yawo-ring-arc" cx="50" cy="50" r="42"/>
+                            </svg>` }).up()
+                        .addDiv({ class: 'yawo-ring-center' })
+                            .addDiv({ class: 'yawo-ring-value' })
+                                .addSpan({ id: 'yawo-completion-num', class: 'yawo-ring-num' }).up()
+                                .addSpan({ textContent: '%', class: 'yawo-ring-sign' }).up()
+                            .up()
+                            .addSmall({ textContent: 'Complete', class: 'yawo-ring-label' }).up()
                         .up()
-                        .addSmall({ textContent: 'Complete', class: 'yawo-ring-label' }).up()
                     .up()
-                .up()
-                // ── Active overlay name + pixel fraction ──
-                .addDiv({ class: 'yawo-overlay-title-row' })
-                    .addSpan({ id: 'yawo-active-overlay', class: 'yawo-overlay-name' }).up()
-                    .addSpan({ id: 'yawo-active-frac', class: 'yawo-overlay-frac yawo-mono', style: 'display:none;' }).up()
+                    .addDiv({ class: 'yawo-overlay-info' })
+                        // ── Active overlay name + pixel fraction ──
+                        .addDiv({ class: 'yawo-overlay-title-row' })
+                            .addSpan({ id: 'yawo-active-overlay', class: 'yawo-overlay-name' }).up()
+                            .addSpan({ id: 'yawo-active-frac', class: 'yawo-overlay-frac yawo-mono', style: 'display:none;' }).up()
+                        .up()
+                        // ── Enable/disable templates pill ──
+                        .addDiv({ class: 'yawo-active-row' })
+                            .addSpan({ class: 'yawo-active-dot' }).up()
+                            .addSpan({ textContent: 'Overlay active', class: 'yawo-active-label' }).up()
+                            .addButton({ class: 'yawo-toggle', role: 'switch', title: 'Disable templates', 'aria-label': 'Toggle templates', 'data-button-status': 'shown' }, (overlay, btn) => {
+                                applyToggleState(btn, overlay.apiManager?.templateManager?.isEnabled ?? true);
+                                btn.onclick = () => {
+                                    const next = btn.dataset.buttonStatus !== 'shown';
+                                    overlay.apiManager?.templateManager?.setEnabled(next);
+                                    applyToggleState(btn, next);
+                                    overlay.setStatus(next ? 'Enabled templates!' : 'Disabled templates!');
+                                };
+                            }).up()
+                        .up()
+                    .up()
                 .up()
                 // ── Stat row ──
                 .addDiv({ class: 'yawo-stat-row' })
@@ -96,20 +118,6 @@ export class WindowMain extends Overlay {
                         .addSmall({ textContent: 'Next level', class: 'yawo-stat-label' }).up()
                     .up()
                 .up()
-                // ── Enable/disable templates pill ──
-                .addDiv({ class: 'yawo-active-row' })
-                    .addSpan({ class: 'yawo-active-dot' }).up()
-                    .addSpan({ textContent: 'Overlay active', class: 'yawo-active-label' }).up()
-                    .addButton({ class: 'yawo-toggle', role: 'switch', title: 'Disable templates', 'aria-label': 'Toggle templates', 'data-button-status': 'shown' }, (overlay, btn) => {
-                        applyToggleState(btn, overlay.apiManager?.templateManager?.isEnabled ?? true);
-                        btn.onclick = () => {
-                            const next = btn.dataset.buttonStatus !== 'shown';
-                            overlay.apiManager?.templateManager?.setEnabled(next);
-                            applyToggleState(btn, next);
-                            overlay.setStatus(next ? 'Enabled templates!' : 'Disabled templates!');
-                        };
-                    }).up()
-                .up()
                 // ── Actions ──
                 .addDiv({ class: 'yawo-overlay-actions' })
                     .addButton({ class: 'yawo-action-btn', innerHTML: `${icon('layers')}<span>Overlays</span>` }, (overlay, btn) => {
@@ -129,17 +137,8 @@ export class WindowMain extends Overlay {
             })
         .mount(document.body);
         this.updateActiveOverlayName(this.apiManager?.templateManager?.getActiveDisplayName());
-        const savedPos = this.settingsManager?.settings?.windowPosition;
-        if (savedPos?.x !== undefined && savedPos?.y !== undefined) {
-            const winEl = document.querySelector(`#${this.windowId}`);
-            if (winEl) {
-                winEl.style.transform = `translate(${savedPos.x}px, ${savedPos.y}px)`;
-                winEl.style.left  = '0px';
-                winEl.style.top   = '0px';
-                winEl.style.right = '';
-            }
-        }
-        this.enableDragging(`#${this.windowId}.yawo-window`, `#${this.windowId} .yawo-titlebar`, (x, y) => {
+        this.applyWindowPosition(document.querySelector(`#${this.windowId}`), this.settingsManager?.settings?.windowPosition);
+        this.enableDragging(`#${this.windowId}.yawo-window`, `#${this.windowId} .yawo-titlebar, #${this.windowId} .yawo-footer`, (x, y) => {
             if (this.settingsManager?.settings) { this.settingsManager.settings.windowPosition = { x, y }; this.settingsManager.persist(); }
         });
         this.enableResizing(
@@ -147,6 +146,39 @@ export class WindowMain extends Overlay {
             (w, h) => { if (this.settingsManager?.settings) { this.settingsManager.settings.windowSize = { w, h }; this.settingsManager.persist(); } },
             this.settingsManager?.settings?.windowSize
         );
+        // Restore the persisted compact layout on mount.
+        if (this.settingsManager?.settings?.compact) {
+            const win = document.querySelector(`#${this.windowId}`);
+            const btn = win?.querySelector('.yawo-compact-btn');
+            this.#applyCompact(win, btn, true);
+        }
+    }
+
+    // Toggle the compact layout on the main window, persisting the choice.
+    toggleCompact(btn) {
+        const win = document.querySelector(`#${this.windowId}`);
+        if (!win) return;
+        const next = !win.classList.contains('yawo-compact');
+        this.#applyCompact(win, btn, next);
+        if (this.settingsManager?.settings) {
+            this.settingsManager.settings.compact = next;
+            this.settingsManager.persist();
+        }
+        this.setStatus(next ? 'Compact view enabled!' : 'Compact view disabled!');
+    }
+
+    // Sync the window's compact class and the chrome button's icon/state.
+    #applyCompact(win, btn, compact) {
+        if (!win) return;
+        win.classList.toggle('yawo-compact', compact);
+        // Let the new layout dictate height (drop any height frozen by a manual resize).
+        win.style.height = '';
+        win.classList.remove('yawo-window-resized');
+        if (btn) {
+            btn.dataset.compactStatus = compact ? 'compact' : 'normal';
+            btn.innerHTML = icon(compact ? 'maximize2' : 'minimize2');
+            btn.title = compact ? 'Normal view' : 'Compact view';
+        }
     }
 
 }

@@ -168,16 +168,16 @@ export class WindowTemplateSelect extends Overlay {
             .addWindowFooter({ version: this.version, note: '' })
         .mount(document.body);
 
-        const win = document.querySelector(`#${this.windowId}`);
-        const savedPos = this.settingsManager?.settings?.templateWindowPosition;
-        if (savedPos?.x !== undefined && savedPos?.y !== undefined) {
-            win.style.transform = `translate(${savedPos.x}px, ${savedPos.y}px)`;
-            win.style.left = '0px';
-            win.style.top  = '0px';
+        this.applyWindowPosition(document.querySelector(`#${this.windowId}`), this.settingsManager?.settings?.templateWindowPosition);
+
+        // Restore the persisted compact layout on mount.
+        if (this.settingsManager?.settings?.templateCompact) {
+            const win = document.querySelector(`#${this.windowId}`);
+            this.#applyCompact(win, win?.querySelector('.yawo-compact-btn'), true);
         }
 
         this.refresh();
-        this.enableDragging(`#${this.windowId}.yawo-window`, `#${this.windowId} .yawo-titlebar`, (x, y) => {
+        this.enableDragging(`#${this.windowId}.yawo-window`, `#${this.windowId} .yawo-titlebar, #${this.windowId} .yawo-footer`, (x, y) => {
             if (this.settingsManager?.settings) {
                 this.settingsManager.settings.templateWindowPosition = { x, y };
                 this.settingsManager.persist();
@@ -188,6 +188,32 @@ export class WindowTemplateSelect extends Overlay {
             (w, h) => { if (this.settingsManager?.settings) { this.settingsManager.settings.templateWindowSize = { w, h }; this.settingsManager.persist(); } },
             this.settingsManager?.settings?.templateWindowSize
         );
+    }
+
+    // Toggle the compact layout on the overlays window, persisting the choice.
+    // Like the filter window (and unlike main), we keep the current height: the
+    // overlay list scrolls, so clearing it would let the list expand the window.
+    toggleCompact(btn) {
+        const win = document.querySelector(`#${this.windowId}`);
+        if (!win) return;
+        const next = !win.classList.contains('yawo-compact');
+        this.#applyCompact(win, btn, next);
+        if (this.settingsManager?.settings) {
+            this.settingsManager.settings.templateCompact = next;
+            this.settingsManager.persist();
+        }
+        this.setStatus(next ? 'Compact view enabled!' : 'Compact view disabled!');
+    }
+
+    // Sync the window's compact class and the chrome button's icon/state.
+    #applyCompact(win, btn, compact) {
+        if (!win) return;
+        win.classList.toggle('yawo-compact', compact);
+        if (btn) {
+            btn.dataset.compactStatus = compact ? 'compact' : 'normal';
+            btn.innerHTML = icon(compact ? 'maximize2' : 'minimize2');
+            btn.title = compact ? 'Normal view' : 'Compact view';
+        }
     }
 
     refresh() {

@@ -173,3 +173,25 @@
 }
 .yawo-btn-create .yawo-icon { width: 16px; height: 16px; }
 .yawo-btn-create:hover { background: var(--yawo-accent-light) !important; border-color: transparent !important; }
+
+/* ── Compact mode ── */
+/* Tighter cards and denser spacing; coordinates stay visible. */
+#yawo-window-template-select.yawo-compact .yawo-content { gap: 8px; }
+#yawo-window-template-select.yawo-compact .yawo-col { gap: 6px; }
+
+#yawo-window-template-select.yawo-compact .yawo-template-card {
+  padding: 7px 10px;
+  border-radius: 10px;
+  gap: 8px;
+}
+#yawo-window-template-select.yawo-compact .yawo-template-info { gap: 1px; }
+#yawo-window-template-select.yawo-compact .yawo-template-name { font-size: 12px; font-weight: 600; }
+#yawo-window-template-select.yawo-compact .yawo-template-coords { font-size: 9.5px; }
+
+#yawo-window-template-select.yawo-compact .yawo-template-actions { gap: 4px; }
+#yawo-window-template-select.yawo-compact .yawo-btn-activate,
+#yawo-window-template-select.yawo-compact .yawo-btn-success {
+  padding: 4px 11px !important;
+  font-size: 10px !important;
+}
+#yawo-window-template-select.yawo-compact .yawo-btn-more { width: 24px; height: 24px; }

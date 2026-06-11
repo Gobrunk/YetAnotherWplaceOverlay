@@ -95,7 +95,7 @@
 /* Each color is a grid row: swatch · name · bar · % · goto. */
 .yawo-filter-row {
   display: grid;
-  grid-template-columns: 18px minmax(0, 1.2fr) minmax(80px, 2fr) 40px 24px;
+  grid-template-columns: 18px minmax(0, 1.2fr) minmax(80px, 2fr) minmax(40px, max-content) 24px;
   align-items: center;
   justify-items: stretch; /* wplace's base CSS disables item stretch; restore it */
   gap: 8px;
@@ -118,6 +118,8 @@
 }
 .yawo-swatch-toggle:hover { transform: scale(1.12); box-shadow: 0 0 0 2px rgba(255,255,255,.18); }
 .yawo-swatch-toggle--hidden { opacity: .4; filter: grayscale(.55); }
+/* Gold contour marks a fully-placed (100 %) color. */
+.yawo-swatch-toggle--done { border-color: var(--yawo-gold); box-shadow: 0 0 0 1px rgba(233,197,88,.5); }
 .yawo-swatch-toggle--hidden::after {
   content: '';
   position: absolute;
@@ -137,11 +139,21 @@
   pointer-events: none;
 }
 
+.yawo-name-block { min-width: 0; }
+
 .yawo-color-name {
   width: 100%;     /* fill the cell so ellipsis clips (wplace disables item stretch) */
   min-width: 0;
   font-size: 12px;
   color: rgba(255,255,255,.88);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Count line — hidden in normal mode (the count lives inside the bar there). */
+.yawo-color-count {
+  display: none;
+  font-size: 10px;
+  color: rgba(255,255,255,.4);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
@@ -155,6 +167,7 @@
   overflow: hidden;
 }
 .yawo-bar-fill { height: 100%; border-radius: 999px; opacity: .8; transition: width .25s ease; }
+.yawo-bar-fill--done { background: var(--yawo-gold-gradient); opacity: 1; }
 .yawo-bar-label {
   position: absolute;
   inset: 0;
@@ -168,9 +181,10 @@
 .yawo-bar-pct {
   width: 100%;
   font-size: 11px; font-weight: 700;
-  text-align: right;
+  display: flex; align-items: center; justify-content: flex-end; gap: 6px;
   white-space: nowrap;
 }
+.yawo-bar-pct--done { color: var(--yawo-gold); }
 
 /* "Go to nearest pixel" — crosshair icon. Box forced inline in JS. */
 .yawo-goto-btn {
@@ -186,3 +200,51 @@
   transition: transform .1s, color .12s;
 }
 .yawo-goto-btn:hover { transform: scale(1.12); color: var(--yawo-accent); }
+
+/* ── Compact mode ── */
+/* Rows collapse to swatch · name · % ; the bar becomes a thin underline. */
+#yawo-color-dropdown.yawo-compact .yawo-filter-list { gap: 2px; }
+
+#yawo-color-dropdown.yawo-compact .yawo-filter-row {
+  position: relative;
+  grid-template-columns: 18px minmax(0, 1fr) max-content max-content 24px;
+  padding: 4px 6px 6px;
+  gap: 8px;
+  border-radius: 8px;
+}
+#yawo-color-dropdown.yawo-compact .yawo-filter-row:hover { background: rgba(255,255,255,.05); }
+
+/* Flatten the name block so name · count sit in their own columns (name truncates). */
+#yawo-color-dropdown.yawo-compact .yawo-name-block { display: contents; }
+#yawo-color-dropdown.yawo-compact .yawo-color-count { display: block; font-size: 11px; }
+
+/* Bar → thin underline at the row bottom (fill width = % via inline style). */
+#yawo-color-dropdown.yawo-compact .yawo-bar {
+  position: absolute;
+  left: 4px; right: 4px; bottom: 0;
+  width: auto;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+}
+#yawo-color-dropdown.yawo-compact .yawo-bar-fill  { opacity: 1; }
+#yawo-color-dropdown.yawo-compact .yawo-bar-label { display: none; }
+
+/* Crosshair sits right of the % but is revealed only when the row is hovered. */
+#yawo-color-dropdown.yawo-compact .yawo-goto-btn {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .12s, transform .1s, color .12s;
+}
+#yawo-color-dropdown.yawo-compact .yawo-filter-row:hover .yawo-goto-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Toolbar buttons collapse to their icon / mode dot (labels hidden). */
+#yawo-color-dropdown.yawo-compact .yawo-filter-mode-btn { padding: 7px 9px; }
+#yawo-color-dropdown.yawo-compact .yawo-filter-mode-btn > span:not(.yawo-mode-dot) { display: none; }
+
+/* The collapsed buttons sit at the right edge — open their menus leftward so the
+   wider labels stay inside the window. */
+#yawo-color-dropdown.yawo-compact .yawo-menu { left: auto; right: 0; }

@@ -70,3 +70,21 @@
 
 /* Footer "Saved" indicator */
 .yawo-footer-note--ok { font-size: 11px; font-weight: 600; }
+
+/* ── Compact mode ── */
+/* Tightens the chrome: drops the auto-save hint, shrinks the section badges
+   and titles, and pulls the cards closer together. Like the filter/overlays
+   windows we keep height untouched so the sections keep scrolling. */
+#yawo-window-settings.yawo-compact .yawo-content    { gap: 9px; }
+#yawo-window-settings.yawo-compact .yawo-settings-sub { display: none; }
+#yawo-window-settings.yawo-compact .yawo-sections   { gap: 9px; }
+
+#yawo-window-settings.yawo-compact .yawo-section      { padding: 12px; gap: 8px; }
+#yawo-window-settings.yawo-compact .yawo-section-head { gap: 8px; }
+#yawo-window-settings.yawo-compact .yawo-section-badge {
+  width: 26px; height: 26px; border-radius: 8px;
+}
+#yawo-window-settings.yawo-compact .yawo-section-badge svg { width: 14px; height: 14px; }
+#yawo-window-settings.yawo-compact .yawo-section-title { font-size: 10.5px; }
+
+#yawo-window-settings.yawo-compact .yawo-slider-value { font-size: 12.5px; }

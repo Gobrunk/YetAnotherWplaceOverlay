@@ -135,3 +135,37 @@
 .yawo-action-btn { flex: 1; min-width: 0; padding: 10px 8px !important; }
 .yawo-action-btn .yawo-icon { color: var(--yawo-accent); width: 16px; height: 16px; }
 .yawo-action-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Hero wrappers (ring + overlay info) ──
+   In normal mode the wrappers are transparent (display:contents) so the ring,
+   title row and active pill stack directly inside .yawo-content as before; the
+   original visual order is restored with `order` since .yawo-active-row now sits
+   in the DOM next to the title row. Compact mode (below) turns the hero into a
+   side-by-side row. */
+.yawo-hero, .yawo-overlay-info { display: contents; }
+.yawo-window-main #yawo-completion       { order: 1; }
+.yawo-window-main .yawo-overlay-title-row { order: 2; }
+.yawo-window-main .yawo-stat-row          { order: 3; }
+.yawo-window-main .yawo-active-row        { order: 4; }
+.yawo-window-main .yawo-overlay-actions   { order: 5; }
+
+/* ── Compact mode ── */
+.yawo-window-main.yawo-compact .yawo-hero {
+  display: flex; align-items: center; gap: 12px;
+}
+.yawo-window-main.yawo-compact .yawo-overlay-info {
+  display: flex; flex-direction: column; gap: 6px;
+  flex: 1; min-width: 0; order: 1;
+}
+.yawo-window-main.yawo-compact #yawo-completion {
+  width: 64px; height: 64px; margin: 0; flex-shrink: 0; order: 0;
+}
+.yawo-window-main.yawo-compact .yawo-ring-num   { font-size: 16px; }
+.yawo-window-main.yawo-compact .yawo-ring-sign  { font-size: 10px; }
+.yawo-window-main.yawo-compact .yawo-ring-label { display: none; }
+.yawo-window-main.yawo-compact .yawo-overlay-title-row {
+  justify-content: flex-start; flex-wrap: wrap; padding: 0; gap: 6px;
+}
+.yawo-window-main.yawo-compact .yawo-active-row { padding: 6px 10px; }
+.yawo-window-main.yawo-compact .yawo-content    { gap: 10px; }
+.yawo-window-main.yawo-compact .yawo-stat-row   { padding: 4px 0; }

@@ -23,7 +23,7 @@ A detachable color window that gives you full visibility into the state of your 
 - **Search** — filter colors by name or hex value
 - **Sort** — order by color ID, name, total pixels, correct pixels, or completion percentage, ascending or descending
 - **Filter mode** — switch every color at once between *All visible*, *All hidden*, or *Selected* (show only the color currently picked in the Wplace palette), on top of the per-color eye toggles
-- **Per-color stats** — see how many pixels of each color are correct vs. total, with a completion progress bar and a one-decimal completion percentage (only ever 100% once every pixel is correct)
+- **Per-color stats** — see how many pixels of each color are correct vs. total, with a completion progress bar and a one-decimal completion percentage (only ever 100% once every pixel is correct). Fully-placed colors are highlighted in gold — swatch border, progress bar, and percentage
 - **Go to** — fly to the nearest incorrect pixel of a given color and auto-select it, ready to place
 
 ### Nearest incomplete pixel
@@ -42,9 +42,13 @@ Visually mark incorrect pixels with a configurable pattern: Cross, X, Full block
 
 A button injected into the Wplace color palette to move it from the bottom of the screen to the top and back.
 
+### Compact mode
+
+Every window has a compact-view toggle in its title bar. The main dashboard collapses into a tight side-by-side layout, while the overlays and color filter windows tighten their rows so more fits on screen. Each window remembers its compact state across sessions, and the footer doubles as a drag handle.
+
 ### Persistent windows
 
-All overlay windows (main dashboard, overlays list, settings, color filter) remember their position across sessions.
+All overlay windows (main dashboard, overlays list, settings, color filter) remember their position across sessions. Windows are kept on screen — dragging one toward an edge always leaves a graspable strip visible — and the **Windows** section of the settings has a *Reset window positions* button that snaps every window back to its default spot.
 
 ### Template import/export
 
