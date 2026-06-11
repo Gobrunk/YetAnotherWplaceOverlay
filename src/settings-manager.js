@@ -11,6 +11,7 @@ export class SettingsManager extends WindowSettings {
         this.settings.gotoSpeed      ??= 1.2;
         this.settings.overlaySpeed   ??= 1.2;
         this.settings.compact        ??= false;
+        this.settings.filterCompact  ??= false;
         this.savedSettings      = structuredClone(this.settings);
         this.storageKey         = 'yawoUserSettings';
         this.saveIntervalMs     = 5000;

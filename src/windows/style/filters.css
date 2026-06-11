@@ -139,11 +139,21 @@
   pointer-events: none;
 }
 
+.yawo-name-block { min-width: 0; }
+
 .yawo-color-name {
   width: 100%;     /* fill the cell so ellipsis clips (wplace disables item stretch) */
   min-width: 0;
   font-size: 12px;
   color: rgba(255,255,255,.88);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Count line — hidden in normal mode (the count lives inside the bar there). */
+.yawo-color-count {
+  display: none;
+  font-size: 10px;
+  color: rgba(255,255,255,.4);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
@@ -190,3 +200,51 @@
   transition: transform .1s, color .12s;
 }
 .yawo-goto-btn:hover { transform: scale(1.12); color: var(--yawo-accent); }
+
+/* ── Compact mode ── */
+/* Rows collapse to swatch · name · % ; the bar becomes a thin underline. */
+#yawo-color-dropdown.yawo-compact .yawo-filter-list { gap: 2px; }
+
+#yawo-color-dropdown.yawo-compact .yawo-filter-row {
+  position: relative;
+  grid-template-columns: 18px minmax(0, 1fr) max-content max-content 24px;
+  padding: 4px 6px 6px;
+  gap: 8px;
+  border-radius: 8px;
+}
+#yawo-color-dropdown.yawo-compact .yawo-filter-row:hover { background: rgba(255,255,255,.05); }
+
+/* Flatten the name block so name · count sit in their own columns (name truncates). */
+#yawo-color-dropdown.yawo-compact .yawo-name-block { display: contents; }
+#yawo-color-dropdown.yawo-compact .yawo-color-count { display: block; font-size: 11px; }
+
+/* Bar → thin underline at the row bottom (fill width = % via inline style). */
+#yawo-color-dropdown.yawo-compact .yawo-bar {
+  position: absolute;
+  left: 4px; right: 4px; bottom: 0;
+  width: auto;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+}
+#yawo-color-dropdown.yawo-compact .yawo-bar-fill  { opacity: 1; }
+#yawo-color-dropdown.yawo-compact .yawo-bar-label { display: none; }
+
+/* Crosshair sits right of the % but is revealed only when the row is hovered. */
+#yawo-color-dropdown.yawo-compact .yawo-goto-btn {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .12s, transform .1s, color .12s;
+}
+#yawo-color-dropdown.yawo-compact .yawo-filter-row:hover .yawo-goto-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Toolbar buttons collapse to their icon / mode dot (labels hidden). */
+#yawo-color-dropdown.yawo-compact .yawo-filter-mode-btn { padding: 7px 9px; }
+#yawo-color-dropdown.yawo-compact .yawo-filter-mode-btn > span:not(.yawo-mode-dot) { display: none; }
+
+/* The collapsed buttons sit at the right edge — open their menus leftward so the
+   wider labels stay inside the window. */
+#yawo-color-dropdown.yawo-compact .yawo-menu { left: auto; right: 0; }
