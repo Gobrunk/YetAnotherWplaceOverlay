@@ -67,7 +67,7 @@ export class WindowColorFilter extends Overlay {
         // ── Filter + sort state ───────────────────────────────
         let filterMode = this.templateManager._soloMode ? 'solo'
             : this.templateManager.hiddenColors.size === 0 ? 'all' : 'none';
-        let sortState = 'id'; // 'id' | 'name-asc' | 'name-desc' | 'pct-desc' | 'pct-asc'
+        let sortState = this._sortState ?? 'id'; // 'id' | 'name-asc' | 'name-desc' | 'pct-desc' | 'pct-asc'
 
         const updateVisibleCount = () => {
             const note = wrap?.querySelector('.yawo-footer-note');
@@ -293,7 +293,7 @@ export class WindowColorFilter extends Overlay {
             lbl.textContent = cfg.label;
             item.appendChild(ic);
             item.appendChild(lbl);
-            item.onclick = () => { sortState = state; applyFilter(); hideSortMenu(); };
+            item.onclick = () => { sortState = this._sortState = state; applyFilter(); hideSortMenu(); };
             sortMenu.appendChild(item);
             sortMenuItems[state] = item;
         }
