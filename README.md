@@ -30,6 +30,10 @@ A detachable color window that gives you full visibility into the state of your 
 
 A global button to jump to the closest pixel anywhere in the template that still needs to be placed. The camera smoothly zooms out, pans, and zooms back in instead of teleporting.
 
+### Ruler
+
+A measuring tool toggled from a button in the dashboard footer (available in both normal and compact layouts). Turn it on, then click two pixels on the canvas to read the distance that separates them — horizontal (Δx), vertical (Δy), and straight-line — in pixels. Both selected pixels are highlighted on the canvas, with a line drawn between them that tracks the camera as you zoom and pan. Right-click resets the current selection.
+
 ### Navigation settings
 
 Tune how the overlay moves the camera from the **Navigation** section of the settings window. Independent sliders set the target zoom level and the animation speed for both *Go to nearest incorrect pixel* and *Go to overlay anchor pixel*.
