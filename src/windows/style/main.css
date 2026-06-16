@@ -136,6 +136,26 @@
 .yawo-action-btn .yawo-icon { color: var(--yawo-accent); width: 16px; height: 16px; }
 .yawo-action-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* ── Ruler readout ── */
+.yawo-ruler {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+}
+.yawo-ruler-text {
+  display: block;
+  font-family: var(--yawo-font-mono);
+  font-size: 11px;
+  color: rgba(255,255,255,.8);
+  font-variant-numeric: tabular-nums;
+}
+/* Active state for the ruler chrome button (footer). */
+.yawo-chrome-btn--active {
+  color: var(--yawo-accent);
+  background: rgba(255,255,255,.07);
+}
+
 /* ── Hero wrappers (ring + overlay info) ──
    In normal mode the wrappers are transparent (display:contents) so the ring,
    title row and active pill stack directly inside .yawo-content as before; the
@@ -148,6 +168,7 @@
 .yawo-window-main .yawo-stat-row          { order: 3; }
 .yawo-window-main .yawo-active-row        { order: 4; }
 .yawo-window-main .yawo-overlay-actions   { order: 5; }
+.yawo-window-main .yawo-ruler             { order: 6; }
 
 /* ── Compact mode ── */
 .yawo-window-main.yawo-compact .yawo-hero {

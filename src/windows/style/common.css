@@ -144,6 +144,36 @@
 .yawo-footer-note { font-size: 10px; color: rgba(255,255,255,.3); text-align: right; line-height: 1.1; }
 .yawo-footer-note--ok { color: var(--yawo-accent); display: inline-flex; align-items: center; gap: 4px; }
 
+/* ── Ruler highlight (drawn on the Wplace canvas, outside .yawo-window) ── */
+#yawo-ruler-layer { position: fixed; inset: 0; pointer-events: none; z-index: 8000; }
+.yawo-ruler-marker {
+  position: fixed;
+  box-sizing: border-box;
+  border: 2px solid var(--yawo-accent);
+  border-radius: 4px;
+  background: rgba(var(--yawo-accent-rgb), .18);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 12px rgba(var(--yawo-accent-rgb), .6);
+}
+.yawo-ruler-marker__label {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--yawo-font-mono);
+  font-size: 11px; font-weight: 700; line-height: 1;
+  color: #fff;
+  background: var(--yawo-accent);
+  padding: 2px 5px;
+  border-radius: 5px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.4);
+}
+.yawo-ruler-line {
+  stroke: var(--yawo-accent);
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+  opacity: .9;
+}
+
 /* ── Separators ── */
 .yawo-window hr { border: none; border-top: 1px solid rgba(255,255,255,.07); margin: 2px 0; }
 
