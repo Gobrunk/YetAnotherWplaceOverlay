@@ -5,6 +5,10 @@ export class ApiManager {
         this.templateManager = templateManager;
         this.chargesTimerId  = '';
         this.lastClickCoords = [];
+        // Ruler tool: when active, each pixel click is captured (up to 2) to
+        // measure the distance between two pixels.
+        this.rulerActive = false;
+        this.rulerPoints = []; // [ [tileX, tileY, pixelX, pixelY], ... ] max 2
     }
 
     navigateToCoords(coords, zoom, select = false, speed) {
@@ -57,6 +61,10 @@ export class ApiManager {
                         return;
                     }
                     this.lastClickCoords = [...tileSegments, ...pixelCoords];
+                    const allCoords = [...tileSegments, ...pixelCoords];
+                    // Ruler mode runs independently of the coords-display injection
+                    // below, so capture the click here while the data is fresh.
+                    if (this.rulerActive) this.#captureRulerPoint(allCoords, windowMain);
                     const displayCoords = [
                         parseInt(tileSegments[0]) % 4 * 1000 + parseInt(pixelCoords[0]),
                         parseInt(tileSegments[1]) % 4 * 1000 + parseInt(pixelCoords[1])
@@ -68,7 +76,6 @@ export class ApiManager {
                             let coordsDisplay = document.querySelector('#yawo-coords-display');
                             const labels   = ['Tl X:', 'Tl Y:', 'Px X:', 'Px Y:'];
                             const ids      = ['yawo-coords-tile-x', 'yawo-coords-tile-y', 'yawo-coords-pixel-x', 'yawo-coords-pixel-y'];
-                            const allCoords = [...tileSegments, ...pixelCoords];
                             if (coordsDisplay) {
                                 for (const [idx, id] of ids.entries())
                                     document.getElementById(id).textContent = `${labels[idx] ?? '??:'} ${allCoords[idx]}`;
@@ -105,5 +112,26 @@ export class ApiManager {
                 }
             }
         });
+    }
+
+    // Ruler tool: collect up to two clicked pixels and feed the measurement to
+    // the main window. A click after a completed pair starts a fresh measurement.
+    #captureRulerPoint(coords, windowMain) {
+        if (this.rulerPoints.length >= 2) this.rulerPoints = [];
+        this.rulerPoints.push(coords);
+        const [a, b] = this.rulerPoints;
+        if (this.rulerPoints.length < 2) {
+            windowMain.setRulerReadout({ a });
+            return;
+        }
+        // Global pixel coordinates: globalX = tileX * 1000 + pixelX (idem Y).
+        const ax = Number(a[0]) * 1000 + Number(a[2]);
+        const ay = Number(a[1]) * 1000 + Number(a[3]);
+        const bx = Number(b[0]) * 1000 + Number(b[2]);
+        const by = Number(b[1]) * 1000 + Number(b[3]);
+        const dx = Math.abs(bx - ax);
+        const dy = Math.abs(by - ay);
+        const diag = Math.hypot(dx, dy);
+        windowMain.setRulerReadout({ a, b, dx, dy, diag });
     }
 }

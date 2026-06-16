@@ -48,6 +48,41 @@ export class WindowMain extends Overlay {
         }
     }
 
+    // Toggle the ruler tool: when on, the next two pixel clicks on Wplace are
+    // measured. State lives on the ApiManager (it owns the click capture).
+    toggleRuler() {
+        const api = this.apiManager;
+        if (!api) return;
+        api.rulerActive = !api.rulerActive;
+        api.rulerPoints = [];
+        const win     = document.querySelector(`#${this.windowId}`);
+        const btn     = win?.querySelector('.yawo-ruler-btn');
+        const readout = win?.querySelector('#yawo-ruler');
+        btn?.classList.toggle('yawo-chrome-btn--active', api.rulerActive);
+        readout?.classList.toggle('yawo-hidden', !api.rulerActive);
+        if (api.rulerActive) {
+            this.setRulerReadout(null);
+            this.setStatus('Ruler on — click the first pixel.');
+        } else {
+            this.setStatus('Ruler off.');
+        }
+    }
+
+    // Render the ruler readout. `null` → initial prompt; `{ a }` → first point
+    // captured; `{ a, b, dx, dy, diag }` → full measurement.
+    setRulerReadout(state) {
+        const el = document.querySelector('#yawo-ruler-text');
+        if (!el) return;
+        const glob = c => `${Number(c[0]) * 1000 + Number(c[2])}, ${Number(c[1]) * 1000 + Number(c[3])}`;
+        if (!state) {
+            el.textContent = 'Click the first pixel on Wplace.';
+        } else if (!state.b) {
+            el.textContent = `A (${glob(state.a)}) — click the second pixel.`;
+        } else {
+            el.textContent = `Δx ${state.dx} · Δy ${state.dy} · ⟂ ${state.diag.toFixed(1)} px`;
+        }
+    }
+
     toggle() {
         if (document.querySelector(`#${this.windowId}`)) {
             this.setError('Main window already exists!');
@@ -127,12 +162,17 @@ export class WindowMain extends Overlay {
                         btn.onclick = () => new WindowColorFilter(overlay).toggle();
                     }).up()
                 .up()
+                // ── Ruler readout (hidden until the ruler tool is toggled on) ──
+                .addDiv({ id: 'yawo-ruler', class: 'yawo-ruler yawo-hidden' })
+                    .addSpan({ id: 'yawo-ruler-text', class: 'yawo-ruler-text' }).up()
+                .up()
             .up()
             .addWindowFooter({
                 version: this.version,
                 buttons: [
                     { icon: 'settings', title: 'Settings', onClick: () => this.settingsManager.toggle() },
                     { icon: 'palette', title: 'Template Color Converter', onClick: () => window.open('https://pepoafonso.github.io/color_converter_wplace/', '_blank', 'noopener noreferrer') },
+                    { icon: 'ruler', title: 'Ruler — measure pixel distance', className: 'yawo-chrome-btn yawo-ruler-btn', onClick: () => this.toggleRuler() },
                 ],
             })
         .mount(document.body);
