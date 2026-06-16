@@ -55,6 +55,7 @@ export class WindowMain extends Overlay {
         if (!api) return;
         api.rulerActive = !api.rulerActive;
         api.rulerPoints = [];
+        api.postRulerHighlight(); // clear any markers left from a previous measurement
         const win     = document.querySelector(`#${this.windowId}`);
         const btn     = win?.querySelector('.yawo-ruler-btn');
         const readout = win?.querySelector('#yawo-ruler');
@@ -172,7 +173,7 @@ export class WindowMain extends Overlay {
                 buttons: [
                     { icon: 'settings', title: 'Settings', onClick: () => this.settingsManager.toggle() },
                     { icon: 'palette', title: 'Template Color Converter', onClick: () => window.open('https://pepoafonso.github.io/color_converter_wplace/', '_blank', 'noopener noreferrer') },
-                    { icon: 'ruler', title: 'Ruler — measure pixel distance', className: 'yawo-chrome-btn yawo-ruler-btn', onClick: () => this.toggleRuler() },
+                    { icon: 'ruler', title: 'Ruler — measure pixel distance (right-click to reset)', className: 'yawo-chrome-btn yawo-ruler-btn', onClick: () => this.toggleRuler() },
                 ],
             })
         .mount(document.body);

@@ -112,6 +112,16 @@ export class ApiManager {
                 }
             }
         });
+
+        // While the ruler is active, a right-click resets the current selection.
+        document.addEventListener('contextmenu', event => {
+            if (!this.rulerActive) return;
+            event.preventDefault();
+            this.rulerPoints = [];
+            this.postRulerHighlight();
+            windowMain.setRulerReadout(null);
+            windowMain.setStatus('Ruler reset — click the first pixel.');
+        }, true);
     }
 
     // Ruler tool: collect up to two clicked pixels and feed the measurement to
@@ -119,6 +129,7 @@ export class ApiManager {
     #captureRulerPoint(coords, windowMain) {
         if (this.rulerPoints.length >= 2) this.rulerPoints = [];
         this.rulerPoints.push(coords);
+        this.postRulerHighlight();
         const [a, b] = this.rulerPoints;
         if (this.rulerPoints.length < 2) {
             windowMain.setRulerReadout({ a });
@@ -133,5 +144,16 @@ export class ApiManager {
         const dy = Math.abs(by - ay);
         const diag = Math.hypot(dx, dy);
         windowMain.setRulerReadout({ a, b, dx, dy, diag });
+    }
+
+    // Tell the bridge which pixels to highlight on the canvas. Maps the captured
+    // [tileX, tileY, pixelX, pixelY] points to global [globalX, globalY] pairs;
+    // an empty list clears the highlight.
+    postRulerHighlight() {
+        const points = this.rulerPoints.map(c => [
+            Number(c[0]) * 1000 + Number(c[2]),
+            Number(c[1]) * 1000 + Number(c[3]),
+        ]);
+        window.postMessage({ source: 'yaw-overlay', rulerHighlight: points }, window.location.origin);
     }
 }

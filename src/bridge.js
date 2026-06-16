@@ -5,6 +5,88 @@ export function injectBridge(scriptName) {
         const logStyle      = currentScript?.getAttribute('yawo-style') || '';
         const blobQueue     = new Map();
 
+        // ── Ruler highlight ──
+        // The overlay runs in an isolated world and can't touch window.realMap,
+        // so the ruler's pixel highlights are drawn here (page context) where the
+        // map's projection is available, and kept in sync on every map render.
+        const WORLD_PX = 2048000; // canvas width/height in pixels (2048 tiles × 1000)
+        let rulerPoints = [];     // [ [globalX, globalY], ... ] max 2
+        let rulerListenersAttached = false;
+
+        const pxToLngLat = (gx, gy) => [
+            (gx / WORLD_PX) * 360 - 180,
+            Math.atan(Math.sinh(Math.PI * (1 - 2 * gy / WORLD_PX))) * (180 / Math.PI),
+        ];
+
+        function ensureRulerLayer() {
+            let layer = document.getElementById('yawo-ruler-layer');
+            if (layer) return layer;
+            layer = document.createElement('div');
+            layer.id = 'yawo-ruler-layer';
+            layer.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:8000;';
+            const SVG_NS = 'http://www.w3.org/2000/svg';
+            const svg = document.createElementNS(SVG_NS, 'svg');
+            svg.setAttribute('style', 'position:absolute;inset:0;width:100%;height:100%;overflow:visible;');
+            const line = document.createElementNS(SVG_NS, 'line');
+            line.id = 'yawo-ruler-svg-line';
+            line.setAttribute('class', 'yawo-ruler-line');
+            svg.appendChild(line);
+            layer.appendChild(svg);
+            for (const tag of ['a', 'b']) {
+                const m = document.createElement('div');
+                m.id = `yawo-ruler-marker-${tag}`;
+                m.className = 'yawo-ruler-marker';
+                const lbl = document.createElement('span');
+                lbl.className = 'yawo-ruler-marker__label';
+                lbl.textContent = tag.toUpperCase();
+                m.appendChild(lbl);
+                layer.appendChild(m);
+            }
+            document.body.appendChild(layer);
+            return layer;
+        }
+
+        function renderRulerHighlight() {
+            const layer = ensureRulerLayer();
+            const map   = window.realMap;
+            const markerA = document.getElementById('yawo-ruler-marker-a');
+            const markerB = document.getElementById('yawo-ruler-marker-b');
+            const line    = document.getElementById('yawo-ruler-svg-line');
+            if (!map || rulerPoints.length === 0) { layer.style.display = 'none'; return; }
+            layer.style.display = '';
+            const rect = map.getCanvas().getBoundingClientRect();
+            const MIN  = 10; // keep the marker grabbable even when a pixel is sub-pixel on screen
+            const place = (marker, [gx, gy]) => {
+                const tl = map.project(pxToLngLat(gx, gy));
+                const br = map.project(pxToLngLat(gx + 1, gy + 1));
+                const cx = rect.left + (tl.x + br.x) / 2;
+                const cy = rect.top  + (tl.y + br.y) / 2;
+                const size = Math.max(Math.abs(br.x - tl.x), Math.abs(br.y - tl.y), MIN);
+                marker.style.display = '';
+                marker.style.left   = `${cx - size / 2}px`;
+                marker.style.top    = `${cy - size / 2}px`;
+                marker.style.width  = `${size}px`;
+                marker.style.height = `${size}px`;
+                return { cx, cy };
+            };
+            const a = place(markerA, rulerPoints[0]);
+            if (rulerPoints.length > 1) {
+                const b = place(markerB, rulerPoints[1]);
+                line.style.display = '';
+                line.setAttribute('x1', a.cx); line.setAttribute('y1', a.cy);
+                line.setAttribute('x2', b.cx); line.setAttribute('y2', b.cy);
+            } else {
+                markerB.style.display = 'none';
+                line.style.display = 'none';
+            }
+            // Track the map: reposition the highlight on every frame it renders.
+            if (!rulerListenersAttached) {
+                map.on('render', renderRulerHighlight);
+                window.addEventListener('resize', renderRulerHighlight);
+                rulerListenersAttached = true;
+            }
+        }
+
         function captureMap(map) {
             if (window.realMap || !map || typeof map.getCenter !== 'function' || !map._canvas) return;
             window.realMap = map;
@@ -30,7 +112,12 @@ export function injectBridge(scriptName) {
 
         window.addEventListener('message', event => {
             if (event.origin !== window.location.origin) return;
-            const { source, blobID, blobData, endpoint, coords, zoom, select, speed } = event.data;
+            const { source, blobID, blobData, endpoint, coords, zoom, select, speed, rulerHighlight } = event.data;
+
+            if (source === 'yaw-overlay' && Array.isArray(rulerHighlight)) {
+                rulerPoints = rulerHighlight;
+                renderRulerHighlight();
+            }
 
             if (source === 'yaw-overlay' && coords) {
                 if (window.realMap) {
